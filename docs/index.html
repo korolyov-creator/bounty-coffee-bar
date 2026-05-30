@@ -183,6 +183,64 @@ footer .social{display:flex;gap:12px;margin-top:18px}
 footer .social a{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s}
 footer .social a:hover{background:var(--gold);color:var(--navy);border-color:var(--gold)}
 footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:50px;padding-top:30px;font-size:13px;opacity:.6;grid-column:1/-1}
+
+/* === MOBILE (≤640px) === */
+@media(max-width:640px){
+  .nav{padding:12px 16px}
+  .nav .logo-mark{font-size:14px;letter-spacing:.08em;gap:6px}
+  .nav .logo-mark .palm-mini{width:32px;height:32px}
+  .nav .nav-cta{padding:8px 14px;font-size:11px}
+  .container{padding:0 18px}
+
+  .hero{min-height:auto;padding:100px 0 60px}
+  .hero h1{font-size:34px !important;line-height:1.1}
+  .hero .eyebrow{font-size:11px;letter-spacing:.2em;margin-bottom:16px}
+  .hero .tagline{font-size:32px;margin-bottom:22px}
+  .hero .lead{font-size:15px;line-height:1.6;margin-bottom:28px}
+  .hero-visual{height:260px;margin-top:14px}
+  .hero-logo img{width:220px !important;height:auto !important}
+  .hero .cta-group{flex-direction:column;gap:10px}
+  .hero .cta-group .btn{width:100%;justify-content:center;padding:13px 22px;font-size:12px}
+
+  .signature-strip{padding:18px 16px}
+  .signature-strip .marquee{font-size:14px;gap:14px;flex-wrap:wrap}
+  .signature-strip .marquee .badge247{font-size:15px;padding:4px 11px}
+
+  h2{font-size:30px !important}
+  .menu .section-head .script,.ritual .script,.locations .script,.order h2 .script{font-size:30px !important}
+
+  .story{padding:70px 0}
+  .story-img{height:auto;aspect-ratio:4/5}
+  .story p{font-size:15px}
+  .story .quote{font-size:15px;padding-left:16px}
+
+  .menu{padding:70px 0}
+  .drink-info h3{font-size:20px}
+  .drink-info .desc{font-size:12px}
+
+  .ritual{padding:70px 0}
+  .moment{padding:28px 18px}
+  .moment .time{font-size:30px}
+  .moment .icon{font-size:46px;margin-bottom:14px}
+
+  .locations{padding:70px 0}
+  .location-img{height:220px}
+  .location-info{padding:22px}
+  .location-info h3{font-size:24px}
+  .location-actions{flex-direction:column}
+  .location-actions a{min-width:auto;padding:11px}
+
+  .order{padding:70px 0}
+  .order p{font-size:15px;margin-bottom:32px}
+  .order-buttons{flex-direction:column}
+  .btn-channel{width:100%;justify-content:center;padding:15px 22px;font-size:14px}
+
+  footer{padding:40px 0 24px}
+  footer .container{gap:30px}
+  footer h4{font-size:12px}
+
+  section[style*="paper-soft"] > .container > div[style*="repeat(6"]{grid-template-columns:repeat(3,1fr) !important}
+}
 </style>
 </head>
 <body>
