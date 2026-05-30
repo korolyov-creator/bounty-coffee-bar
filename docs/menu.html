@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Меню — Bounty Coffee Bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Cookie&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--gold:#C9A14A;--gold-bright:#E0BE6A;
+  --paper:#F2EAD7;--paper-soft:#FAF6EC;
+  --ink:#1a1a1a;--muted:#6b7280;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--navy);color:var(--paper);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:50;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(14px);background:rgba(15,31,58,.85);border-bottom:1px solid rgba(201,161,74,.18)}
+.nav a{color:var(--paper);text-decoration:none}
+.nav .logo-mark{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-weight:700;font-size:18px;letter-spacing:.15em;text-transform:uppercase}
+.nav .logo-mark .icon{width:42px;height:42px;border-radius:50%;background:url('assets/logo/bounty-logo.png') center/cover no-repeat;border:1.5px solid var(--gold)}
+.nav .back{padding:10px 22px;background:var(--gold);color:var(--navy);border-radius:99px;font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;transition:transform .2s}
+.nav .back:hover{transform:translateY(-1px)}
+
+/* HEADER */
+.header{padding:60px 32px 30px;text-align:center}
+.header .eyebrow{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;font-weight:500}
+.header h1{font-family:'Playfair Display',serif;font-size:clamp(40px,5vw,64px);font-weight:700;color:var(--paper);font-style:italic;line-height:1.05}
+.header h1 .accent{color:var(--gold);font-style:normal;font-weight:400;font-family:'Cookie',cursive;font-size:.7em;display:block;margin-top:6px}
+.header .meta{color:rgba(242,234,215,.7);margin-top:18px;font-size:14px}
+
+/* MENU IMAGE */
+.menu-wrap{flex:1;padding:30px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:24px}
+.menu-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{padding:14px 26px;border-radius:99px;font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s;cursor:pointer;border:none;font-family:inherit}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold-bright);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--paper);border:1.5px solid rgba(242,234,215,.3)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+
+.menu-image-container{max-width:1100px;width:100%;background:var(--navy-deep);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4),0 0 0 1px rgba(201,161,74,.15);position:relative}
+.menu-image-container img{width:100%;height:auto;display:block;cursor:zoom-in;transition:opacity .25s}
+.menu-image-container.zoomed img{cursor:zoom-out}
+
+.hint{color:rgba(242,234,215,.55);font-size:13px;text-align:center;font-style:italic}
+
+/* ZOOM OVERLAY */
+.zoom-overlay{display:none;position:fixed;inset:0;background:rgba(9,21,41,.96);z-index:100;overflow:auto;padding:24px;cursor:zoom-out}
+.zoom-overlay.active{display:flex;align-items:flex-start;justify-content:center}
+.zoom-overlay img{max-width:none;width:auto;height:auto;display:block;border-radius:8px}
+.zoom-close{position:fixed;top:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--navy);border:none;font-size:24px;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:101}
+
+/* FOOTER */
+.foot{padding:30px;text-align:center;border-top:1px solid rgba(201,161,74,.18);color:rgba(242,234,215,.6);font-size:12px}
+.foot a{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="logo-mark"><span class="icon"></span> Bounty</a>
+  <a href="index.html" class="back">← На главную</a>
+</nav>
+
+<header class="header">
+  <div class="eyebrow">★ FULL MENU ★</div>
+  <h1>Полное меню<span class="accent">Bounty Coffee Bar</span></h1>
+  <div class="meta">Цены актуальны с июня 2026 · Все позиции бара</div>
+</header>
+
+<main class="menu-wrap">
+  <div class="menu-actions">
+    <a href="menu/bounty-menu-vertical.pdf" target="_blank" class="btn btn-gold">📄 Скачать PDF</a>
+    <button onclick="document.getElementById('zoom').classList.add('active')" class="btn btn-ghost">🔍 Увеличить</button>
+  </div>
+
+  <div class="menu-image-container" onclick="document.getElementById('zoom').classList.add('active')">
+    <img src="menu/bounty-menu-hd.png" alt="Меню Bounty Coffee Bar" loading="eager">
+  </div>
+
+  <div class="hint">Нажми на меню чтобы увеличить · 4250×6613 px HD-качество</div>
+</main>
+
+<!-- Полноэкранный зум -->
+<div id="zoom" class="zoom-overlay" onclick="this.classList.remove('active')">
+  <button class="zoom-close" onclick="event.stopPropagation();document.getElementById('zoom').classList.remove('active')">×</button>
+  <img src="menu/bounty-menu-hd.png" alt="Меню Bounty">
+</div>
+
+<footer class="foot">
+  Bounty Coffee Bar · Tashkent · <a href="https://www.instagram.com/bountycoffeebar.tashkent/" target="_blank">@bountycoffeebar.tashkent</a> · 📍 Ц-14 Хадра 25 (24/7) · 📍 Сайрам 25/1
+</footer>
+
+</body>
+</html>
