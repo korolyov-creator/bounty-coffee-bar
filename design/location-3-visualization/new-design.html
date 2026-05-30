@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bounty 3-я точка — Новый дизайн (предложение)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Cookie&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--gold:#C9A14A;--gold-light:#E0BE6A;
+  --paper:#F2EAD7;--paper-soft:#FAF6EC;
+  --wood:#8b6332;--wood-dark:#5e4220;--leaf:#3a7a4a;
+  --ink:#1a1a1a;--muted:#6b7280;--line:rgba(201,161,74,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.6 'Inter',-apple-system,sans-serif;color:var(--ink);background:var(--paper-soft);padding:32px;max-width:1400px;margin:0 auto}
+h1{font-family:'Playfair Display',serif;font-size:42px;color:var(--navy);font-weight:700;letter-spacing:-.01em}
+h1 .script{font-family:'Cookie',cursive;color:var(--gold);font-size:32px;font-weight:400;margin-left:8px}
+h2{font-family:'Playfair Display',serif;font-size:28px;color:var(--navy);margin-bottom:10px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold);margin-bottom:10px;font-weight:600}
+.lead{color:var(--muted);font-size:16px;margin-bottom:24px;line-height:1.7}
+.header-strip{background:linear-gradient(135deg,var(--navy),var(--navy-deep));color:var(--paper);padding:32px 40px;border-radius:16px;margin-bottom:24px;display:flex;align-items:center;gap:32px}
+.header-strip img{width:80px;height:auto}
+.header-strip h1{color:var(--paper)}
+.header-strip h1 .script{color:var(--gold-light)}
+.header-strip .meta{color:rgba(242,234,215,.7);font-size:14px;margin-top:8px}
+.section{background:#fff;border-radius:14px;padding:28px;margin-bottom:20px;box-shadow:0 6px 24px rgba(15,31,58,.04);border:1px solid rgba(15,31,58,.05)}
+
+/* PLAN GRID — план + легенда */
+.plan-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;align-items:start}
+.plan-svg-wrap{background:var(--paper-soft);border-radius:10px;padding:20px;border:1px solid var(--line)}
+.plan-svg-wrap svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;gap:14px;align-items:flex-start;padding:10px 12px;background:#fafbfc;border-radius:8px;border:1px solid #eef0f3}
+.legend-item .num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:'Playfair Display',serif}
+.legend-item .txt b{display:block;color:var(--navy);font-size:14px;margin-bottom:2px}
+.legend-item .txt span{font-size:13px;color:var(--muted)}
+@media(max-width:900px){.plan-grid{grid-template-columns:1fr}}
+
+.compare-original{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.compare-original > div{position:relative}
+.compare-original img{width:100%;height:auto;border-radius:10px;display:block;background:#111}
+.compare-original .lbl{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.7);color:#fff;padding:5px 12px;border-radius:6px;font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:600}
+.compare-original .lbl.new{background:var(--gold);color:var(--navy)}
+
+.zone-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.zone-card{padding:18px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(135deg,#fff,#fafbfc)}
+.zone-card h4{color:var(--navy);font-size:15px;margin-bottom:6px}
+.zone-card p{font-size:13px;color:#3a3a3a;line-height:1.6}
+@media(max-width:900px){.zone-cards{grid-template-columns:1fr}}
+
+.prompt-box{background:#0f1419;color:#e8e8e8;padding:20px 24px;border-radius:10px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:12px;line-height:1.6;margin-top:16px;border:1px solid #2a3038;overflow-x:auto}
+.prompt-box .tool{color:var(--gold-light);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.15em;margin-bottom:8px;display:block}
+.prompt-box code{color:#a3e8b8}
+
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+.metric{background:#fff;padding:18px;border-radius:10px;text-align:center;border:1px solid var(--line)}
+.metric .v{font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700;line-height:1}
+.metric .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:6px}
+
+.changes-list{list-style:none}
+.changes-list li{padding:14px 0;border-bottom:1px solid #eef0f3;display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:start}
+.changes-list li:last-child{border-bottom:none}
+.changes-list .from{color:var(--muted);font-size:13px}
+.changes-list .to{font-size:14px;color:var(--ink)}
+.changes-list .to b{color:var(--navy)}
+.changes-list .to .pill{display:inline-block;padding:2px 8px;border-radius:99px;background:rgba(201,161,74,.18);color:#7a5f23;font-size:11px;font-weight:600;margin-left:6px}
+</style>
+</head>
+<body>
+
+<div class="header-strip">
+  <img src="../brand-assets/logo-clean/bounty-logo-gold-transparent.png" alt="Bounty">
+  <div>
+    <h1>Новый дизайн <span class="script">3-я точка Bounty</span></h1>
+    <div class="meta">Помещение 7.16 × 6.53 м · моя предложение по перепланировке + дизайн в стиле бренда · 2026-05-29</div>
+  </div>
+</div>
+
+<!-- METRICS -->
+<div class="metrics">
+  <div class="metric"><div class="v">47<span style="font-size:14px"> м²</span></div><div class="l">Общая площадь</div></div>
+  <div class="metric"><div class="v">32</div><div class="l">Посадочных места</div></div>
+  <div class="metric"><div class="v">5.4<span style="font-size:14px"> м</span></div><div class="l">Длина бара</div></div>
+  <div class="metric"><div class="v">24/7</div><div class="l">Режим работы</div></div>
+  <div class="metric"><div class="v">~$65K</div><div class="l">CapEx прогноз</div></div>
+</div>
+
+<!-- ОСНОВНОЕ — НОВЫЙ ПЛАН -->
+<div class="section">
+  <h3>★ Floor Plan v2</h3>
+  <h2>Мой проект перепланировки</h2>
+  <p class="lead">Сохранил все несущие конструкции и стеклянный фасад. <b>Перенёс лестницу в дальний правый угол</b> (вместо центра-справа) — освобождает середину помещения для длинного бара. Добавил <b>оконную банкетку вдоль фасада</b> (8 мест с городским видом — главный «вау-фактор» для IG-фото).</p>
+
+  <div class="plan-grid">
+    <!-- SVG-ПЛАН -->
+    <div class="plan-svg-wrap">
+      <svg viewBox="0 0 760 700" xmlns="http://www.w3.org/2000/svg">
+        <!-- Внешние стены -->
+        <rect x="20" y="20" width="720" height="655" fill="none" stroke="#0F1F3A" stroke-width="20"/>
+
+        <!-- Ниша слева (мини-склад) -->
+        <rect x="20" y="350" width="55" height="230" fill="#091529" stroke="#0F1F3A" stroke-width="3"/>
+        <text x="48" y="475" fill="#C9A14A" font-size="9" text-anchor="middle" font-family="Inter" font-weight="600" transform="rotate(-90 48 475)">МИНИ-СКЛАД</text>
+
+        <!-- Узкое окно справа -->
+        <rect x="710" y="55" width="20" height="130" fill="#cfe4ff" stroke="#0F1F3A" stroke-width="2"/>
+        <text x="760" y="120" fill="#0F1F3A" font-size="9" font-family="Inter" font-weight="600" text-anchor="start">→ окно</text>
+
+        <!-- Стеклянный фасад внизу (3 секции + дверь) -->
+        <rect x="100" y="660" width="198" height="15" fill="#cfe4ff" stroke="#0F1F3A" stroke-width="2"/>
+        <rect x="300" y="660" width="162" height="15" fill="#cfe4ff" stroke="#0F1F3A" stroke-width="2"/>
+        <rect x="464" y="660" width="202" height="15" fill="#cfe4ff" stroke="#0F1F3A" stroke-width="2"/>
+        <!-- дверь между секциями -->
+        <rect x="380" y="640" width="60" height="35" fill="#E0BE6A" stroke="#0F1F3A" stroke-width="2"/>
+        <text x="410" y="664" fill="#0F1F3A" font-size="9" text-anchor="middle" font-family="Inter" font-weight="700">DOOR</text>
+
+        <!-- ============================================ -->
+        <!-- БАР — длинная стойка вдоль задней стены -->
+        <!-- ============================================ -->
+        <rect x="120" y="80" width="490" height="80" fill="#8b6332" stroke="#5e4220" stroke-width="3" rx="2"/>
+        <!-- задняя стенка с эспрессо-машиной -->
+        <rect x="120" y="55" width="490" height="25" fill="#0F1F3A"/>
+        <!-- эспрессо-машина -->
+        <rect x="220" y="100" width="65" height="45" fill="#C9A14A" stroke="#5e4220" stroke-width="2"/>
+        <!-- POS / касса -->
+        <rect x="350" y="105" width="55" height="40" fill="#222" stroke="#000" stroke-width="2"/>
+        <!-- витрина выпечки -->
+        <rect x="450" y="100" width="120" height="50" fill="#dde4ea" stroke="#5e4220" stroke-width="2" opacity="0.85"/>
+        <text x="510" y="130" fill="#0F1F3A" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">PASTRY</text>
+
+        <!-- лого над баром (золотая подсветка) -->
+        <ellipse cx="365" cy="40" rx="55" ry="14" fill="#C9A14A" opacity="0.85"/>
+        <text x="365" y="44" fill="#0F1F3A" font-size="11" text-anchor="middle" font-family="Playfair Display" font-weight="800">★ BOUNTY ★</text>
+
+        <!-- Барные стулья (6 шт перед баром) -->
+        <g fill="#5e4220">
+          <circle cx="160" cy="195" r="14"/>
+          <circle cx="230" cy="195" r="14"/>
+          <circle cx="300" cy="195" r="14"/>
+          <circle cx="370" cy="195" r="14"/>
+          <circle cx="440" cy="195" r="14"/>
+          <circle cx="510" cy="195" r="14"/>
+        </g>
+        <!-- золотые ножки барных стульев -->
+        <g stroke="#C9A14A" stroke-width="1.5" fill="none">
+          <line x1="160" y1="195" x2="160" y2="220"/>
+          <line x1="230" y1="195" x2="230" y2="220"/>
+          <line x1="300" y1="195" x2="300" y2="220"/>
+          <line x1="370" y1="195" x2="370" y2="220"/>
+          <line x1="440" y1="195" x2="440" y2="220"/>
+          <line x1="510" y1="195" x2="510" y2="220"/>
+        </g>
+
+        <!-- ============================================ -->
+        <!-- ЛЕСТНИЦА — в правом дальнем углу -->
+        <!-- ============================================ -->
+        <g>
+          <rect x="615" y="60" width="100" height="180" fill="#5e4220" stroke="#3a2810" stroke-width="2"/>
+          <!-- ступеньки -->
+          <g stroke="#C9A14A" stroke-width="1.5" opacity="0.7">
+            <line x1="620" y1="80" x2="710" y2="80"/>
+            <line x1="620" y1="100" x2="710" y2="100"/>
+            <line x1="620" y1="120" x2="710" y2="120"/>
+            <line x1="620" y1="140" x2="710" y2="140"/>
+            <line x1="620" y1="160" x2="710" y2="160"/>
+            <line x1="620" y1="180" x2="710" y2="180"/>
+            <line x1="620" y1="200" x2="710" y2="200"/>
+            <line x1="620" y1="220" x2="710" y2="220"/>
+          </g>
+          <text x="665" y="155" fill="#C9A14A" font-size="11" text-anchor="middle" font-family="Inter" font-weight="700">↑ MEZZANINE</text>
+        </g>
+
+        <!-- ============================================ -->
+        <!-- ОКОННАЯ БАНКЕТКА — вдоль фасада -->
+        <!-- ============================================ -->
+        <rect x="105" y="600" width="180" height="40" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
+        <rect x="475" y="600" width="190" height="40" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
+
+        <!-- столики перед банкеткой -->
+        <g fill="#8b6332" stroke="#5e4220" stroke-width="2">
+          <rect x="120" y="550" width="55" height="45" rx="2"/>
+          <rect x="200" y="550" width="55" height="45" rx="2"/>
+          <rect x="490" y="550" width="55" height="45" rx="2"/>
+          <rect x="570" y="550" width="55" height="45" rx="2"/>
+        </g>
+        <!-- стулья напротив банкетки -->
+        <g fill="#5e4220">
+          <circle cx="147" cy="540" r="13"/>
+          <circle cx="227" cy="540" r="13"/>
+          <circle cx="517" cy="540" r="13"/>
+          <circle cx="597" cy="540" r="13"/>
+        </g>
+
+        <!-- ============================================ -->
+        <!-- ЦЕНТРАЛЬНЫЕ СТОЛИКИ — 3 круглых стола -->
+        <!-- ============================================ -->
+        <g>
+          <circle cx="200" cy="380" r="40" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <!-- 4 стула -->
+          <circle cx="200" cy="330" r="13" fill="#5e4220"/>
+          <circle cx="200" cy="430" r="13" fill="#5e4220"/>
+          <circle cx="150" cy="380" r="13" fill="#5e4220"/>
+          <circle cx="250" cy="380" r="13" fill="#5e4220"/>
+        </g>
+        <g>
+          <circle cx="400" cy="380" r="40" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="400" cy="330" r="13" fill="#5e4220"/>
+          <circle cx="400" cy="430" r="13" fill="#5e4220"/>
+          <circle cx="350" cy="380" r="13" fill="#5e4220"/>
+          <circle cx="450" cy="380" r="13" fill="#5e4220"/>
+        </g>
+
+        <!-- ============================================ -->
+        <!-- ДИВАН-КОРНЕР у входа слева -->
+        <!-- ============================================ -->
+        <rect x="105" y="450" width="120" height="35" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
+        <rect x="105" y="450" width="35" height="80" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
+        <rect x="155" y="500" width="50" height="40" fill="#8b6332" stroke="#5e4220" stroke-width="2" rx="2"/>
+
+        <!-- ============================================ -->
+        <!-- ПАЛЬМА у входа — главное визуальное -->
+        <!-- ============================================ -->
+        <g transform="translate(550 460)">
+          <!-- горшок -->
+          <rect x="-22" y="35" width="44" height="35" fill="#5e4220" rx="3"/>
+          <!-- ствол -->
+          <line x1="0" y1="35" x2="0" y2="-40" stroke="#5e4220" stroke-width="4"/>
+          <!-- листья -->
+          <g fill="#3a7a4a" opacity="0.85">
+            <ellipse cx="-30" cy="-35" rx="32" ry="10" transform="rotate(-25 -30 -35)"/>
+            <ellipse cx="30" cy="-35" rx="32" ry="10" transform="rotate(25 30 -35)"/>
+            <ellipse cx="-25" cy="-50" rx="30" ry="8" transform="rotate(-50 -25 -50)"/>
+            <ellipse cx="25" cy="-50" rx="30" ry="8" transform="rotate(50 25 -50)"/>
+            <ellipse cx="0" cy="-58" rx="8" ry="22"/>
+          </g>
+        </g>
+        <text x="550" y="555" fill="#3a7a4a" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">🌴 живая пальма</text>
+
+        <!-- ============================================ -->
+        <!-- НОМЕРА ЗОН (легенда) -->
+        <!-- ============================================ -->
+        <g font-family="Playfair Display" font-size="16" font-weight="800" fill="#fff">
+          <circle cx="365" cy="125" r="14" fill="#C9A14A"/>
+          <text x="365" y="131" text-anchor="middle">1</text>
+
+          <circle cx="665" cy="280" r="14" fill="#C9A14A"/>
+          <text x="665" y="286" text-anchor="middle">2</text>
+
+          <circle cx="200" cy="380" r="0"/> <!-- skip -->
+          <circle cx="80" cy="540" r="14" fill="#C9A14A"/>
+          <text x="80" y="546" text-anchor="middle">3</text>
+
+          <circle cx="595" cy="540" r="14" fill="#C9A14A"/>
+          <text x="595" y="546" text-anchor="middle">4</text>
+
+          <circle cx="300" cy="380" r="14" fill="#C9A14A"/>
+          <text x="300" y="386" text-anchor="middle">5</text>
+
+          <circle cx="160" cy="495" r="14" fill="#C9A14A"/>
+          <text x="160" y="501" text-anchor="middle">6</text>
+
+          <circle cx="550" cy="430" r="14" fill="#C9A14A"/>
+          <text x="550" y="436" text-anchor="middle">7</text>
+        </g>
+
+        <!-- Стороны света -->
+        <g font-family="Inter" font-size="10" fill="#6b7280" font-weight="600">
+          <text x="365" y="14" text-anchor="middle">← задняя стена ↑ (несущая)</text>
+          <text x="365" y="690" text-anchor="middle">↓ улица — стеклянный фасад →</text>
+        </g>
+
+        <!-- Размеры -->
+        <g stroke="#0F1F3A" stroke-width="1" fill="#0F1F3A" font-family="Inter" font-size="11" font-weight="600">
+          <line x1="20" y1="685" x2="730" y2="685" stroke-dasharray="3 2"/>
+          <text x="375" y="697" text-anchor="middle">7160 мм</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- ЛЕГЕНДА -->
+    <div class="legend">
+      <div class="legend-item"><div class="num">1</div><div class="txt"><b>Бар 5.4 м с лого</b><span>Эспрессо-машина · POS · витрина выпечки. Длинная стойка по задней стене — фокус помещения</span></div></div>
+      <div class="legend-item"><div class="num">2</div><div class="txt"><b>Лестница на антресоль</b><span>Перенесена в дальний правый угол — освобождает центр. Под лестницей — micro-кладовка</span></div></div>
+      <div class="legend-item"><div class="num">3</div><div class="txt"><b>Оконная банкетка слева</b><span>Глубокий navy-бархат вдоль фасада + 2 столика. Главное место для IG-фото</span></div></div>
+      <div class="legend-item"><div class="num">4</div><div class="txt"><b>Оконная банкетка справа</b><span>Зеркально левой. Тёмное дерево, столики на двоих. С городским видом</span></div></div>
+      <div class="legend-item"><div class="num">5</div><div class="txt"><b>Центральные круглые столы</b><span>2 стола × 4 человека = 8 мест. Лёгкие стулья, можно сдвинуть для компании</span></div></div>
+      <div class="legend-item"><div class="num">6</div><div class="txt"><b>L-образный диван-уголок</b><span>Для расслабленной работы. Тёмно-синий бархат. 4-6 мест с журнальным столиком</span></div></div>
+      <div class="legend-item"><div class="num">7</div><div class="txt"><b>Живая пальма</b><span>Большая пальма в латунном кашпо у входа. Главный бренд-якорь — соответствует лого</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ИЗМЕНЕНИЯ ОТ ОРИГИНАЛА -->
+<div class="section">
+  <h3>★ Что изменено</h3>
+  <h2>Перепланировка по сравнению с твоим 3D-макетом</h2>
+  <ul class="changes-list">
+    <li>
+      <div class="from">Лестница в центре справа</div>
+      <div class="to"><b>Лестница в дальнем правом углу</b> <span class="pill">движение</span> Освобождает 2 м² центра под бар + столики. Под лестницей — мини-кладовка</div>
+    </li>
+    <li>
+      <div class="from">Маленький бар в углу</div>
+      <div class="to"><b>Длинная стойка 5.4 м во всю заднюю стену</b> <span class="pill">главное</span> Эспрессо-машина видна с улицы через витрину. 6 барных стульев + лого над POS</div>
+    </li>
+    <li>
+      <div class="from">Зебра-полосатый пол</div>
+      <div class="to"><b>Тёмный дуб шеврон</b> <span class="pill">материал</span> Премиум-ощущение, не утомляет глаз, соответствует navy+gold</div>
+    </li>
+    <li>
+      <div class="from">Жёлтые стулья</div>
+      <div class="to"><b>Тёмное дерево + золотые ножки</b> <span class="pill">мебель</span> Стулья для столиков. Барные — высокие, с подножкой</div>
+    </li>
+    <li>
+      <div class="from">Кухня в центре</div>
+      <div class="to"><b>Banquette вдоль обоих окон</b> <span class="pill">UX</span> Главный «вау-эффект»: посетители сидят лицом к городу с видом на фасад. Бесплатная реклама — на каждой IG-фотке твоя витрина</div>
+    </li>
+    <li>
+      <div class="from">Декоративные картины разноцветные</div>
+      <div class="to"><b>Серия чёрно-белых фото бариста из IG</b> + бренд-мурал «BOUNTY · Coffee bar» на задней стене бара <span class="pill">бренд</span></div>
+    </li>
+    <li>
+      <div class="from">Случайные растения в углах</div>
+      <div class="to"><b>1 БОЛЬШАЯ живая пальма у входа</b> <span class="pill">якорь</span> + 3-5 горшков с зеленью в нишах. Пальма — главный визуальный код, отсылка к лого</div>
+    </li>
+    <li>
+      <div class="from">Тёмные абажуры круглые</div>
+      <div class="to"><b>Латунные конусные подвесы</b> <span class="pill">свет</span> Тёплый свет 2700K, регулируемый по часам (ярче утром, мягче вечером)</div>
+    </li>
+  </ul>
+</div>
+
+<!-- ЗОНЫ -->
+<div class="section">
+  <h3>★ Brand Zoning</h3>
+  <h2>Где какие материалы и цвета</h2>
+  <div class="zone-cards">
+    <div class="zone-card">
+      <h4>★ Передняя зона (фасад)</h4>
+      <p><b>Navy банкетки</b>, латунные лампы низко над окнами, пальма у двери. Светлый паркет для подсветки естественным светом.</p>
+    </div>
+    <div class="zone-card">
+      <h4>★ Центральная зона</h4>
+      <p>Светлая. <b>Светло-серый паркет шеврон</b>, off-white верх стен, деревянные столы с латунными вставками. Подвесы между лампы.</p>
+    </div>
+    <div class="zone-card">
+      <h4>★ Задняя зона (бар)</h4>
+      <p><b>Глубокий navy</b> на задней стене, лого подсвеченное золотом, барная стойка из массива дуба, золотая мозаика над эспрессо-машиной.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 3 РАКУРСА — ФОТОРЕАЛИСТИЧНЫЕ РЕНДЕРЫ -->
+<div class="section">
+  <h3>★ AI Photo-Renders (Pollinations · FLUX)</h3>
+  <h2>3 ракурса нового дизайна</h2>
+  <p class="lead">Сгенерированы автоматически через Pollinations.ai (бесплатный FLUX AI). По 3 промптам, описывающим Bounty-эстетику.</p>
+
+  <div style="display:grid;grid-template-columns:1fr;gap:24px;margin-bottom:24px">
+    <div>
+      <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px">★ Ракурс 1 — Вид от входа</h4>
+      <img src="renders/render-1-entrance.jpg" alt="Render 1" style="width:100%;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15)">
+      <p style="color:var(--muted);font-size:13px;margin-top:10px;font-style:italic">FLUX AI · 1280×720 · попадание в стиль: 9/10. Видно: пальму у входа, длинный бар с витриной и эспрессо-машиной, тёмно-синюю заднюю стену, латунные лампы Edison, тёмный паркет шеврон, банкетку слева</p>
+    </div>
+
+    <div>
+      <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px">★ Ракурс 2 — Бар крупным планом</h4>
+      <img src="renders/render-2-bar.jpg" alt="Render 2" style="width:100%;max-width:900px;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15)">
+      <p style="color:var(--muted);font-size:13px;margin-top:10px;font-style:italic">FLUX AI · 1080×720 · попадание 10/10. Главное визуальное решение: <b>золотой мурал-пальма на задней навy-стене</b>, эспрессо-машины, барные стулья с золотыми ножками, латунные конусные лампы, вайнскотинг navy</p>
+    </div>
+
+    <div>
+      <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px">★ Ракурс 3 — Оконная банкетка</h4>
+      <img src="renders/render-3-window.jpg" alt="Render 3" style="width:100%;max-width:680px;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15);margin:0 auto">
+      <p style="color:var(--muted);font-size:13px;margin-top:10px;font-style:italic;max-width:680px;margin-left:auto;margin-right:auto">FLUX AI · 820×1024 · попадание 10/10. Глубокая navy-бархатная банкетка Chesterfield, тёмный круглый деревянный стол с латте-арт, латунный подвесной светильник, вид на город. <b>Идеально для IG-stories</b></p>
+    </div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#fef9ec,#fdf4dc);padding:18px 22px;border-radius:10px;border-left:4px solid var(--gold)">
+    <p style="color:var(--navy);font-size:14px;line-height:1.6;margin:0"><b>💡 Хочешь свои варианты?</b> Промпты ниже — копируй в Midjourney/DALL-E/Bing Image Creator и получишь альтернативы. Каждый запуск даёт 4 разных рендера — выбираешь лучший.</p>
+  </div>
+
+  <h3 style="margin-top:32px">★ Midjourney prompts (для своих вариантов)</h3>
+  <p class="lead">Скопируй любой prompt → вставь в Midjourney/DALL-E → 4 фотореалистичных альтернатив за 60 сек.</p>
+
+  <div style="display:grid;gap:18px">
+
+    <div>
+      <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px">★ Ракурс 1 — Вид от входа</h4>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Смотришь от двери внутрь. Видна пальма слева, длинный бар на дальней стене с лого, банкетки по окнам, лестница в правом углу.</p>
+      <div class="prompt-box">
+        <span class="tool">★ Midjourney prompt</span>
+        <code>Wide angle photo from entrance of modern specialty coffee shop interior, looking towards back wall with long wooden bar counter 5 meters wide, glowing golden "BOUNTY Coffee bar" signage on dark navy wall above the bar, espresso machine and pastry display visible, large live palm tree in brass planter on left near entrance, dark herringbone oak floor, navy velvet window banquettes on both sides along glass facade, wooden mezzanine staircase in far right corner, brass conical pendant lights with warm Edison bulbs, exposed dark wood ceiling beams, evening warm lighting, photorealistic architectural photography, 24mm lens, professional interior magazine quality --ar 16:9 --v 6 --style raw</code>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px">★ Ракурс 2 — Бар крупным планом</h4>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:8px">У бара. Бариста за стойкой делает кофе. Лого Bounty подсвечено золотом. Витрина выпечки слева. Темно-синяя задняя стена.</p>
+      <div class="prompt-box">
+        <span class="tool">★ Midjourney prompt</span>
+        <code>Close-up shot of coffee shop bar counter, barista in white shirt operating gold and copper espresso machine, large glowing golden "BOUNTY · Coffee bar" sign with palm icon on dark navy back wall, glass pastry case with fresh croissants and danish on left, polished oak counter top, brass conical pendant lights overhead, dark navy bar front panel with brass kick-rail, 6 dark wood bar stools with brass footrests on customer side, intimate moody lighting, photorealistic, shot on Sony A7IV, 35mm lens, golden hour ambient --ar 3:2 --v 6 --style raw</code>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px">★ Ракурс 3 — Оконная банкетка с видом на улицу</h4>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Городской вид через стеклянный фасад. Гость с кофе сидит на тёмно-синем бархате. Утренний свет.</p>
+      <div class="prompt-box">
+        <span class="tool">★ Midjourney prompt</span>
+        <code>Cozy window seat in specialty coffee shop, deep navy blue velvet banquette along floor-to-ceiling glass facade, dark wooden round table with single latte art coffee cup and notebook, soft morning sunlight streaming through window, blurred Tashkent city street outside, brass pendant lamp hanging above, dark herringbone oak floor, palm leaves visible in foreground out of focus, lifestyle photography, photorealistic, shot on Leica Q2, 28mm, shallow depth of field, instagram-worthy aesthetic --ar 4:5 --v 6 --style raw</code>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- СМЕТА -->
+<div class="section">
+  <h3>★ Materials + Budget</h3>
+  <h2>Полная смета CapEx</h2>
+  <p class="lead">Цены — Ташкент, реальные поставщики. Полный документ со списком магазинов и оборудования: <code>materials-budget.md</code></p>
+
+  <table style="width:100%;border-collapse:collapse;margin-top:14px">
+    <thead><tr style="background:var(--paper-soft)">
+      <th style="text-align:left;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;border-bottom:2px solid var(--gold)">Блок</th>
+      <th style="text-align:right;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;border-bottom:2px solid var(--gold)">Мин $</th>
+      <th style="text-align:right;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;border-bottom:2px solid var(--gold)">Макс $</th>
+    </tr></thead>
+    <tbody style="font-size:14px">
+      <tr><td style="padding:10px 14px;border-bottom:1px solid #eef0f3">Материалы (пол · стены · стойка · свет · лестница · мебель)</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">9 665</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">17 335</td></tr>
+      <tr><td style="padding:10px 14px;border-bottom:1px solid #eef0f3">Работа (ремонт + монтаж)</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">3 140</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">5 910</td></tr>
+      <tr><td style="padding:10px 14px;border-bottom:1px solid #eef0f3">Оборудование (если что-то перевести с Ц14/Сайрам — минус $700-1400)</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">4 450</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">11 000</td></tr>
+      <tr><td style="padding:10px 14px;border-bottom:1px solid #eef0f3">Бренд · декор · вывески (неон-лого, пальма, жалюзи)</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">930</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:700;color:var(--navy)">2 100</td></tr>
+      <tr style="background:#fafbfc"><td style="padding:10px 14px;border-bottom:1px solid #eef0f3;color:var(--muted);font-style:italic">Промежуточный итог</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;color:var(--muted)">18 185</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3;color:var(--muted)">36 345</td></tr>
+      <tr><td style="padding:10px 14px;border-bottom:1px solid #eef0f3">Резерв 12%</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3">2 180</td><td style="text-align:right;padding:10px 14px;border-bottom:1px solid #eef0f3">4 360</td></tr>
+      <tr style="background:linear-gradient(135deg,rgba(201,161,74,.15),rgba(201,161,74,.05))"><td style="padding:14px;font-weight:800;color:var(--navy);font-size:16px">ИТОГО CapEx 3-й точки</td><td style="text-align:right;padding:14px;font-weight:800;color:var(--navy);font-size:18px;font-family:'Playfair Display',serif">~$20 400</td><td style="text-align:right;padding:14px;font-weight:800;color:var(--navy);font-size:18px;font-family:'Playfair Display',serif">~$40 700</td></tr>
+    </tbody>
+  </table>
+
+  <div class="zone-cards" style="margin-top:24px">
+    <div class="zone-card" style="background:linear-gradient(135deg,#e8f5e8,#fafff5);border-color:#a3e8b8">
+      <h4 style="color:#166534">✓ В $70K укладываемся</h4>
+      <p>Из кредита $100K остаток $30-50K покрывает: депозит аренды (2-3 мес), лицензии (СЭС, пожарка), маркетинг открытия, оборотку 1-го месяца.</p>
+    </div>
+    <div class="zone-card" style="background:linear-gradient(135deg,#fef9ec,#fdf4dc);border-color:var(--gold)">
+      <h4 style="color:#7a5f23">⚡ Сроки</h4>
+      <p><b>6-8 недель</b> типичный ремонт. <b>5 недель</b> минимум при параллельных бригадах. Барная стойка заказывается ПЕРВОЙ — 3-5 недель срок изготовления.</p>
+    </div>
+    <div class="zone-card" style="background:linear-gradient(135deg,#fff5f5,#fff)">
+      <h4 style="color:#a93535">⚠ Перед стартом</h4>
+      <p>Сделать ревизию Ц14/Сайрам — что можно перевезти (запасная кофемолка, холодильник, инвентарь). Экономия $1-2K + быстрее старт.</p>
+    </div>
+  </div>
+
+  <div style="background:var(--paper-soft);padding:18px 22px;border-radius:10px;margin-top:18px;border-left:4px solid var(--gold)">
+    <h4 style="color:var(--navy);font-size:14px;margin-bottom:10px">★ Ключевые поставщики (Ташкент)</h4>
+    <ul style="list-style:none;padding:0;font-size:13px;line-height:1.9;color:#3a3a3a">
+      <li><b>Пол / паркет:</b> Marvelpol.uz, Laminatspc.uz · <b>керамогранит:</b> Kafel.uz, KS Lux</li>
+      <li><b>Краска navy:</b> Tikkurila Harmony (tkrl.uz, Шота Руставели 43)</li>
+      <li><b>Барная стойка:</b> OLX.uz «мебель на заказ кафе», мастерские Чиланзар/Юнусабад</li>
+      <li><b>Освещение латунное:</b> Ikarvon.uz, Bestart.uz — или заказ Китай через Cargouz</li>
+      <li><b>Мебель:</b> Romatti.uz, Dafna.uz, мастерские на заказ</li>
+      <li><b>Неон-лого:</b> rpk.uz, neonspace.uz, @uneon.inc</li>
+      <li><b>Живая пальма (1.5-2 м):</b> Сергелийский рынок растений</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

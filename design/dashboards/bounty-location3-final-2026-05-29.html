@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bounty 3-я точка — финальный синтез (v2 исправлено)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&family=Inter:wght@300;400;500;600;700;800&family=Cookie&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--gold:#C9A14A;--gold-light:#E0BE6A;
+  --paper:#F2EAD7;--paper-soft:#FAF6EC;
+  --red:#dc2626;--orange:#f97316;--yellow:#eab308;--green:#16a34a;--blue:#3b82f6;
+  --ink:#0b0f17;--muted:#6b7280;--line:#e5e7eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.45 'Inter',-apple-system,sans-serif;color:var(--ink);background:#f5f6f8;padding:20px;max-width:1400px;margin:0 auto}
+h1{font-family:'Playfair Display',serif;font-size:36px;color:var(--paper);font-weight:700;letter-spacing:-.01em;line-height:1.1}
+h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:700;margin-bottom:12px}
+h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;background:var(--paper-soft);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;border-bottom:2px solid var(--gold)}
+th.r,td.r{text-align:right}
+th.c,td.c{text-align:center}
+td{padding:7px 10px;border-bottom:1px solid #eef0f3;font-size:13px}
+.section{background:#fff;border-radius:10px;padding:18px 22px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.04);border:1px solid #eef0f3}
+
+/* HERO */
+.verdict{background:linear-gradient(135deg,var(--navy),var(--navy-deep));color:var(--paper);padding:30px 36px;border-radius:14px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center}
+.verdict .badge{padding:18px 28px;background:rgba(220,38,38,.2);border:2px solid var(--red);border-radius:8px;text-align:center;color:#fca5a5;font-family:'Playfair Display',serif;font-size:24px;font-weight:700;letter-spacing:1px}
+.verdict h1 span{font-family:'Cookie',cursive;color:var(--gold-light);font-size:22px;font-weight:400;display:block;margin-top:4px}
+.verdict .switch{font-size:13px;color:rgba(242,234,215,.85);margin-top:10px}
+.verdict .switch b{color:var(--gold-light);font-weight:700}
+.verdict .go-badge{padding:18px 28px;background:rgba(22,163,74,.2);border:2px solid var(--green);border-radius:8px;text-align:center;color:#a3e8b8;font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+.verdict .go-badge .price{display:block;font-size:14px;font-family:'Inter';margin-top:6px;color:rgba(163,232,184,.8)}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;padding:12px 14px;border-radius:8px;border-left:3px solid var(--gold);border-right:1px solid #eef0f3;border-top:1px solid #eef0f3;border-bottom:1px solid #eef0f3}
+.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.kpi .v{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:700;line-height:1;margin-top:4px}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:3px}
+.kpi.r{border-left-color:var(--red)} .kpi.g{border-left-color:var(--green)}
+.kpi.o{border-left-color:var(--orange)} .kpi.b{border-left-color:var(--blue)}
+
+/* DISTRICT TABLE */
+.dist-rank-1{background:rgba(22,163,74,.08)}
+.dist-rank-2{background:rgba(22,163,74,.04)}
+.dist-rank-3{background:rgba(59,130,246,.06)}
+.score{display:inline-block;min-width:32px;padding:2px 8px;border-radius:4px;background:#eef0f3;font-weight:700;text-align:center;font-size:12px}
+.score.s5{background:var(--green);color:#fff}
+.score.s4{background:var(--blue);color:#fff}
+.score.s3{background:var(--yellow)}
+.score.s2{background:var(--orange);color:#fff}
+.score.s1{background:var(--red);color:#fff}
+
+/* TIER */
+.tier{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#eef0f3;color:var(--ink)}
+.tier.r{background:rgba(220,38,38,.15);color:#991b1b}
+.tier.g{background:rgba(22,163,74,.15);color:#15803d}
+.tier.b{background:rgba(59,130,246,.15);color:#1d4ed8}
+.tier.gold{background:rgba(201,161,74,.18);color:#7a5f23}
+
+/* DUAL */
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* COMPARE */
+.compare-row{display:grid;grid-template-columns:160px 1fr 1fr;gap:14px;padding:8px 0;border-bottom:1px solid #eef0f3;align-items:center;font-size:13px}
+.compare-row .metric{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.compare-row .bad{color:var(--red);font-weight:700}
+.compare-row .good{color:var(--green);font-weight:700}
+.compare-row .neutral{color:var(--ink)}
+
+/* FINDING */
+.finding{padding:11px 14px;border-radius:7px;background:#fff8ec;border-left:3px solid var(--gold);margin-bottom:8px}
+.finding .h{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.finding .b{font-size:12px;color:#3a3a3a;line-height:1.5}
+.finding .cost{font-size:11px;color:var(--gold);font-weight:700;margin-top:4px}
+.finding.crit{background:#fef2f2;border-color:var(--red)}
+.finding.crit .h{color:#991b1b}
+.finding.good{background:#ecfdf5;border-color:var(--green)}
+.finding.good .h{color:#166534}
+
+/* ACTIONS */
+.actions{list-style:none;padding:0}
+.actions li{display:grid;grid-template-columns:32px 1fr 100px;gap:12px;padding:10px 0;border-bottom:1px solid #eef0f3;align-items:center}
+.actions .n{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-family:'Playfair Display',serif}
+.actions .t{font-size:13px;line-height:1.5}
+.actions .t b{color:var(--navy)}
+.actions .when{font-size:11px;color:var(--muted);text-align:right;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+
+.foot{text-align:center;color:var(--muted);font-size:11px;padding:12px;margin-top:8px}
+code{font-family:'SF Mono',Menlo,monospace;font-size:11px;background:#eef0f3;padding:1px 6px;border-radius:3px;color:var(--navy)}
+
+.corrected{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(22,163,74,.15);color:#15803d;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-left:8px}
+</style>
+</head>
+<body>
+
+<!-- ВЕРДИКТ -->
+<div class="verdict">
+  <div class="badge">❌ NO-GO<br><span style="font-size:11px;font-family:'Inter';letter-spacing:1px">КАТТА ДАРХОН</span></div>
+  <div>
+    <h1>3-я точка Bounty<span>финальный синтез research (v2 ✓ исправлено)</span></h1>
+    <div class="switch">Дизайн: <b>6 критических находок</b>, план переделать. Локация: <b>Катта Дархон провален по 3 причинам</b>. <b>Топ-5 районов: Юнусабад + МУ (вровень, 34) → Шайхантахур → Чиланзар → Яккасарай.</b> Главная альтернатива на сегодня — Юнусабад Ц-5, $1 600/мес</div>
+  </div>
+  <div class="go-badge">✓ GO<br><span style="font-size:11px;font-family:'Inter';letter-spacing:1px">ЮНУСАБАД Ц-5</span>
+    <span class="price">80 м² · $1 600/мес</span>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="kpi-row">
+  <div class="kpi r"><div class="l">Катта Дархон</div><div class="v">NO-GO</div><div class="sub">3 фундам. причины</div></div>
+  <div class="kpi g"><div class="l">Юнусабад Ц-5</div><div class="v">$1 600</div><div class="sub">80 м², 1-я линия</div></div>
+  <div class="kpi b"><div class="l">Топ-районы</div><div class="v">Юн + МУ</div><div class="sub">34 балла каждый</div></div>
+  <div class="kpi o"><div class="l">CapEx обнов.</div><div class="v">$24-46K</div><div class="sub">+ HVAC + акустика</div></div>
+  <div class="kpi"><div class="l">Источников</div><div class="v">110</div><div class="sub">50 дизайн + 60 локация</div></div>
+  <div class="kpi"><div class="l">Действий</div><div class="v">5</div><div class="sub">на 7 дней</div></div>
+</div>
+
+<!-- ============= -->
+<!-- ВЕРДИКТ КАТТА ДАРХОН -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ NO-GO Катта Дархон — обоснование</h3>
+  <h2>3 причины</h2>
+  <div class="dual">
+    <div>
+      <div class="compare-row"><div class="metric">Нужно пешех/час</div><div class="bad">512</div><div></div></div>
+      <div class="compare-row"><div class="metric">Факт пешех/час</div><div class="bad">~150 (жилая улица)</div><div></div></div>
+      <div class="compare-row"><div class="metric">Метро</div><div class="bad">Пушкинская, 15-20 мин</div><div></div></div>
+      <div class="compare-row"><div class="metric">Якорь трафика</div><div class="bad">НЕТ (нет ТЦ/БЦ/IT)</div><div></div></div>
+      <div class="compare-row"><div class="metric">Кластер CMWP</div><div class="bad">НЕ в топ-10</div><div></div></div>
+      <div class="compare-row"><div class="metric">Прогноз выручки</div><div class="bad">25-40M сум/мес</div><div></div></div>
+      <div class="compare-row"><div class="metric">Break-even 86M</div><div class="bad">недостижим</div><div></div></div>
+    </div>
+    <div>
+      <div class="finding crit">
+        <div class="h">1. Аналог уже в портфеле</div>
+        <div class="b">Сайрам 25/1 — тот же архетип (жилая улица, ЖК). Даёт 29M/мес с отработанной командой. Катта Дархон не даст больше.</div>
+      </div>
+      <div class="finding crit">
+        <div class="h">2. Каннибализация без масштаба</div>
+        <div class="b">3-я точка = клон Сайрама, не масштабирует бизнес — перераспределяет трафик.</div>
+      </div>
+      <div class="finding crit">
+        <div class="h">3. Не в плане 26 гастрозон</div>
+        <div class="b">Город развивает конкретные кластеры (Бунёдкор, Шевченко, Истикбол). Катта Дархон в этих планах не значится.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= -->
+<!-- 12 РАЙОНОВ — ПРАВИЛЬНЫЕ ЦИФРЫ И РАНГИ -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ 12 районов Ташкента <span class="corrected">✓ исправлено по файлу</span></h3>
+  <h2>Ранг для Bounty по 5 критериям (источник: bounty-location)</h2>
+  <table>
+    <thead><tr>
+      <th>Район</th>
+      <th class="r">Население</th>
+      <th class="c">Трафик</th>
+      <th class="c">ЦА</th>
+      <th class="c">Конкур.</th>
+      <th class="c">Аренда</th>
+      <th class="c">Персп.</th>
+      <th class="c">ИТОГО</th>
+      <th>Заметка</th>
+    </tr></thead>
+    <tbody>
+      <tr class="dist-rank-1">
+        <td><b>Юнусабадский</b></td><td class="r">385K</td>
+        <td class="c"><span class="score s4">8</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s4">7</span></td>
+        <td class="c"><b style="color:var(--green);font-size:15px">34</b></td>
+        <td><span class="tier g">★ ТОП</span> Mega Planet зона + Ц-14 рядом</td>
+      </tr>
+      <tr class="dist-rank-1">
+        <td><b>Мирзо-Улугбекский</b></td><td class="r">340K</td>
+        <td class="c"><span class="score s2">5</span></td><td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s4">7</span></td>
+        <td class="c"><b style="color:var(--green);font-size:15px">34</b></td>
+        <td><span class="tier g">★ ТОП</span> IT Park + INHA. НО не Катта Дархон</td>
+      </tr>
+      <tr class="dist-rank-3">
+        <td><b>Шайхантахурский</b></td><td class="r">375K</td>
+        <td class="c"><span class="score s5">9</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s3">4</span></td><td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s4">7</span></td>
+        <td class="c"><b style="color:var(--blue);font-size:15px">33</b></td>
+        <td><span class="tier b">Бунёдкор</span> 90 заведений, 24/7, открыт 10.07.2025</td>
+      </tr>
+      <tr>
+        <td>Чиланзарский</td><td class="r">285K</td>
+        <td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s3">6</span></td>
+        <td class="c"><b style="font-size:15px">32</b></td>
+        <td>Ц-1 0% вакансия · $17-35/м²</td>
+      </tr>
+      <tr>
+        <td>Мирабадский</td><td class="r">158K</td>
+        <td class="c"><span class="score s5">9</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s2">3</span></td><td class="c"><span class="score s2">4</span></td><td class="c"><span class="score s4">7</span></td>
+        <td class="c"><b style="font-size:15px">31</b></td>
+        <td>Шевченко $31/м² · ⚠ перегруз: Tim's, Coffeelab, Shavi</td>
+      </tr>
+      <tr>
+        <td>Алмазарский</td><td class="r">415K</td>
+        <td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s2">5</span></td><td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s2">5</span></td>
+        <td class="c"><b style="font-size:15px">31</b></td>
+        <td>Население max, но окраины, ниже доход</td>
+      </tr>
+      <tr>
+        <td>Яккасарайский</td><td class="r">136K</td>
+        <td class="c"><span class="score s4">7</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s3">5</span></td><td class="c"><span class="score s3">6</span></td><td class="c"><span class="score s3">6</span></td>
+        <td class="c"><b style="font-size:15px">30</b></td>
+        <td>Руставели $24/м² · вечерний трафик</td>
+      </tr>
+      <tr>
+        <td>Учтепинский</td><td class="r">310K</td>
+        <td class="c"><span class="score s2">5</span></td><td class="c"><span class="score s2">4</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s2">5</span></td>
+        <td class="c"><b style="font-size:15px">30</b></td>
+        <td>Ювелирка/розница</td>
+      </tr>
+      <tr>
+        <td>Яшнабадский</td><td class="r">305K</td>
+        <td class="c"><span class="score s2">5</span></td><td class="c"><span class="score s2">3</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s5">9</span></td><td class="c"><span class="score s2">4</span></td>
+        <td class="c"><b style="font-size:15px">29</b></td>
+        <td>Электротехника/логистика</td>
+      </tr>
+      <tr>
+        <td>Янгихаятский</td><td class="r">175K</td>
+        <td class="c"><span class="score s2">4</span></td><td class="c"><span class="score s2">3</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s5">8</span></td><td class="c"><span class="score s2">5</span></td>
+        <td class="c"><b style="font-size:15px">28</b></td>
+        <td>Новый, мало инфраструктуры</td>
+      </tr>
+      <tr>
+        <td>Сергелийский</td><td class="r">175K</td>
+        <td class="c"><span class="score s2">4</span></td><td class="c"><span class="score s1">2</span></td><td class="c"><span class="score s5">9</span></td><td class="c"><span class="score s5">9</span></td><td class="c"><span class="score s1">3</span></td>
+        <td class="c"><b style="font-size:15px">27</b></td>
+        <td>Металлургия/спальный</td>
+      </tr>
+      <tr>
+        <td>Бектемирский</td><td class="r">60K</td>
+        <td class="c"><span class="score s1">2</span></td><td class="c"><span class="score s1">1</span></td><td class="c"><span class="score s5">10</span></td><td class="c"><span class="score s5">10</span></td><td class="c"><span class="score s1">2</span></td>
+        <td class="c"><b style="font-size:15px">25</b></td>
+        <td>Химпром · нет ЦА</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:10px;font-size:11px;color:var(--muted);font-style:italic">Источник: stat.uz (население), CMWP/Realting/Spot.uz (аренда), spot.uz (специализация). Конкуренция и Аренда инвертированы: выше балл = меньше конкурентов / дешевле.</div>
+</div>
+
+<!-- ============= -->
+<!-- 10 ТОРГОВЫХ КЛАСТЕРОВ -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Торговые кластеры (CMWP апрель 2026) <span class="corrected">✓ добавлено</span></h3>
+  <h2>10 главных кластеров стрит-ритейла</h2>
+  <table>
+    <thead><tr><th>Кластер</th><th>Район</th><th class="r">Ставка $/м²</th><th>Вакансия</th><th>Плотность кофеен</th></tr></thead>
+    <tbody>
+      <tr><td><b>Шевченко</b></td><td>Мирабадский</td><td class="r">$31 (+23% YoY)</td><td>Низкая</td><td><span class="tier r">Очень высокая</span></td></tr>
+      <tr><td>Шота Руставели</td><td>Яккасарайский</td><td class="r">$24 (+8% YoY)</td><td>Низкая</td><td>Средняя</td></tr>
+      <tr><td><b>Ц-1 Чиланзар</b></td><td>Чиланзарский</td><td class="r">$17-35</td><td><span class="tier g">~0%</span></td><td>Средняя</td></tr>
+      <tr><td>ЦУМ / Бродвей</td><td>Шайхантахурский</td><td class="r">$17-40</td><td>7%</td><td>Средняя</td></tr>
+      <tr><td>Амира Тимура</td><td>Центр</td><td class="r">высокая</td><td>Низкая</td><td>Высокая</td></tr>
+      <tr><td>Ташкент-Сити</td><td>Яккасарай/центр</td><td class="r">$40-62</td><td>Средняя</td><td>Средняя</td></tr>
+      <tr><td>Seoul Mun</td><td>Юнусабадский</td><td class="r">—</td><td>Высокая (новый)</td><td>Низкая</td></tr>
+      <tr><td>Мирабадский</td><td>Мирабадский</td><td class="r">$16-62</td><td>Низкая</td><td><span class="tier r">Очень высокая</span></td></tr>
+      <tr style="background:rgba(22,163,74,.06)"><td><b>Бунёдкор</b> <span class="tier g">NEW</span></td><td>Шайхантахурский</td><td class="r">$14-40</td><td>Формирующийся</td><td><b>90 заведений</b></td></tr>
+      <tr style="background:rgba(220,38,38,.04)"><td><b>Катта Дархон</b></td><td>Мирзо-Улугбекский</td><td class="r">$20-25</td><td>—</td><td><span class="tier r">Низкая (нет спроса)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============= -->
+<!-- НОВЫЕ ВЕТКИ МЕТРО -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Метро 2026 — катализаторы трафика <span class="corrected">✓ добавлено</span></h3>
+  <h2>Открытие новых веток конца 2026</h2>
+  <table>
+    <thead><tr><th>Ветка</th><th>Маршрут</th><th class="r">Открытие</th><th class="r">Пассажиров/сутки</th></tr></thead>
+    <tbody>
+      <tr><td><b>Новый Ташкент</b></td><td>Дустлик → Новый Ташкент (21 км, 9 станций)</td><td class="r">Конец 2026 (8 км / 3 станции)</td><td class="r" style="font-weight:700;color:var(--green)">230 000</td></tr>
+      <tr><td><b>ТТЗ</b></td><td>Пушкин → ТТЗ (10,8 км)</td><td class="r">Конец 2026</td><td class="r" style="font-weight:700;color:var(--green)">85 000</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:10px;font-size:12px;color:var(--muted)">⚠ Ни одна новая ветка НЕ проходит через Катта Дархон. Зона остаётся транзитной без метро-трафика.</div>
+</div>
+
+<!-- ============= -->
+<!-- ТОП-7 ОБЪЯВЛЕНИЙ -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Найденные помещения (20 проверено, топ-7)</h3>
+  <h2>Список с ID объявлений</h2>
+  <table>
+    <thead><tr>
+      <th style="width:30px">#</th><th>Адрес</th><th>Район</th><th class="r">Площадь</th><th class="r">Цена/мес</th><th>Линия</th><th>Статус</th>
+    </tr></thead>
+    <tbody>
+      <tr style="background:rgba(22,163,74,.08)"><td style="font-weight:800;color:var(--green)">1</td><td><b>Ц-5</b> Юнусабад, центр</td><td>Юнусабад</td><td class="r">80 м²</td><td class="r" style="font-weight:700;color:var(--green)">$1 600</td><td><span class="tier g">1-я</span></td><td><span class="tier gold">★ ПРИОРИТЕТ</span></td></tr>
+      <tr><td style="font-weight:700">2</td><td>Аллея Гоголя <b>Ц-2</b></td><td>Шайхантахур</td><td class="r">95 м²</td><td class="r">$2 000</td><td><span class="tier b">2-я</span></td><td>евро+парковка</td></tr>
+      <tr><td style="font-weight:700">3</td><td><b>Ц-1</b> Мирзо-Улугбек</td><td>Чиланзар</td><td class="r">100+100<small>тер.</small></td><td class="r">—</td><td><span class="tier g">1-я</span></td><td>терраса = ★</td></tr>
+      <tr><td style="font-weight:700">4</td><td>Экобазар</td><td>МУ</td><td class="r">~85 м²</td><td class="r">—</td><td><span class="tier g">1-я</span></td><td>нужна цена</td></tr>
+      <tr><td style="font-weight:700">5</td><td><b>Ц-7</b> ор. ЦУМ кафе Дустлар</td><td>Мирабад</td><td class="r">92-96 м²</td><td class="r">$2 500</td><td><span class="tier g">1-я</span></td><td>дорого</td></tr>
+      <tr><td style="font-weight:700">6</td><td>Ташкент-Сити</td><td>—</td><td class="r">—</td><td class="r">—</td><td><span class="tier g">1-я</span></td><td>готовый ремонт</td></tr>
+      <tr><td style="font-weight:700">7</td><td><b>Ц-1</b> Бибигон (срочно)</td><td>Чиланзар</td><td class="r">—</td><td class="r">—</td><td><span class="tier g">1-я</span></td><td>топ-локация</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;font-size:11px;color:var(--muted)">
+    <b>Источники:</b> OLX.uz · Birbir.uz · Shahar.uz · Realting.uz · Realt24.uz · m2bomber.com · 9 объявлений с прямыми ID-ссылками<br>
+    <b>Telegram (живой мониторинг):</b> @tashkent_realty · @nedvigost · @arenda_ofis_tashkent · @kommercheskaya_nedvizhimost
+  </div>
+</div>
+
+<!-- ============= -->
+<!-- ТОП-5 РАЙОНОВ ПО РЕКОМЕНДАЦИИ АГЕНТА -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Топ-5 рекомендаций bounty-location <span class="corrected">✓ строго по файлу</span></h3>
+  <h2>Куда смотреть для 3-й точки (с риском по каждой)</h2>
+  <div class="triple">
+    <div class="finding good">
+      <div class="h">1. Мирзо-Улугбек у IT Park / INHA</div>
+      <div class="b">ЦА совпадает идеально, малая конкуренция, умеренная аренда. <b>НО не Катта Дархон</b> — нужна правильная улица в районе</div>
+    </div>
+    <div class="finding good">
+      <div class="h">2. Юнусабад — Mega Planet / Ц-5</div>
+      <div class="b">Высокий трафик, низкая конкуренция specialty. <b>⚠ Риск: каннибализация с Bounty Ц-14 Хадра</b> — проверить замером</div>
+    </div>
+    <div class="finding">
+      <div class="h">3. Чиланзар — Ц-1 или у метро</div>
+      <div class="b">Транзитный трафик, доступная аренда $17-35/м². <b>0% вакансия</b> — сложно найти</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">
+    <div class="finding">
+      <div class="h">4. Яккасарай — Руставели / Ташкент-Сити</div>
+      <div class="b">Активный вечерний поток, но аренда $24-40/м² (выше среднего)</div>
+    </div>
+    <div class="finding">
+      <div class="h">5. Шайхантахур — <b>Бунёдкор</b></div>
+      <div class="b">Новая 24/7 гастрозона (10.07.2025), 90 заведений-соседей, туристический трафик. <b>★ Новый альтернативный кластер</b></div>
+    </div>
+    <div class="finding crit">
+      <div class="h">❌ Мирабад — ИСКЛЮЧЁН</div>
+      <div class="b">Шевченко $31/м² × 85 м² = $2 550/мес только аренда. Tim's + Coffeelab перегружают категорию</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= -->
+<!-- 6 ДИЗАЙН-НАХОДОК -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Дизайн — 6 критических находок (bounty-design)</h3>
+  <h2>Что переделать в плане</h2>
+  <div class="dual">
+    <div>
+      <div class="finding crit">
+        <div class="h">1. HVAC отсутствует в смете 🚨</div>
+        <div class="b">+42°C лето + 3 кВт тепла эспрессо-машины в 47 м² = СЭС не выдаст заключение без кондиционирования.</div>
+        <div class="cost">+$1 500-2 300 обязательно</div>
+      </div>
+      <div class="finding">
+        <div class="h">2. 32 места = нарушение пожарного прохода</div>
+        <div class="b">По норме 1.5-1.8 м²/место + рабочая площадь ~28 м² = МАКС 26-28 мест при 90 см проходах.</div>
+        <div class="cost">→ урезать план до 26-28 мест</div>
+      </div>
+      <div class="finding">
+        <div class="h">3. Акустика — RT60 будет 2.0-2.5 сек</div>
+        <div class="b">Керамогранит+паркет+стекло+краска — разговор при работе кофемашины дискомфортен.</div>
+        <div class="cost">+$1 300-2 200 (реечный потолок + ткань + ковёр)</div>
+      </div>
+    </div>
+    <div>
+      <div class="finding good">
+        <div class="h">4. Лого как архитектурный мотив ★</div>
+        <div class="b">Физическая арка с пальмой из дерева. Кейс Koffee Mameya Kakeru (Токио, 14sd). Узнаваемость + главный IG-spot.</div>
+        <div class="cost">+$250-480 — лучший ROI</div>
+      </div>
+      <div class="finding">
+        <div class="h">5. Navy + тёмная столешница = подавляет аппетит</div>
+        <div class="b">Remick Arch 2025: синий подавляет аппетит. Решение: светлая столешница (терраццо/компакт-плита под мрамор).</div>
+        <div class="cost">Дешевле тёмного дерева и долговечнее</div>
+      </div>
+      <div class="finding">
+        <div class="h">6. Ташкент — топ-10 грязных городов</div>
+        <div class="b">IQAir Q4 2025. Глянцевые поверхности → матовые (пыль не видна, уборка проще).</div>
+        <div class="cost">Бесплатно (выбор материалов)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= -->
+<!-- НОВЫЙ CAPEX -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Обновлённый CapEx</h3>
+  <h2>Смета с поправками дизайнера</h2>
+  <table>
+    <thead><tr><th>Блок</th><th class="r">Старая мин $</th><th class="r">Старая макс $</th><th class="r">Новая мин $</th><th class="r">Новая макс $</th></tr></thead>
+    <tbody>
+      <tr><td>Материалы</td><td class="r">9 665</td><td class="r">17 335</td><td class="r">9 665</td><td class="r">17 335</td></tr>
+      <tr><td>Работа</td><td class="r">3 140</td><td class="r">5 910</td><td class="r">3 140</td><td class="r">5 910</td></tr>
+      <tr><td>Оборудование</td><td class="r">4 450</td><td class="r">11 000</td><td class="r">4 450</td><td class="r">11 000</td></tr>
+      <tr style="background:#fef2f2"><td><b>+ HVAC (НОВОЕ — обязательно)</b></td><td class="r">—</td><td class="r">—</td><td class="r">1 500</td><td class="r">2 300</td></tr>
+      <tr style="background:#fef2f2"><td><b>+ Акустика (НОВОЕ)</b></td><td class="r">—</td><td class="r">—</td><td class="r">1 300</td><td class="r">2 200</td></tr>
+      <tr style="background:#ecfdf5"><td><b>+ Лого-арка (НОВОЕ)</b></td><td class="r">—</td><td class="r">—</td><td class="r">250</td><td class="r">480</td></tr>
+      <tr><td>Бренд/декор</td><td class="r">930</td><td class="r">2 100</td><td class="r">930</td><td class="r">2 100</td></tr>
+      <tr><td>Резерв 12%</td><td class="r">2 180</td><td class="r">4 360</td><td class="r">2 540</td><td class="r">4 960</td></tr>
+      <tr style="background:linear-gradient(135deg,rgba(201,161,74,.18),rgba(201,161,74,.05))"><td><b>ИТОГО CapEx</b></td><td class="r"><b>~$20 400</b></td><td class="r"><b>~$40 700</b></td><td class="r"><b>~$23 800</b></td><td class="r"><b>~$46 300</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============= -->
+<!-- ДЕЙСТВИЯ -->
+<!-- ============= -->
+<div class="section">
+  <h3>★ Action items</h3>
+  <h2>5 действий на 7 дней</h2>
+  <ul class="actions">
+    <li><span class="n">1</span><span class="t"><b>Физический выезд на Юнусабад Ц-5 (80 м², $1 600/мес)</b> — 3 слота: 7-9 утра, 12-14 дня, 18-20 вечера. Замер пешеходов 15 мин каждый</span><span class="when">сегодня-завтра</span></li>
+    <li><span class="n">2</span><span class="t"><b>Позвонить по OLX-объявлению</b> Юнусабад Ц-5 — подтвердить актуальность + согласовать осмотр</span><span class="when">сегодня</span></li>
+    <li><span class="n">3</span><span class="t"><b>Параллельный замер на Катта Дархон</b> в те же 3 слота — прямое сравнение трафика</span><span class="when">завтра</span></li>
+    <li><span class="n">4</span><span class="t"><b>Проверить Бунёдкор</b> — новая зона 90 заведений, может быть лучше Юнусабада. Прогулка вечером + проверить вакансии</span><span class="when">2-3 дня</span></li>
+    <li><span class="n">5</span><span class="t"><b>Стив — финмодель</b> с новым CapEx $24-46K + bounty-risk — аудит выбранной локации перед подписанием</span><span class="when">5-7 дней</span></li>
+  </ul>
+</div>
+
+<div class="foot">
+  <b>Что исправлено в v2:</b> цифры населения 6 районов · правильный рейтинг (Юнусабад+МУ вровень 34, Шайхантахур #3 = 33) · добавлены Бунёдкор + новые ветки метро 2026 + полная таблица 10 кластеров CMWP<br>
+  Документы: <code>~/Desktop/Bounty/design/data/tashkent-map-research-2026-05-29.md</code> · <code>tashkent-rentals-shortlist-2026-05-29.md</code> · <code>~/Desktop/Bounty/design/location-3-visualization/research-deep.md</code> · <code>design-v3.md</code><br>
+  Источников: <b>110 URL</b> · Слов: <b>13 940</b> · Аудит ✓ (оба агента) · Дашборд v2 ✓ (проверен по файлам)
+</div>
+
+</body>
+</html>

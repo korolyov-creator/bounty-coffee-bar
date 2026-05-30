@@ -1,0 +1,138 @@
+{
+  "snapshot_date": "2026-05-28",
+  "source": "live_scrape_via_gstack_browser",
+  "brand": {
+    "name": "Bounty Coffee Bar",
+    "tagline": "Тихая пауза в городе",
+    "founded": "2019",
+    "logo_v1": "Бирюзовый круг 'BOUNTY COFFEE BAR' со звёздами (старый, на @bounty_coffee_bar)",
+    "logo_v2": "Тёмно-синий круг с пальмой, золотой шрифт 'BOUNTY' + 'EST 2019' (текущий, на @bountycoffeebar.tashkent)",
+    "voice": "Тёплая, неформальная, ироничная, без корпоративщины. Примеры: 'Когда SMM-щик слишком серьёзно относится к контенту', 'Правильно расставляем приоритеты', 'когда ресурсов уже нет но уровень ответственности остаётся'"
+  },
+  "locations": [
+    {
+      "code": "Ц14",
+      "address_full": "Ц-14, Хадра, 25",
+      "ig_label": "Bounty Хадра",
+      "yandex_id": "139748196138",
+      "coords": "41.325604, 69.251620",
+      "schedule": "24/7",
+      "status": "mature",
+      "avg_monthly_revenue_sum_2025_2026": 131849333,
+      "active_months": 52
+    },
+    {
+      "code": "Сайрам",
+      "address_full": "улица Сайрам 25/1",
+      "ig_label": "Bounty Сайрам",
+      "yandex_id": "218338813837",
+      "coords": "41.332246, 69.324796",
+      "schedule": "стандартный (не 24/7)",
+      "status": "growing",
+      "avg_monthly_revenue_sum_2025_2026": 29402333,
+      "active_months": 25,
+      "note": "В памяти Claude эта точка названа 'Буз Базар' — синоним"
+    },
+    {
+      "code": "Катта Дархон",
+      "status": "planned_2026",
+      "loan_usd": 100000,
+      "loan_rate": 12,
+      "loan_term_years": 5,
+      "loan_grace_period_years": 2,
+      "break_even_year_1_2_sum": 86000000,
+      "break_even_year_3_5_sum": 139000000
+    }
+  ],
+  "instagram": {
+    "handle": "bountycoffeebar.tashkent",
+    "url": "https://www.instagram.com/bountycoffeebar.tashkent/",
+    "followers": 1620,
+    "following": 10,
+    "posts": 27,
+    "bio": "Кофейня. Тихая пауза в городе ☕️ 📍Ц-14, Хадра, 25 📍улица Сайрам 25/1",
+    "highlights": ["Vibe", "Live", "LOCATION"],
+    "tabs_available": ["Публикации", "Reels", "Отметки"],
+    "old_account_to_avoid": {
+      "handle": "bounty_coffee_bar",
+      "followers": 27,
+      "posts": 0,
+      "note": "Пустышка, не использовать"
+    },
+    "visible_posts_first_12": [
+      {"order": 1, "type": "photo", "pinned": true, "caption": "Есть места, куда заходят случайно. И остаются дольше, чем планировали. Bounty Coffee Bar - не только про кофе."},
+      {"order": 2, "type": "photo", "pinned": true, "caption": "Мы просто делаем хороший кофе и создаём атмосферу, в которую хочется возвращаться. 🌸 📍Ц-14, Хадра, 25 📍Сайрам, 25/1"},
+      {"order": 3, "type": "photo", "pinned": true, "caption": "Когда SMM-щик слишком серьёзно относится к контенту ☕"},
+      {"order": 4, "type": "reel", "caption": "В ритме кофе ☕️"},
+      {"order": 5, "type": "reel", "caption": "Правильно расставляем приоритеты 😏"},
+      {"order": 6, "type": "reel", "caption": "Мы и не против, а вы? 🤗"},
+      {"order": 7, "type": "carousel", "caption": "Приходите к нам на кофе в Bounty Coffee Bar ☕️"},
+      {"order": 8, "type": "reel", "caption": "Какой твой кофе на сегодня? ☕"},
+      {"order": 9, "type": "reel", "caption": "ЗавтракоОбедоУжин ☕️"},
+      {"order": 10, "type": "reel", "caption": "когда ресурсов уже нет но уровень ответственности остаётся ждём тебя в Bounty Coffee Bar за кофе!"},
+      {"order": 11, "type": "reel", "caption": "Что может быть лучше утреннего кофе? ☕✨"},
+      {"order": 12, "type": "reel", "caption": "Когда бы вам ни захотелось кофе - мы рядом ☕ Филиал на Ц-14 работает 24/7"}
+    ],
+    "content_mix_visible": {
+      "reels": 8,
+      "photo": 3,
+      "carousel": 1,
+      "reels_percentage": 67
+    },
+    "recommended_accounts_by_ig_algo": [
+      "unitycoffee.uz", "air_waffle_tashkent", "tkh.uz", "wasabi_uz",
+      "chaykoftashkent", "loookuz", "affresco.restaurant", "tortele.uz",
+      "cataleya.uz", "timscoffeeuz", "yavtesto", "bxb.kzo",
+      "sezamgarden_uz", "the_20sgirls_club"
+    ]
+  },
+  "website": {
+    "url": "https://www.bountycoffeebar.uz/",
+    "purpose": "минимальный хаб ссылок (меню + 2 точки на картах + соцсети)",
+    "links": {
+      "menu": "https://www.bountycoffeebar.uz/",
+      "instagram": "https://www.instagram.com/bountycoffeebar.tashkent",
+      "facebook": "https://www.facebook.com/bountycoffeebar.tashkent",
+      "telegram": "https://www.t.me/bountycoffeebar",
+      "google_maps_khadra": "https://maps.app.goo.gl/iJ69khEz8cmU9ahu7",
+      "google_maps_sayram": "https://maps.app.goo.gl/iok3Hvfezpa393VC8",
+      "yandex_khadra": "https://yandex.ru/maps/org/139748196138/",
+      "yandex_sayram": "https://yandex.ru/maps/org/218338813837/"
+    },
+    "facebook_likes": 697,
+    "weak_points": "Только ссылки, нет SEO-контента, нет упоминания 24/7, нет фото, нет лид-формы"
+  },
+  "competitors_summary": {
+    "direct_first_circle": ["community.tashkent (5329 followers, 258 posts)"],
+    "indirect_second_circle": [
+      "coffeelabuz (2767 followers — premium specialty)",
+      "coffeenation.uz (B2B + retail brand)"
+    ],
+    "category_third_circle": [
+      "boncafe_uz (19000 followers, 34 locations, French cafe)",
+      "rassvet.coffee.uz (boutique breakfast)"
+    ],
+    "not_relevant": ["fayz_milliykafe (national cuisine)"],
+    "white_space_opportunities": [
+      "Никто не позиционирует кофейню как 'отпуск/тропики/побег' — у Bounty есть пальма в лого, можно усилить",
+      "24/7-формат недоиспользуется визуально (только @qahvauz)",
+      "Reels-стратегия слабее у всех конкурентов — Bounty уже выбрал это направление"
+    ]
+  },
+  "financial_summary": {
+    "currency": "UZS",
+    "data_period": "Oct 2021 — Apr 2026",
+    "c14_total_lifetime_revenue": 5399114000,
+    "buz_total_lifetime_revenue": 644345000,
+    "c14_avg_last_6mo": 131849333,
+    "buz_avg_last_6mo": 29402333,
+    "c14_to_buz_ratio": 4.48,
+    "combined_avg_last_6mo": 161251666,
+    "approx_usd_combined_monthly": 12900
+  },
+  "memory_corrections_applied": [
+    "Handle changed from @bounty_coffee_bar to @bountycoffeebar.tashkent",
+    "Locations clarified: Ц14 = 'Bounty Хадра', Буз Базар = 'Bounty Сайрам' (or two different names for same point)",
+    "Revenue updated from rounded (125M/27M) to precise 6-mo avg (131.8M/29.4M)"
+  ]
+}

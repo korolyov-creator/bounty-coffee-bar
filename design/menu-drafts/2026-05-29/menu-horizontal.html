@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bounty Coffee Bar — Меню (горизонтальное)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cookie&display=swap" rel="stylesheet">
+<style>
+@page { size: 630mm 370mm; margin: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--gold:#C9A14A;--gold-light:#E0BE6A;
+  --paper:#F2EAD7;--paper-soft:rgba(242,234,215,.85);--row-bg:rgba(242,234,215,.06);
+}
+html,body{width:630mm;height:370mm;background:var(--navy);color:var(--paper);font-family:'Inter',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{padding:14mm 18mm;display:flex;flex-direction:column;gap:4mm}
+
+/* HEADER */
+.header{position:relative;height:42mm;display:flex;align-items:center;justify-content:center;margin-bottom:2mm}
+.palm-left,.palm-right{position:absolute;top:-6mm;width:180mm;height:50mm;pointer-events:none;opacity:0.85}
+.palm-left{left:-20mm}
+.palm-right{right:-20mm;transform:scaleX(-1)}
+.palm-left svg,.palm-right svg{width:100%;height:100%}
+.logo-container{position:relative;z-index:5}
+.logo-container img{width:55mm;height:auto;display:block}
+
+/* GRID — 2 строки × 2 блока */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1}
+.row + .row{margin-top:2mm}
+
+/* BLOCK */
+.block{display:grid;grid-template-columns:10mm 1fr;gap:4mm}
+.block-label{background:linear-gradient(180deg,var(--gold-light),var(--gold));display:flex;align-items:center;justify-content:center;border-radius:2mm;color:var(--navy);font-weight:800;font-size:4mm;letter-spacing:1mm;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);padding:4mm 1mm;text-align:center}
+
+.block-content{display:flex;flex-direction:column;gap:2mm;min-width:0}
+.block-title{font-weight:800;font-size:5.5mm;color:var(--paper);text-transform:uppercase;letter-spacing:0.4mm;padding-bottom:1.5mm;border-bottom:1px solid rgba(201,161,74,.3)}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+.col-head{display:grid;grid-template-columns:1fr 12mm 12mm;background:linear-gradient(180deg,var(--gold-light),var(--gold));color:var(--navy);padding:1.3mm 2.5mm;font-weight:800;font-size:1.8mm;letter-spacing:0.8mm;text-transform:uppercase;border-radius:0.8mm;align-items:center}
+.col-head .label{font-size:2mm;letter-spacing:0.3mm}
+.col-head .v{text-align:right;font-size:1.8mm}
+
+.item{display:grid;grid-template-columns:1fr 12mm 12mm;gap:2mm;padding:1.1mm 2.5mm;align-items:baseline}
+.item:nth-child(even){background:var(--row-bg)}
+.item .name{font-size:2.1mm;font-weight:600;color:var(--paper);text-transform:uppercase;letter-spacing:0.1mm}
+.item .name small{font-weight:400;font-size:1.7mm;color:var(--paper-soft);text-transform:none;letter-spacing:0;font-style:italic;display:inline}
+.item .price{font-weight:700;font-size:2.2mm;color:var(--paper);text-align:right;letter-spacing:0.2mm}
+.item.single{grid-template-columns:1fr 12mm}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="palm-left">
+    <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#C9A14A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 10 30 Q 90 25 170 40 Q 240 65 290 110"/>
+        <g stroke-width="1.4">
+          <line x1="40" y1="29" x2="55" y2="15"/><line x1="70" y1="27" x2="85" y2="13"/>
+          <line x1="100" y1="28" x2="115" y2="14"/><line x1="130" y1="32" x2="148" y2="18"/>
+          <line x1="160" y1="38" x2="178" y2="22"/><line x1="190" y1="48" x2="208" y2="30"/>
+          <line x1="220" y1="62" x2="240" y2="44"/><line x1="248" y1="80" x2="268" y2="62"/>
+        </g>
+        <path d="M 10 70 Q 80 75 150 95 Q 215 120 260 155"/>
+        <g stroke-width="1.4">
+          <line x1="40" y1="71" x2="52" y2="55"/><line x1="68" y1="73" x2="80" y2="58"/>
+          <line x1="96" y1="78" x2="108" y2="63"/><line x1="125" y1="86" x2="138" y2="70"/>
+          <line x1="155" y1="98" x2="170" y2="82"/><line x1="185" y1="112" x2="200" y2="95"/>
+        </g>
+        <path d="M 10 130 Q 70 138 130 165 Q 175 195 200 220"/>
+        <g stroke-width="1.4">
+          <line x1="35" y1="132" x2="44" y2="115"/><line x1="60" y1="138" x2="70" y2="122"/>
+          <line x1="85" y1="148" x2="95" y2="132"/><line x1="110" y1="160" x2="120" y2="143"/>
+          <line x1="135" y1="172" x2="146" y2="155"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <div class="palm-right">
+    <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#C9A14A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 10 30 Q 90 25 170 40 Q 240 65 290 110"/>
+        <g stroke-width="1.4">
+          <line x1="40" y1="29" x2="55" y2="15"/><line x1="70" y1="27" x2="85" y2="13"/>
+          <line x1="100" y1="28" x2="115" y2="14"/><line x1="130" y1="32" x2="148" y2="18"/>
+          <line x1="160" y1="38" x2="178" y2="22"/><line x1="190" y1="48" x2="208" y2="30"/>
+          <line x1="220" y1="62" x2="240" y2="44"/><line x1="248" y1="80" x2="268" y2="62"/>
+        </g>
+        <path d="M 10 70 Q 80 75 150 95 Q 215 120 260 155"/>
+        <g stroke-width="1.4">
+          <line x1="40" y1="71" x2="52" y2="55"/><line x1="68" y1="73" x2="80" y2="58"/>
+          <line x1="96" y1="78" x2="108" y2="63"/><line x1="125" y1="86" x2="138" y2="70"/>
+          <line x1="155" y1="98" x2="170" y2="82"/><line x1="185" y1="112" x2="200" y2="95"/>
+        </g>
+        <path d="M 10 130 Q 70 138 130 165 Q 175 195 200 220"/>
+        <g stroke-width="1.4">
+          <line x1="35" y1="132" x2="44" y2="115"/><line x1="60" y1="138" x2="70" y2="122"/>
+          <line x1="85" y1="148" x2="95" y2="132"/><line x1="110" y1="160" x2="120" y2="143"/>
+          <line x1="135" y1="172" x2="146" y2="155"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <div class="logo-container">
+    <img src="../../brand-assets/bounty-logo-real.png" alt="Bounty">
+  </div>
+</div>
+
+<!-- ROW 1: КОФЕ + НАПИТКИ -->
+<div class="row">
+  <!-- КОФЕ -->
+  <div class="block">
+    <div class="block-label">Кофе</div>
+    <div class="block-content">
+      <div class="block-title">КОФЕ</div>
+      <div class="cols">
+        <div>
+          <div class="col-head"><span class="label">Чёрный кофе</span><span class="v">250</span><span class="v">500</span></div>
+          <div class="item"><span class="name">Американо</span><span class="price">22 000</span><span class="price">26 000</span></div>
+          <div class="item"><span class="name">Лонг блэк</span><span class="price">30 000</span><span class="price">35 000</span></div>
+          <div class="item"><span class="name">Эспрессо <small>один/двойной</small></span><span class="price">22 000</span><span class="price">26 000</span></div>
+        </div>
+        <div>
+          <div class="col-head"><span class="label">Молочный кофе</span><span class="v">250</span><span class="v">500</span></div>
+          <div class="item"><span class="name">Капучино</span><span class="price">25 000</span><span class="price">30 000</span></div>
+          <div class="item"><span class="name">Латте</span><span class="price">—</span><span class="price">28 000</span></div>
+          <div class="item"><span class="name">Флэт уайт</span><span class="price">30 000</span><span class="price">37 500</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- НАПИТКИ -->
+  <div class="block">
+    <div class="block-label">Напитки</div>
+    <div class="block-content">
+      <div class="block-title">НАПИТКИ</div>
+      <div class="cols">
+        <div>
+          <div class="col-head"><span class="label">Горячие</span><span class="v">500</span><span class="v"></span></div>
+          <div class="item single"><span class="name">Чай облепиха-имбирь</span><span class="price">30 000</span></div>
+          <div class="item single"><span class="name">Чай ягодный</span><span class="price">30 000</span></div>
+          <div class="item single"><span class="name">Чай облепиха+ягоды</span><span class="price">30 000</span></div>
+          <div class="item single"><span class="name">Чай облепиха+айва</span><span class="price">30 000</span></div>
+          <div class="item single"><span class="name">Чай ягода+манго</span><span class="price">30 000</span></div>
+          <div class="item single"><span class="name">Чай облепиха+манго</span><span class="price">30 000</span></div>
+        </div>
+        <div>
+          <div class="col-head"><span class="label">Холодные</span><span class="v">250</span><span class="v">500</span></div>
+          <div class="item"><span class="name">Фрэш яблочный</span><span class="price">35 500</span><span class="price">53 500</span></div>
+          <div class="item"><span class="name">Фрэш апельсиновый</span><span class="price">57 000</span><span class="price">94 500</span></div>
+          <div class="item"><span class="name">Айс-Ти</span><span class="price">—</span><span class="price">33 000</span></div>
+          <div class="item"><span class="name">Милкшейк классический</span><span class="price">—</span><span class="price">33 500</span></div>
+          <div class="item"><span class="name">Милкшейк банановый</span><span class="price">—</span><span class="price">35 500</span></div>
+          <div class="item"><span class="name">Мохито классический</span><span class="price">—</span><span class="price">33 000</span></div>
+          <div class="item"><span class="name">Лайм-тоник</span><span class="price">—</span><span class="price">30 000</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2: КОФЕЙНЫЕ НАПИТКИ + ДОБАВКИ -->
+<div class="row">
+  <!-- КОФЕЙНЫЕ НАПИТКИ -->
+  <div class="block">
+    <div class="block-label">Кофейные напитки</div>
+    <div class="block-content">
+      <div class="block-title">КОФЕЙНЫЕ НАПИТКИ</div>
+      <div class="cols">
+        <div>
+          <div class="col-head"><span class="label">Горячие кофейные</span><span class="v">250</span><span class="v">500</span></div>
+          <div class="item"><span class="name">Раф классик</span><span class="price">34 000</span><span class="price">46 500</span></div>
+          <div class="item"><span class="name">Раф Bounty</span><span class="price">34 000</span><span class="price">46 500</span></div>
+          <div class="item"><span class="name">Мокко</span><span class="price">32 000</span><span class="price">36 000</span></div>
+          <div class="item"><span class="name">Американский какао</span><span class="price">—</span><span class="price">38 000</span></div>
+          <div class="item"><span class="name">Горячий шоколад</span><span class="price">26 000</span><span class="price">—</span></div>
+          <div class="item"><span class="name">Банановый кофе</span><span class="price">—</span><span class="price">35 000</span></div>
+        </div>
+        <div>
+          <div class="col-head"><span class="label">Холодные кофейные</span><span class="v">250</span><span class="v">500</span></div>
+          <div class="item"><span class="name">Айс капучино</span><span class="price">—</span><span class="price">30 000</span></div>
+          <div class="item"><span class="name">Айс американо</span><span class="price">—</span><span class="price">26 000</span></div>
+          <div class="item"><span class="name">Айс латте</span><span class="price">—</span><span class="price">28 000</span></div>
+          <div class="item"><span class="name">Фраппучино</span><span class="price">—</span><span class="price">45 000</span></div>
+          <div class="item"><span class="name">Эспрессо-тоник</span><span class="price">—</span><span class="price">46 000</span></div>
+          <div class="item"><span class="name">Cold Brew</span><span class="price">28 000</span><span class="price">38 000</span></div>
+          <div class="item"><span class="name">Шмель <small>лимит.</small></span><span class="price">—</span><span class="price">83 000</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ДОБАВКИ -->
+  <div class="block">
+    <div class="block-label">Добавки</div>
+    <div class="block-content">
+      <div class="block-title">ДОБАВКИ</div>
+      <div class="cols">
+        <div>
+          <div class="col-head"><span class="label">К напитку</span><span class="v"></span><span class="v"></span></div>
+          <div class="item single"><span class="name">Эспрессо шот</span><span class="price">10 000</span></div>
+          <div class="item single"><span class="name">Сироп <small>15 гр</small></span><span class="price">6 000</span></div>
+          <div class="item single"><span class="name">Мёд <small>15 гр</small></span><span class="price">5 500</span></div>
+        </div>
+        <div>
+          <div class="col-head"><span class="label">К напитку</span><span class="v"></span><span class="v"></span></div>
+          <div class="item single"><span class="name">Взбитые сливки <small>20 гр</small></span><span class="price">6 000</span></div>
+          <div class="item single"><span class="name">Молоко <small>100 мл</small></span><span class="price">8 000</span></div>
+          <div class="item single"><span class="name">Имбирь <small>15 гр</small></span><span class="price">6 000</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

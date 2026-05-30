@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Temporary
+*.tmp
+*.bak
+*~
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Node (если когда-то появится)
+node_modules/
+*.log
+
+# Python (если когда-то)
+__pycache__/
+*.pyc
+.venv/
+
+# Большие бинарники которые проще регенерить
+*.zip
+*.rar

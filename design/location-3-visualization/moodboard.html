@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bounty 3-я точка — Mood-board визуализации</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Cookie&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--gold:#C9A14A;--gold-light:#E0BE6A;
+  --paper:#F2EAD7;--paper-soft:#FAF6EC;
+  --ink:#1a1a1a;--muted:#6b7280;--line:rgba(201,161,74,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.6 'Inter',-apple-system,sans-serif;color:var(--ink);background:var(--paper-soft);padding:32px;max-width:1400px;margin:0 auto}
+h1{font-family:'Playfair Display',serif;font-size:42px;color:var(--navy);font-weight:700;letter-spacing:-.01em;margin-bottom:6px}
+h1 .script{font-family:'Cookie',cursive;color:var(--gold);font-size:32px;font-weight:400;margin-left:8px}
+h2{font-family:'Playfair Display',serif;font-size:28px;color:var(--navy);margin-bottom:8px;font-weight:700}
+h3{font-size:14px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold);margin-bottom:10px;font-weight:600}
+.lead{color:var(--muted);font-size:16px;margin-bottom:32px;line-height:1.7}
+
+.header-strip{background:linear-gradient(135deg,var(--navy),var(--navy-deep));color:var(--paper);padding:32px 40px;border-radius:16px;margin-bottom:32px;display:flex;align-items:center;gap:32px}
+.header-strip img{width:80px;height:auto}
+.header-strip h1{color:var(--paper)}
+.header-strip h1 .script{color:var(--gold-light)}
+.header-strip .meta{color:rgba(242,234,215,.7);font-size:14px;margin-top:8px}
+
+.section{background:#fff;border-radius:14px;padding:28px;margin-bottom:24px;box-shadow:0 6px 24px rgba(15,31,58,.04);border:1px solid rgba(15,31,58,.05)}
+.section-head{margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.section-head .left h2{margin:0}
+.section-head .right{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:4px 12px;border-radius:99px;background:#eef2f7;color:var(--navy);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.pill.gold{background:rgba(201,161,74,.18);color:#7a5f23}
+.pill.navy{background:rgba(15,31,58,.1);color:var(--navy)}
+.pill.green{background:rgba(34,197,94,.15);color:#166534}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.compare > div{position:relative}
+.compare img{width:100%;height:auto;border-radius:10px;display:block;background:#111}
+.compare .lbl{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.7);color:#fff;padding:5px 12px;border-radius:6px;font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:600}
+.compare .lbl.real{background:var(--gold);color:var(--navy)}
+
+.notes{background:linear-gradient(135deg,#fef9ec,#fdf4dc);border-left:4px solid var(--gold);padding:18px 22px;border-radius:0 10px 10px 0;margin-top:18px}
+.notes h4{color:var(--navy);font-size:14px;margin-bottom:8px;font-weight:700}
+.notes ul{list-style:none;padding:0}
+.notes li{padding:6px 0;color:#3a3a3a;font-size:14px;line-height:1.6;padding-left:20px;position:relative}
+.notes li:before{content:"→";position:absolute;left:0;color:var(--gold);font-weight:700}
+
+.prompt-box{background:#0f1419;color:#e8e8e8;padding:20px 24px;border-radius:10px;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:12px;line-height:1.6;margin-top:18px;border:1px solid #2a3038;overflow-x:auto}
+.prompt-box .tool{color:var(--gold-light);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.15em;margin-bottom:8px;display:block}
+.prompt-box code{color:#a3e8b8;font-family:inherit}
+.copy-hint{color:#6b7280;font-size:11px;margin-top:6px;font-style:italic}
+
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+.plan-grid img{width:100%;border-radius:10px;border:1px solid #ddd;background:#fff}
+.plan-info{padding:20px;background:linear-gradient(135deg,var(--paper-soft),#fff);border-radius:10px}
+.plan-info dl{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;font-size:14px}
+.plan-info dt{color:var(--muted);font-weight:500}
+.plan-info dd{font-weight:700;color:var(--navy)}
+
+.brand-zones{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+.zone{padding:18px;border-radius:10px;color:#fff}
+.zone.navy{background:var(--navy)}
+.zone.gold{background:var(--gold);color:var(--navy)}
+.zone.paper{background:var(--paper);color:var(--navy);border:1px solid var(--line)}
+.zone h4{font-size:13px;text-transform:uppercase;letter-spacing:.15em;margin-bottom:8px;font-weight:700;font-family:'Inter',sans-serif}
+.zone p{font-size:13px;line-height:1.6}
+
+.footer-cta{background:linear-gradient(135deg,var(--navy),var(--navy-deep));color:var(--paper);padding:32px 40px;border-radius:14px;text-align:center;margin-top:32px}
+.footer-cta h3{color:var(--gold);margin-bottom:14px}
+.footer-cta p{color:rgba(242,234,215,.8);max-width:680px;margin:0 auto;font-size:14px;line-height:1.7}
+.footer-cta a{color:var(--gold-light);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header-strip">
+  <img src="../brand-assets/logo-clean/bounty-logo-gold-transparent.png" alt="Bounty">
+  <div>
+    <h1>Mood-board <span class="script">3-я точка</span></h1>
+    <div class="meta">Помещение 7.16 × 6.53 м (~47 м²) · 2 уровня · стеклянный фасад · 3D-макет от 2026-05-29</div>
+  </div>
+</div>
+
+<p class="lead">Сравнение твоего 3D-макета из Planner 5D с реальными кофейнями похожей геометрии. Цель — показать как помещение может выглядеть в бренд-эстетике Bounty (тёмно-синий + золото + пальмы). Внизу каждой секции — готовые AI-prompts, которые можно скопировать в Midjourney/DALL-E для получения фотореалистичных вариантов.</p>
+
+<!-- PLAN -->
+<div class="section">
+  <div class="section-head"><div class="left"><h3>★ Floor Plan</h3><h2>Обмерный план помещения</h2></div></div>
+  <div class="plan-grid">
+    <img src="floor-plan.png" alt="Обмерный план">
+    <div class="plan-info">
+      <h4 style="color:var(--navy);margin-bottom:14px">Ключевые размеры</h4>
+      <dl>
+        <dt>Общая площадь</dt><dd>~46.7 м²</dd>
+        <dt>Глубина</dt><dd>7.16 м</dd>
+        <dt>Ширина</dt><dd>6.53 м</dd>
+        <dt>Стеклянный фасад</dt><dd>3 секции (1.98 + 1.62 + 2.02 м)</dd>
+        <dt>Узкое окно справа</dt><dd>1.31 м</dd>
+        <dt>Ниша слева</dt><dd>2.30 × 0.55 м (мини-склад)</dd>
+        <dt>Внутри</dt><dd>лестница на 2-й этаж/антресоль</dd>
+        <dt>Потенциал посадки</dt><dd>≈ 28-34 места</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- РАКУРС 1: TOP VIEW -->
+<!-- ============================================ -->
+<div class="section">
+  <div class="section-head">
+    <div class="left">
+      <h3>★ Ракурс 1 — Top View</h3>
+      <h2>Вид сверху · общий план</h2>
+    </div>
+    <div class="right">
+      <span class="pill navy">2 уровня</span>
+      <span class="pill gold">бар + посадка</span>
+      <span class="pill">лестница справа</span>
+    </div>
+  </div>
+
+  <div class="compare">
+    <div>
+      <span class="lbl">3D-макет (Planner 5D)</span>
+      <img src="3d-screens/01-top-view.jpg" alt="3D top view">
+    </div>
+    <div>
+      <span class="lbl real">Реальный референс</span>
+      <img src="https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=1200&q=85&auto=format" alt="Real coffee shop">
+    </div>
+  </div>
+
+  <div class="notes">
+    <h4>Что переделать чтобы было «в стиле Bounty»</h4>
+    <ul>
+      <li>Зебра-полосатый пол → заменить на <b>тёмный паркет/керамогранит в шеврон-укладке</b> (как в индастриал-кофейнях Сеула/Берлина)</li>
+      <li>Фиолетовая картина на стене → <b>чёрно-белая фотография побережья / пальм</b> или большой Bounty-лого как мурал</li>
+      <li>Деревянная лестница (есть) → оставить, добавить кованые перила тёмные</li>
+      <li>Стулья жёлтые → заменить на <b>тёмно-синий бархат</b> или <b>тёмно-коричневое дерево</b>, акценты — золотые ножки</li>
+      <li>Эспрессо-машина красная → переместить на <b>центральную барную стойку</b>, видно с улицы (маркетинг)</li>
+    </ul>
+  </div>
+
+  <div class="prompt-box">
+    <span class="tool">★ Midjourney prompt</span>
+    <code>Top-down isometric view of modern specialty coffee shop interior, 7x6 meter space, dark navy walls with gold accents, herringbone dark oak wood floor, central wooden bar with espresso machine, mezzanine wooden staircase on right side, glass facade with 3 window sections on front, hanging pendant lights, palm tree decorative elements, scandinavian-industrial aesthetic, warm ambient lighting, photorealistic architectural visualization --ar 4:3 --v 6 --style raw</code>
+    <div class="copy-hint">Скопируй → вставь в Midjourney → получишь 4 фотореалистичных варианта вид сверху</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- РАКУРС 2: BAR + MEZZANINE -->
+<!-- ============================================ -->
+<div class="section">
+  <div class="section-head">
+    <div class="left">
+      <h3>★ Ракурс 2 — Bar + Mezzanine</h3>
+      <h2>Барная зона с антресолью</h2>
+    </div>
+    <div class="right">
+      <span class="pill navy">входная зона</span>
+      <span class="pill gold">POS / касса</span>
+      <span class="pill">deli-витрина</span>
+    </div>
+  </div>
+
+  <div class="compare">
+    <div>
+      <span class="lbl">3D-макет</span>
+      <img src="3d-screens/02-bar-mezzanine.jpg" alt="3D bar+mezzanine">
+    </div>
+    <div>
+      <span class="lbl real">Реальный референс</span>
+      <img src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=1200&q=85&auto=format" alt="Real cafe bar">
+    </div>
+  </div>
+
+  <div class="notes">
+    <h4>Адаптация под Bounty</h4>
+    <ul>
+      <li>Деревянные колонны → оставить, но <b>обернуть в тёмно-синюю мореную фанеру</b> с золотым кольцом сверху</li>
+      <li>Большие растения в горшках → добавить <b>живую пальму</b> у входа (привязка к лого — главное визуальное послание)</li>
+      <li>Большая чёрно-белая картина (зима) → заменить на <b>чёрно-белое фото обжарки кофе</b> или <b>волны+пальмы</b> (соответствие бренду)</li>
+      <li>Стулья жёлтые → <b>деревянные крафтовые</b> с тёмно-синей подушкой</li>
+      <li>POS-стойка чёрная → <b>дерево + латунь</b> (премиум-ощущение, теплее)</li>
+      <li>Над POS — <b>главный лого Bounty</b> подсвеченный (золотая неонка)</li>
+    </ul>
+  </div>
+
+  <div class="prompt-box">
+    <span class="tool">★ Midjourney prompt</span>
+    <code>Modern coffee shop bar area, dark navy painted brick walls, wooden pillars wrapped with deep navy stained wood, brass accents, golden ESTD 2019 BOUNTY signage glowing above oak counter, vintage espresso machine display, glass pastry case with croissants, hanging Edison pendant lights, large palm tree in corner, dark herringbone floor, wooden staircase to mezzanine on background, warm golden hour lighting, photorealistic 35mm photography, depth of field, soft bokeh --ar 3:4 --v 6 --style raw</code>
+    <div class="copy-hint">Этот prompt — для вертикального формата (Stories/Instagram)</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- РАКУРС 3: BAR + PASTRY -->
+<!-- ============================================ -->
+<div class="section">
+  <div class="section-head">
+    <div class="left">
+      <h3>★ Ракурс 3 — Bar Counter Detail</h3>
+      <h2>Барная стойка изнутри · посадка</h2>
+    </div>
+    <div class="right">
+      <span class="pill navy">бариста-зона</span>
+      <span class="pill gold">витрина выпечки</span>
+      <span class="pill">подвесные лампы</span>
+    </div>
+  </div>
+
+  <div class="compare">
+    <div>
+      <span class="lbl">3D-макет</span>
+      <img src="3d-screens/03-bar-pastry.jpg" alt="3D bar pastry">
+    </div>
+    <div>
+      <span class="lbl real">Реальный референс</span>
+      <img src="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=1200&q=85&auto=format" alt="Real bar pastry">
+    </div>
+  </div>
+
+  <div class="notes">
+    <h4>Адаптация под Bounty</h4>
+    <ul>
+      <li>Большие чёрные абажуры → <b>конусные латунные</b> (золотой акцент сверху)</li>
+      <li>Деревянная лестница (есть) → ОК, но <b>тёмная морилка</b> + золотые ступенные накладки</li>
+      <li>Барная стойка чёрная → деревянная <b>с тёмно-синей передней панелью</b></li>
+      <li>Стулья жёлтые → <b>тёмно-коричневые барные</b> с золотыми подножками</li>
+      <li>Деко-полки с растением → <b>выставка кофейных пачек Bounty</b> + книги про кофе + 1-2 живых растения</li>
+      <li>Большая красная абстрактная картина → <b>принт «BOUNTY · Coffee bar» в раме</b> или серия чёрно-белых фото бариста (как у тебя в IG!)</li>
+    </ul>
+  </div>
+
+  <div class="prompt-box">
+    <span class="tool">★ Midjourney prompt</span>
+    <code>Cozy specialty coffee shop interior, view from upstairs mezzanine looking down at bar counter, dark wooden bar with navy front panel, brass conical pendant lights with warm Edison bulbs, glass case displaying fresh pastries and croissants, dark oak bar stools with brass footrests, plants in raw concrete pots, exposed dark wooden ceiling beams, framed black and white photography of baristas on wall, dark herringbone floor, intimate evening lighting, photorealistic, shot on Leica Q2, shallow depth of field --ar 3:4 --v 6 --style raw</code>
+    <div class="copy-hint">Захватывает вид сверху на бар (как в твоём 3D-скрине)</div>
+  </div>
+</div>
+
+<!-- BRAND ZONING -->
+<div class="section">
+  <div class="section-head">
+    <div class="left">
+      <h3>★ Brand Zoning</h3>
+      <h2>Где какой цвет идёт в интерьере</h2>
+    </div>
+  </div>
+  <p style="color:var(--muted);margin-bottom:12px">Правило 60-30-10: основной цвет занимает 60% (стены, пол), вторичный 30% (мебель), акцент 10% (детали, лого, освещение).</p>
+  <div class="brand-zones">
+    <div class="zone navy">
+      <h4>Navy 60%</h4>
+      <p>Передняя стена бара, нижняя половина стен (вайнскотинг), нижняя панель стойки. Создаёт «тихую» атмосферу, фокусирует на свете и кофе.</p>
+    </div>
+    <div class="zone paper">
+      <h4>Paper / Wood 30%</h4>
+      <p>Верхняя половина стен (off-white), пол (тёмный дуб шеврон), деревянная барная столешница, столы, стулья.</p>
+    </div>
+    <div class="zone gold">
+      <h4>Gold 10%</h4>
+      <p>Лого подсветка, рамки картин, латунные лампы, ножки стульев, перила лестницы, декоративные акценты на полках.</p>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO USE PROMPTS -->
+<div class="footer-cta">
+  <h3>★ Как использовать prompt'ы выше</h3>
+  <p><b>1.</b> Заведи аккаунт в <a href="https://www.midjourney.com" target="_blank">Midjourney</a> ($10/мес) или используй <a href="https://www.bing.com/images/create" target="_blank">Bing Image Creator</a> (бесплатно).<br>
+  <b>2.</b> Скопируй prompt из чёрного блока выше → вставь в чат бота.<br>
+  <b>3.</b> Подожди 60 секунд → получишь 4 фотореалистичные варианта.<br>
+  <b>4.</b> Лучший выбери, скачай и пришли — я встрою в дашборд проекта или сайт.<br><br>
+  <b>Альтернатива:</b> ChatGPT с DALL-E 3 (входит в подписку Plus) — также работает с этими prompt'ами.</p>
+</div>
+
+</body>
+</html>
