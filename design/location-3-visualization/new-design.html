@@ -80,8 +80,8 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold
 <!-- METRICS -->
 <div class="metrics">
   <div class="metric"><div class="v">47<span style="font-size:14px"> м²</span></div><div class="l">Общая площадь</div></div>
-  <div class="metric"><div class="v">32</div><div class="l">Посадочных места</div></div>
-  <div class="metric"><div class="v">5.4<span style="font-size:14px"> м</span></div><div class="l">Длина бара</div></div>
+  <div class="metric"><div class="v">26</div><div class="l">Посадочных места</div></div>
+  <div class="metric"><div class="v">7.5<span style="font-size:14px"> м</span></div><div class="l">Длина Г-бара</div></div>
   <div class="metric"><div class="v">24/7</div><div class="l">Режим работы</div></div>
   <div class="metric"><div class="v">~$65K</div><div class="l">CapEx прогноз</div></div>
 </div>
@@ -116,112 +116,140 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold
         <text x="410" y="664" fill="#0F1F3A" font-size="9" text-anchor="middle" font-family="Inter" font-weight="700">DOOR</text>
 
         <!-- ============================================ -->
-        <!-- БАР — длинная стойка вдоль задней стены -->
         <!-- ============================================ -->
-        <rect x="120" y="80" width="490" height="80" fill="#8b6332" stroke="#5e4220" stroke-width="3" rx="2"/>
-        <!-- задняя стенка с эспрессо-машиной -->
-        <rect x="120" y="55" width="490" height="25" fill="#0F1F3A"/>
-        <!-- эспрессо-машина -->
-        <rect x="220" y="100" width="65" height="45" fill="#C9A14A" stroke="#5e4220" stroke-width="2"/>
-        <!-- POS / касса -->
-        <rect x="350" y="105" width="55" height="40" fill="#222" stroke="#000" stroke-width="2"/>
-        <!-- витрина выпечки -->
-        <rect x="450" y="100" width="120" height="50" fill="#dde4ea" stroke="#5e4220" stroke-width="2" opacity="0.85"/>
-        <text x="510" y="130" fill="#0F1F3A" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">PASTRY</text>
-
-        <!-- лого над баром (золотая подсветка) -->
-        <ellipse cx="365" cy="40" rx="55" ry="14" fill="#C9A14A" opacity="0.85"/>
-        <text x="365" y="44" fill="#0F1F3A" font-size="11" text-anchor="middle" font-family="Playfair Display" font-weight="800">★ BOUNTY ★</text>
-
-        <!-- Барные стулья (6 шт перед баром) -->
-        <g fill="#5e4220">
-          <circle cx="160" cy="195" r="14"/>
-          <circle cx="230" cy="195" r="14"/>
-          <circle cx="300" cy="195" r="14"/>
-          <circle cx="370" cy="195" r="14"/>
-          <circle cx="440" cy="195" r="14"/>
-          <circle cx="510" cy="195" r="14"/>
-        </g>
-        <!-- золотые ножки барных стульев -->
-        <g stroke="#C9A14A" stroke-width="1.5" fill="none">
-          <line x1="160" y1="195" x2="160" y2="220"/>
-          <line x1="230" y1="195" x2="230" y2="220"/>
-          <line x1="300" y1="195" x2="300" y2="220"/>
-          <line x1="370" y1="195" x2="370" y2="220"/>
-          <line x1="440" y1="195" x2="440" y2="220"/>
-          <line x1="510" y1="195" x2="510" y2="220"/>
-        </g>
-
-        <!-- ============================================ -->
-        <!-- ЛЕСТНИЦА — в правом дальнем углу -->
+        <!-- ЛЕСТНИЦА — в ЛЕВОМ ВЕРХНЕМ углу (по эскизу) -->
         <!-- ============================================ -->
         <g>
-          <rect x="615" y="60" width="100" height="180" fill="#5e4220" stroke="#3a2810" stroke-width="2"/>
-          <!-- ступеньки -->
-          <g stroke="#C9A14A" stroke-width="1.5" opacity="0.7">
-            <line x1="620" y1="80" x2="710" y2="80"/>
-            <line x1="620" y1="100" x2="710" y2="100"/>
-            <line x1="620" y1="120" x2="710" y2="120"/>
-            <line x1="620" y1="140" x2="710" y2="140"/>
-            <line x1="620" y1="160" x2="710" y2="160"/>
-            <line x1="620" y1="180" x2="710" y2="180"/>
-            <line x1="620" y1="200" x2="710" y2="200"/>
-            <line x1="620" y1="220" x2="710" y2="220"/>
+          <rect x="100" y="80" width="90" height="180" fill="#5e4220" stroke="#3a2810" stroke-width="2" rx="2"/>
+          <!-- ступеньки (горизонтальные чёрточки как на эскизе) -->
+          <g stroke="#C9A14A" stroke-width="1.6" opacity="0.85">
+            <line x1="105" y1="100" x2="185" y2="100"/>
+            <line x1="105" y1="120" x2="185" y2="120"/>
+            <line x1="105" y1="140" x2="185" y2="140"/>
+            <line x1="105" y1="160" x2="185" y2="160"/>
+            <line x1="105" y1="180" x2="185" y2="180"/>
+            <line x1="105" y1="200" x2="185" y2="200"/>
+            <line x1="105" y1="220" x2="185" y2="220"/>
+            <line x1="105" y1="240" x2="185" y2="240"/>
           </g>
-          <text x="665" y="155" fill="#C9A14A" font-size="11" text-anchor="middle" font-family="Inter" font-weight="700">↑ MEZZANINE</text>
+          <text x="145" y="175" fill="#C9A14A" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">↑ ANTRESOL</text>
         </g>
 
         <!-- ============================================ -->
-        <!-- ОКОННАЯ БАНКЕТКА — вдоль фасада -->
+        <!-- БАР Г-ОБРАЗНЫЙ (по эскизу) -->
+        <!-- Вертикальная часть: от лестницы вниз через центр-лево -->
+        <!-- Горизонтальная: внизу поворачивает направо до правой стены -->
         <!-- ============================================ -->
-        <rect x="105" y="600" width="180" height="40" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
-        <rect x="475" y="600" width="190" height="40" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
+        <!-- Вертикальная часть бара (от верха-центра до низа) -->
+        <rect x="240" y="100" width="90" height="380" fill="#8b6332" stroke="#5e4220" stroke-width="3" rx="2"/>
+        <!-- Закругление угла Г -->
+        <path d="M 240 480 Q 240 510 280 510 L 600 510" stroke="#8b6332" stroke-width="80" fill="none" stroke-linecap="butt"/>
+        <!-- Горизонтальная часть (от центра внизу до правой стены) -->
+        <rect x="280" y="470" width="380" height="80" fill="#8b6332" stroke="#5e4220" stroke-width="3" rx="2"/>
 
-        <!-- столики перед банкеткой -->
-        <g fill="#8b6332" stroke="#5e4220" stroke-width="2">
-          <rect x="120" y="550" width="55" height="45" rx="2"/>
-          <rect x="200" y="550" width="55" height="45" rx="2"/>
-          <rect x="490" y="550" width="55" height="45" rx="2"/>
-          <rect x="570" y="550" width="55" height="45" rx="2"/>
-        </g>
-        <!-- стулья напротив банкетки -->
+        <!-- Задняя navy-стенка бара (верхняя часть) -->
+        <rect x="240" y="80" width="90" height="20" fill="#0F1F3A"/>
+
+        <!-- Эспрессо-машина (на верхней части бара) -->
+        <rect x="255" y="155" width="60" height="40" fill="#C9A14A" stroke="#5e4220" stroke-width="2"/>
+        <text x="285" y="178" fill="#0F1F3A" font-size="8" text-anchor="middle" font-family="Inter" font-weight="700">ESPRESSO</text>
+
+        <!-- POS / касса -->
+        <rect x="255" y="220" width="60" height="40" fill="#222" stroke="#000" stroke-width="2"/>
+        <text x="285" y="244" fill="#C9A14A" font-size="8" text-anchor="middle" font-family="Inter" font-weight="700">POS</text>
+
+        <!-- Витрина выпечки (на горизонтальной части бара) -->
+        <rect x="350" y="480" width="130" height="55" fill="#dde4ea" stroke="#5e4220" stroke-width="2" opacity="0.85"/>
+        <text x="415" y="513" fill="#0F1F3A" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">PASTRY</text>
+
+        <!-- Лого над баром -->
+        <ellipse cx="285" cy="62" rx="55" ry="14" fill="#C9A14A" opacity="0.85"/>
+        <text x="285" y="66" fill="#0F1F3A" font-size="11" text-anchor="middle" font-family="Playfair Display" font-weight="800">★ BOUNTY ★</text>
+
+        <!-- Барные стулья с правой стороны вертикальной части (для гостей) -->
         <g fill="#5e4220">
-          <circle cx="147" cy="540" r="13"/>
-          <circle cx="227" cy="540" r="13"/>
-          <circle cx="517" cy="540" r="13"/>
-          <circle cx="597" cy="540" r="13"/>
+          <circle cx="365" cy="150" r="13"/>
+          <circle cx="365" cy="200" r="13"/>
+          <circle cx="365" cy="250" r="13"/>
+          <circle cx="365" cy="300" r="13"/>
+          <circle cx="365" cy="350" r="13"/>
+          <circle cx="365" cy="400" r="13"/>
+        </g>
+        <g stroke="#C9A14A" stroke-width="1.4" fill="none">
+          <line x1="350" y1="150" x2="335" y2="150"/>
+          <line x1="350" y1="200" x2="335" y2="200"/>
+          <line x1="350" y1="250" x2="335" y2="250"/>
+          <line x1="350" y1="300" x2="335" y2="300"/>
+          <line x1="350" y1="350" x2="335" y2="350"/>
+          <line x1="350" y1="400" x2="335" y2="400"/>
         </g>
 
         <!-- ============================================ -->
-        <!-- ЦЕНТРАЛЬНЫЕ СТОЛИКИ — 3 круглых стола -->
+        <!-- ПОСАДОЧНАЯ ЗОНА СПРАВА (4-6 столиков) -->
+        <!-- ============================================ -->
+        <!-- Столик 1: верх правый -->
+        <g>
+          <circle cx="460" cy="150" r="32" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="460" cy="110" r="11" fill="#5e4220"/>
+          <circle cx="460" cy="190" r="11" fill="#5e4220"/>
+          <circle cx="420" cy="150" r="11" fill="#5e4220"/>
+          <circle cx="500" cy="150" r="11" fill="#5e4220"/>
+        </g>
+        <!-- Столик 2: верх дальний правый -->
+        <g>
+          <circle cx="580" cy="150" r="32" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="580" cy="110" r="11" fill="#5e4220"/>
+          <circle cx="580" cy="190" r="11" fill="#5e4220"/>
+          <circle cx="540" cy="150" r="11" fill="#5e4220"/>
+          <circle cx="620" cy="150" r="11" fill="#5e4220"/>
+        </g>
+        <!-- Столик 3: середина правый -->
+        <g>
+          <circle cx="460" cy="280" r="32" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="460" cy="240" r="11" fill="#5e4220"/>
+          <circle cx="460" cy="320" r="11" fill="#5e4220"/>
+          <circle cx="420" cy="280" r="11" fill="#5e4220"/>
+          <circle cx="500" cy="280" r="11" fill="#5e4220"/>
+        </g>
+        <!-- Столик 4: середина дальний -->
+        <g>
+          <circle cx="580" cy="280" r="32" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="580" cy="240" r="11" fill="#5e4220"/>
+          <circle cx="580" cy="320" r="11" fill="#5e4220"/>
+          <circle cx="540" cy="280" r="11" fill="#5e4220"/>
+          <circle cx="620" cy="280" r="11" fill="#5e4220"/>
+        </g>
+
+        <!-- ============================================ -->
+        <!-- ОКОННАЯ БАНКЕТКА — вдоль правой стены (видом наружу) -->
+        <!-- ============================================ -->
+        <rect x="660" y="80" width="35" height="380" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
+        <!-- маленькие столики у банкетки -->
+        <g fill="#8b6332" stroke="#5e4220" stroke-width="2">
+          <rect x="615" y="100" width="42" height="42" rx="2"/>
+          <rect x="615" y="200" width="42" height="42" rx="2"/>
+          <rect x="615" y="300" width="42" height="42" rx="2"/>
+          <rect x="615" y="400" width="42" height="42" rx="2"/>
+        </g>
+
+        <!-- ============================================ -->
+        <!-- ВЫНОСНЫЕ СТОЛИКИ у входа справа -->
         <!-- ============================================ -->
         <g>
-          <circle cx="200" cy="380" r="40" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
-          <!-- 4 стула -->
-          <circle cx="200" cy="330" r="13" fill="#5e4220"/>
-          <circle cx="200" cy="430" r="13" fill="#5e4220"/>
-          <circle cx="150" cy="380" r="13" fill="#5e4220"/>
-          <circle cx="250" cy="380" r="13" fill="#5e4220"/>
+          <circle cx="500" cy="600" r="28" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="500" cy="568" r="10" fill="#5e4220"/>
+          <circle cx="500" cy="632" r="10" fill="#5e4220"/>
         </g>
         <g>
-          <circle cx="400" cy="380" r="40" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
-          <circle cx="400" cy="330" r="13" fill="#5e4220"/>
-          <circle cx="400" cy="430" r="13" fill="#5e4220"/>
-          <circle cx="350" cy="380" r="13" fill="#5e4220"/>
-          <circle cx="450" cy="380" r="13" fill="#5e4220"/>
+          <circle cx="600" cy="600" r="28" fill="#8b6332" stroke="#5e4220" stroke-width="2"/>
+          <circle cx="600" cy="568" r="10" fill="#5e4220"/>
+          <circle cx="600" cy="632" r="10" fill="#5e4220"/>
         </g>
 
         <!-- ============================================ -->
-        <!-- ДИВАН-КОРНЕР у входа слева -->
+        <!-- ПАЛЬМА у входа слева — главное визуальное -->
         <!-- ============================================ -->
-        <rect x="105" y="450" width="120" height="35" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
-        <rect x="105" y="450" width="35" height="80" fill="#1e3a5f" stroke="#0F1F3A" stroke-width="2" rx="3"/>
-        <rect x="155" y="500" width="50" height="40" fill="#8b6332" stroke="#5e4220" stroke-width="2" rx="2"/>
-
-        <!-- ============================================ -->
-        <!-- ПАЛЬМА у входа — главное визуальное -->
-        <!-- ============================================ -->
-        <g transform="translate(550 460)">
+        <g transform="translate(140 600)">
           <!-- горшок -->
           <rect x="-22" y="35" width="44" height="35" fill="#5e4220" rx="3"/>
           <!-- ствол -->
@@ -235,33 +263,33 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold
             <ellipse cx="0" cy="-58" rx="8" ry="22"/>
           </g>
         </g>
-        <text x="550" y="555" fill="#3a7a4a" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">🌴 живая пальма</text>
+        <text x="140" y="650" fill="#3a7a4a" font-size="10" text-anchor="middle" font-family="Inter" font-weight="700">🌴 живая пальма</text>
 
         <!-- ============================================ -->
         <!-- НОМЕРА ЗОН (легенда) -->
         <!-- ============================================ -->
         <g font-family="Playfair Display" font-size="16" font-weight="800" fill="#fff">
-          <circle cx="365" cy="125" r="14" fill="#C9A14A"/>
-          <text x="365" y="131" text-anchor="middle">1</text>
-
-          <circle cx="665" cy="280" r="14" fill="#C9A14A"/>
-          <text x="665" y="286" text-anchor="middle">2</text>
-
-          <circle cx="200" cy="380" r="0"/> <!-- skip -->
-          <circle cx="80" cy="540" r="14" fill="#C9A14A"/>
-          <text x="80" y="546" text-anchor="middle">3</text>
-
-          <circle cx="595" cy="540" r="14" fill="#C9A14A"/>
-          <text x="595" y="546" text-anchor="middle">4</text>
-
-          <circle cx="300" cy="380" r="14" fill="#C9A14A"/>
-          <text x="300" y="386" text-anchor="middle">5</text>
-
-          <circle cx="160" cy="495" r="14" fill="#C9A14A"/>
-          <text x="160" y="501" text-anchor="middle">6</text>
-
-          <circle cx="550" cy="430" r="14" fill="#C9A14A"/>
-          <text x="550" y="436" text-anchor="middle">7</text>
+          <!-- 1: Лестница -->
+          <circle cx="145" cy="60" r="14" fill="#C9A14A"/>
+          <text x="145" y="66" text-anchor="middle">1</text>
+          <!-- 2: Бар (вертикальная часть) -->
+          <circle cx="285" cy="125" r="14" fill="#C9A14A"/>
+          <text x="285" y="131" text-anchor="middle">2</text>
+          <!-- 3: Бар (горизонтальная часть с витриной) -->
+          <circle cx="470" cy="510" r="14" fill="#C9A14A"/>
+          <text x="470" y="516" text-anchor="middle">3</text>
+          <!-- 4: 4 круглых столика -->
+          <circle cx="520" cy="215" r="14" fill="#C9A14A"/>
+          <text x="520" y="221" text-anchor="middle">4</text>
+          <!-- 5: Оконная банкетка -->
+          <circle cx="690" cy="260" r="14" fill="#C9A14A"/>
+          <text x="690" y="266" text-anchor="middle">5</text>
+          <!-- 6: Выносные столики у входа -->
+          <circle cx="550" cy="620" r="14" fill="#C9A14A"/>
+          <text x="550" y="626" text-anchor="middle">6</text>
+          <!-- 7: Пальма -->
+          <circle cx="80" cy="600" r="14" fill="#C9A14A"/>
+          <text x="80" y="606" text-anchor="middle">7</text>
         </g>
 
         <!-- Стороны света -->
@@ -280,13 +308,13 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold
 
     <!-- ЛЕГЕНДА -->
     <div class="legend">
-      <div class="legend-item"><div class="num">1</div><div class="txt"><b>Бар 5.4 м с лого</b><span>Эспрессо-машина · POS · витрина выпечки. Длинная стойка по задней стене — фокус помещения</span></div></div>
-      <div class="legend-item"><div class="num">2</div><div class="txt"><b>Лестница на антресоль</b><span>Перенесена в дальний правый угол — освобождает центр. Под лестницей — micro-кладовка</span></div></div>
-      <div class="legend-item"><div class="num">3</div><div class="txt"><b>Оконная банкетка слева</b><span>Глубокий navy-бархат вдоль фасада + 2 столика. Главное место для IG-фото</span></div></div>
-      <div class="legend-item"><div class="num">4</div><div class="txt"><b>Оконная банкетка справа</b><span>Зеркально левой. Тёмное дерево, столики на двоих. С городским видом</span></div></div>
-      <div class="legend-item"><div class="num">5</div><div class="txt"><b>Центральные круглые столы</b><span>2 стола × 4 человека = 8 мест. Лёгкие стулья, можно сдвинуть для компании</span></div></div>
-      <div class="legend-item"><div class="num">6</div><div class="txt"><b>L-образный диван-уголок</b><span>Для расслабленной работы. Тёмно-синий бархат. 4-6 мест с журнальным столиком</span></div></div>
-      <div class="legend-item"><div class="num">7</div><div class="txt"><b>Живая пальма</b><span>Большая пальма в латунном кашпо у входа. Главный бренд-якорь — соответствует лого</span></div></div>
+      <div class="legend-item"><div class="num">1</div><div class="txt"><b>Лестница на антресоль</b><span>В левом верхнем углу (по эскизу). Вдоль левой стены, поднимается на 2-й уровень. Под ней — micro-склад</span></div></div>
+      <div class="legend-item"><div class="num">2</div><div class="txt"><b>Бар — вертикальная часть</b><span>Эспрессо-машина + POS. 6 барных стульев со стороны гостей. Лого Bounty подсвечен сверху</span></div></div>
+      <div class="legend-item"><div class="num">3</div><div class="txt"><b>Бар — горизонтальная часть</b><span>Поворот направо. Витрина выпечки. Закрывает левую половину помещения от посадки</span></div></div>
+      <div class="legend-item"><div class="num">4</div><div class="txt"><b>4 круглых столика 2-4 чел.</b><span>В центре-справа. Деревянные, лёгкие стулья. Можно сдвигать для компании</span></div></div>
+      <div class="legend-item"><div class="num">5</div><div class="txt"><b>Оконная банкетка справа</b><span>Глубокий navy-бархат вдоль ПРАВОГО окна. 4 маленьких столика. Главное место для IG-фото с городским видом</span></div></div>
+      <div class="legend-item"><div class="num">6</div><div class="txt"><b>Выносные столики у входа</b><span>2 круглых стола на 2 чел. — для быстрого кофе на 15 мин у фасада</span></div></div>
+      <div class="legend-item"><div class="num">7</div><div class="txt"><b>Живая пальма</b><span>Большая пальма в латунном кашпо у входа слева. Главный бренд-якорь — соответствует лого</span></div></div>
     </div>
   </div>
 </div>
@@ -360,19 +388,19 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold
   <div style="display:grid;grid-template-columns:1fr;gap:24px;margin-bottom:24px">
     <div>
       <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px">★ Ракурс 1 — Вид от входа</h4>
-      <img src="renders/render-1-entrance.jpg" alt="Render 1" style="width:100%;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15)">
+      <img src="renders-v2/v2-render-1-entrance-view.jpg" alt="Render 1" style="width:100%;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15)">
       <p style="color:var(--muted);font-size:13px;margin-top:10px;font-style:italic">FLUX AI · 1280×720 · попадание в стиль: 9/10. Видно: пальму у входа, длинный бар с витриной и эспрессо-машиной, тёмно-синюю заднюю стену, латунные лампы Edison, тёмный паркет шеврон, банкетку слева</p>
     </div>
 
     <div>
       <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px">★ Ракурс 2 — Бар крупным планом</h4>
-      <img src="renders/render-2-bar.jpg" alt="Render 2" style="width:100%;max-width:900px;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15)">
+      <img src="renders-v2/v2-render-2-bar-detail.jpg" alt="Render 2" style="width:100%;max-width:900px;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15)">
       <p style="color:var(--muted);font-size:13px;margin-top:10px;font-style:italic">FLUX AI · 1080×720 · попадание 10/10. Главное визуальное решение: <b>золотой мурал-пальма на задней навy-стене</b>, эспрессо-машины, барные стулья с золотыми ножками, латунные конусные лампы, вайнскотинг navy</p>
     </div>
 
     <div>
       <h4 style="color:var(--navy);font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px">★ Ракурс 3 — Оконная банкетка</h4>
-      <img src="renders/render-3-window.jpg" alt="Render 3" style="width:100%;max-width:680px;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15);margin:0 auto">
+      <img src="renders-v2/v2-render-3-window-seating.jpg" alt="Render 3" style="width:100%;max-width:680px;border-radius:12px;display:block;box-shadow:0 12px 32px rgba(15,31,58,.15);margin:0 auto">
       <p style="color:var(--muted);font-size:13px;margin-top:10px;font-style:italic;max-width:680px;margin-left:auto;margin-right:auto">FLUX AI · 820×1024 · попадание 10/10. Глубокая navy-бархатная банкетка Chesterfield, тёмный круглый деревянный стол с латте-арт, латунный подвесной светильник, вид на город. <b>Идеально для IG-stories</b></p>
     </div>
   </div>
