@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bounty Coffee Bar — оргструктура агентов</title>
+<style>
+  :root{
+    --bg:#0e1116;--panel:#171b22;--ink:#e6edf3;--muted:#8b949e;
+    --gold:#d4a017;--gold-bright:#f0b429;--navy:#1e3a5f;--palm:#27ae60;
+    --owner:#fbbf24;--cos:#a78bfa;
+    --finance:#22c55e;--market:#f97316;--ops:#06b6d4;--brand:#ec4899;--strategy:#a855f7
+  }
+  *{box-sizing:border-box}
+  body{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:24px;max-width:1400px;margin:0 auto}
+  h1{font-size:34px;margin:0 0 4px;letter-spacing:-.02em;background:linear-gradient(135deg,var(--gold),var(--palm));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  h2{font-size:20px;margin:0 0 14px}
+  h3{font-size:13px;margin:0 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .sub{color:var(--muted);margin-bottom:24px;font-size:14px}
+  .panel{background:var(--panel);border-radius:14px;padding:22px;border:1px solid #21262d;margin-bottom:20px}
+  .header-strip{background:linear-gradient(135deg,var(--navy) 0%,#0a1f3a 50%,#000 100%);border-radius:16px;padding:32px;margin-bottom:24px;border:1px solid #2c3950}
+  .header-strip h1{margin-bottom:6px}
+  .header-strip .tagline{color:#cbd5e1;font-size:16px;font-style:italic}
+  .header-strip .meta{color:var(--muted);font-size:13px;margin-top:10px}
+
+  /* Org chart */
+  .org-chart{padding:24px 0}
+  .tier{display:flex;justify-content:center;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+  .node{background:#0e1116;border:2px solid #21262d;border-radius:12px;padding:14px 18px;text-align:center;min-width:140px;position:relative;transition:transform .15s}
+  .node:hover{transform:translateY(-2px)}
+  .node .role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .node .name{font-size:14px;font-weight:600;color:#fff}
+  .node .slug{font-size:11px;color:var(--muted);margin-top:4px;font-family:Menlo,Monaco,monospace}
+  .node.owner{border-color:var(--owner);background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(251,191,36,.05))}
+  .node.owner .name{color:var(--owner)}
+  .node.cos{border-color:var(--cos);background:linear-gradient(135deg,rgba(167,139,250,.15),rgba(167,139,250,.05))}
+  .node.cos .name{color:#c4b5fd}
+  .node.finance{border-color:var(--finance)}
+  .node.finance .role{color:#a3e8b8}
+  .node.market{border-color:var(--market)}
+  .node.market .role{color:#fdba74}
+  .node.ops{border-color:var(--ops)}
+  .node.ops .role{color:#67e8f9}
+  .node.brand{border-color:var(--brand)}
+  .node.brand .role{color:#fbcfe8}
+  .node.strategy{border-color:var(--strategy)}
+  .node.strategy .role{color:#d8b4fe}
+
+  .connector{height:24px;display:flex;justify-content:center;align-items:center;color:#3b4250}
+  .connector .line{width:2px;height:100%;background:#3b4250}
+
+  .pillars{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:12px}
+  .pillar-label{text-align:center;padding:8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;border-radius:8px;color:#0e1116}
+  .pillar-label.finance{background:var(--finance)}
+  .pillar-label.market{background:var(--market)}
+  .pillar-label.ops{background:var(--ops)}
+  .pillar-label.brand{background:var(--brand)}
+  .pillar-label.strategy{background:var(--strategy)}
+
+  /* Agent cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:#0e1116;border:1px solid #21262d;border-radius:12px;padding:18px;position:relative;border-top:3px solid var(--gold)}
+  .card.f{border-top-color:var(--finance)}
+  .card.m{border-top-color:var(--market)}
+  .card.o{border-top-color:var(--ops)}
+  .card.b{border-top-color:var(--brand)}
+  .card.s{border-top-color:var(--strategy)}
+  .card.c{border-top-color:var(--cos)}
+  .card .num{position:absolute;top:14px;right:14px;font-size:24px;font-weight:700;color:#21262d;line-height:1}
+  .card h4{margin:0 0 4px;font-size:15px;color:#fff;font-weight:600}
+  .card .role-tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+  .card .desc{font-size:12px;color:#cbd5e1;line-height:1.5;margin-bottom:10px}
+  .card .slug{font-size:11px;color:var(--muted);font-family:Menlo,Monaco,monospace;background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;display:inline-block}
+  .card .triggers{font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid #21262d}
+  .card .triggers b{color:#cbd5e1;display:block;margin-bottom:4px;font-weight:500}
+
+  /* Flow diagram */
+  .flows{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px}
+  .flow{display:flex;align-items:center;gap:14px;padding:10px 14px;background:#0e1116;border-radius:8px;font-size:13px;border-left:3px solid #3b4250}
+  .flow .from{color:#fbcfe8;font-family:Menlo,Monaco,monospace;font-size:12px;min-width:140px}
+  .flow .arrow{color:var(--muted);font-weight:600}
+  .flow .to{color:#a3e8b8;font-family:Menlo,Monaco,monospace;font-size:12px;min-width:140px}
+  .flow .what{color:#cbd5e1;flex-grow:1}
+
+  /* Rules */
+  ul.rules{list-style:none;padding:0;margin:0}
+  ul.rules li{padding:12px 0;border-bottom:1px solid #21262d;display:flex;gap:12px;align-items:flex-start}
+  ul.rules li:last-child{border-bottom:none}
+  ul.rules .num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+  ul.rules .text{color:#cbd5e1;line-height:1.5}
+  ul.rules .text b{color:#fff}
+
+  .footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px;padding-top:20px;border-top:1px solid #21262d}
+  .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;background:#21262d;margin-right:4px;color:var(--muted)}
+  .pill.new{background:rgba(34,197,94,.2);color:#a3e8b8}
+  .pill.exist{background:rgba(167,139,250,.18);color:#c4b5fd}
+</style>
+</head>
+<body>
+
+<div class="header-strip">
+  <h1>🌴 Оргструктура агентов Bounty</h1>
+  <div class="tagline">11 ролей — от налогов до 24/7 reels</div>
+  <div class="meta">Дата создания: 2026-05-28 · Все артефакты: <code>~/Desktop/Bounty/org/</code></div>
+</div>
+
+<!-- ОРГ-СХЕМА -->
+<div class="panel">
+  <h2>🏢 Иерархия</h2>
+  <div class="org-chart">
+    <div class="tier">
+      <div class="node owner">
+        <div class="role">👑 Owner</div>
+        <div class="name">Дмитрий Королёв</div>
+        <div class="slug">все стратегические решения</div>
+      </div>
+    </div>
+    <div class="connector"><div class="line"></div></div>
+    <div class="tier">
+      <div class="node cos">
+        <div class="role">🎯 Chief of Staff</div>
+        <div class="name">Я (Claude)</div>
+        <div class="slug">координация · синтез · эскалация</div>
+      </div>
+    </div>
+    <div class="connector"><div class="line"></div></div>
+    <div class="pillars">
+      <div class="pillar-label finance">💰 Finance</div>
+      <div class="pillar-label market">📊 Market</div>
+      <div class="pillar-label ops">⚙️ Ops</div>
+      <div class="pillar-label brand">🎨 Brand</div>
+      <div class="pillar-label strategy">🚀 Strategy</div>
+    </div>
+    <div class="tier" style="margin-top:14px">
+      <!-- Finance -->
+      <div class="node finance">
+        <div class="role">CFO / Главбух</div>
+        <div class="name">Стив</div>
+        <div class="slug">steve</div>
+      </div>
+      <!-- Market -->
+      <div class="node market">
+        <div class="role">Бизнес-аналитик</div>
+        <div class="name">bounty-business</div>
+        <div class="slug">bounty-business</div>
+      </div>
+      <!-- Ops -->
+      <div class="node ops">
+        <div class="role">Операц. менеджер</div>
+        <div class="name">bounty-ops</div>
+        <div class="slug">bounty-ops</div>
+      </div>
+      <!-- Brand -->
+      <div class="node brand">
+        <div class="role">Дизайнер</div>
+        <div class="name">bounty-design</div>
+        <div class="slug">bounty-design</div>
+      </div>
+      <!-- Strategy -->
+      <div class="node strategy">
+        <div class="role">Локация-аналитик</div>
+        <div class="name">bounty-location</div>
+        <div class="slug">bounty-location</div>
+      </div>
+    </div>
+    <div class="tier" style="margin-top:18px">
+      <div class="node finance">
+        <div class="role">Прайс / Закуп</div>
+        <div class="name">bounty-pricing</div>
+        <div class="slug">bounty-pricing</div>
+      </div>
+      <div class="node market">
+        <div class="role">Конкурент-интел</div>
+        <div class="name">bounty-competitors</div>
+        <div class="slug">bounty-competitors</div>
+      </div>
+      <div class="node ops"></div>
+      <div class="node brand">
+        <div class="role">SMM</div>
+        <div class="name">bounty-smm</div>
+        <div class="slug">bounty-smm</div>
+      </div>
+      <div class="node strategy">
+        <div class="role">Риск-менеджер</div>
+        <div class="name">bounty-risk</div>
+        <div class="slug">bounty-risk</div>
+      </div>
+    </div>
+    <div class="tier" style="margin-top:14px">
+      <div class="node brand" style="background:linear-gradient(135deg,rgba(236,72,153,.15),rgba(236,72,153,.05))">
+        <div class="role">Маркетолог</div>
+        <div class="name">bounty-marketing</div>
+        <div class="slug">bounty-marketing</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- КАРТОЧКИ АГЕНТОВ -->
+<div class="panel">
+  <h2>👥 11 ролей — детально</h2>
+  <div class="cards">
+
+    <div class="card c"><div class="num">01</div>
+      <h4>Я (Claude) — Chief of Staff</h4>
+      <div class="role-tag">координация</div>
+      <div class="desc">Точка входа для владельца. Роутю задачи между 10 специалистами, синтезирую данные, эскалирую только то, что требует решения владельца.</div>
+      <span class="pill exist">всегда активен</span>
+      <div class="triggers"><b>Триггер:</b>Любое первое сообщение от владельца</div>
+    </div>
+
+    <div class="card f"><div class="num">02</div>
+      <h4>Стив — CFO / Главбух</h4>
+      <div class="role-tag">финансы</div>
+      <div class="desc">Налоги РУз (упрощёнка общепита), проводки, первичка, отчёты. Обязательный финальный фильтр для всех финансовых ответов.</div>
+      <span class="pill exist">уже работает</span>
+      <span class="slug">steve</span>
+      <div class="triggers"><b>Триггер:</b>Налог, проводка, отчёт, ЗП, проверка</div>
+    </div>
+
+    <div class="card m"><div class="num">03</div>
+      <h4>bounty-business</h4>
+      <div class="role-tag">горизонтальный анализ</div>
+      <div class="desc">Общий бизнес-взгляд: налоги, маржа, конкуренты, ежемесячные сводки. Узбекистан-специфика.</div>
+      <span class="pill exist">уже работает</span>
+      <span class="slug">bounty-business</span>
+      <div class="triggers"><b>Триггер:</b>«Как дела с бизнесом», сводный отчёт</div>
+    </div>
+
+    <div class="card b"><div class="num">04</div>
+      <h4>bounty-design</h4>
+      <div class="role-tag">креатив / визуал</div>
+      <div class="desc">Меню (печать+QR), highlight-обложки, шаблоны постов, бренд-материалы, брифы фотографу.</div>
+      <span class="pill exist">уже работает</span>
+      <span class="slug">bounty-design</span>
+      <div class="triggers"><b>Триггер:</b>Обновить меню, дизайн поста, баннер</div>
+    </div>
+
+    <div class="card b"><div class="num">05</div>
+      <h4>bounty-smm</h4>
+      <div class="role-tag">SMM / Instagram</div>
+      <div class="desc">Контент-план на 30 дней, копирайт постов, идеи reels, аналитика IG Insights, ответы на DM. Цикл: 2 reels + 1 carousel/неделя.</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-smm</span>
+      <div class="triggers"><b>Триггер:</b>«Что постить», аудит охвата, идея reel</div>
+    </div>
+
+    <div class="card m"><div class="num">06</div>
+      <h4>bounty-competitors</h4>
+      <div class="role-tag">конкурентная разведка</div>
+      <div class="desc">Еженедельный мониторинг community.tashkent, coffeelabuz, boncafe_uz и локальных в радиусе 500м. Алерты при движениях.</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-competitors</span>
+      <div class="triggers"><b>Триггер:</b>«Что у конкурентов», акция, новая точка</div>
+    </div>
+
+    <div class="card f"><div class="num">07</div>
+      <h4>bounty-pricing</h4>
+      <div class="role-tag">прайс / закупки</div>
+      <div class="desc">Cost cards для каждой позиции, маржа, цены поставщиков (зерно, молоко), сигнал «пора повышать цены».</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-pricing</span>
+      <div class="triggers"><b>Триггер:</b>Маржа, поставщик поднял цены, новая позиция</div>
+    </div>
+
+    <div class="card b"><div class="num">08</div>
+      <h4>bounty-marketing</h4>
+      <div class="role-tag">маркетинг</div>
+      <div class="desc">Кампании, акции, программа лояльности, retention. CAC/LTV. Идея: ночной тариф 24/7 на Ц-14.</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-marketing</span>
+      <div class="triggers"><b>Триггер:</b>Акция, лояльность, реакция на конкурента</div>
+    </div>
+
+    <div class="card s"><div class="num">09</div>
+      <h4>bounty-location</h4>
+      <div class="role-tag">стратегия / новые точки</div>
+      <div class="desc">Поиск помещений, трафик, аренда, CapEx, break-even. В фокусе — 3-я точка под кредит $100K.</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-location</span>
+      <div class="triggers"><b>Триггер:</b>Нашёл помещение, GO/NO-GO решение</div>
+    </div>
+
+    <div class="card s"><div class="num">10</div>
+      <h4>bounty-risk</h4>
+      <div class="role-tag">риски</div>
+      <div class="desc">Финансовые, операционные, юридические, репутационные риски. Обязательная проверка перед решениями &gt; $5K.</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-risk</span>
+      <div class="triggers"><b>Триггер:</b>Подписание контракта, изменения НК РУз, инцидент</div>
+    </div>
+
+    <div class="card o"><div class="num">11</div>
+      <h4>bounty-ops</h4>
+      <div class="role-tag">операции / каждый день</div>
+      <div class="desc">SOP, расписания бариста (Ц-14 24/7 = 3 смены), качество, инвентарь, СЭС, ТО оборудования.</div>
+      <span class="pill new">НОВЫЙ</span>
+      <span class="slug">bounty-ops</span>
+      <div class="triggers"><b>Триггер:</b>Жалоба, поломка, найм, ревизия</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ПОТОКИ ДАННЫХ -->
+<div class="panel">
+  <h2>🔄 Потоки данных — кто кому что передаёт</h2>
+  <div class="flows">
+    <div class="flow"><div class="from">bounty-pricing</div><div class="arrow">→</div><div class="to">steve</div><div class="what">Себестоимость для калькуляции налогов</div></div>
+    <div class="flow"><div class="from">bounty-pricing</div><div class="arrow">→</div><div class="to">bounty-marketing</div><div class="what">Минимальная цена → рамки для скидок</div></div>
+    <div class="flow"><div class="from">bounty-competitors</div><div class="arrow">→</div><div class="to">bounty-marketing</div><div class="what">Движения конкурентов → на что реагировать</div></div>
+    <div class="flow"><div class="from">bounty-competitors</div><div class="arrow">→</div><div class="to">bounty-location</div><div class="what">Карта конкурентов в радиусе 500м новой точки</div></div>
+    <div class="flow"><div class="from">bounty-location</div><div class="arrow">→</div><div class="to">bounty-risk</div><div class="what">Оценка рисков локации</div></div>
+    <div class="flow"><div class="from">bounty-location</div><div class="arrow">→</div><div class="to">steve</div><div class="what">CapEx-модель и P&L новой точки</div></div>
+    <div class="flow"><div class="from">bounty-ops</div><div class="arrow">→</div><div class="to">steve</div><div class="what">ФОТ, расходники, ремонты</div></div>
+    <div class="flow"><div class="from">bounty-smm</div><div class="arrow">→</div><div class="to">bounty-design</div><div class="what">Бриф на визуал поста</div></div>
+    <div class="flow"><div class="from">bounty-smm</div><div class="arrow">→</div><div class="to">bounty-marketing</div><div class="what">Координация с кампаниями</div></div>
+    <div class="flow"><div class="from">все 10 агентов</div><div class="arrow">→</div><div class="to">Я (Claude)</div><div class="what">Синтез → один ответ владельцу</div></div>
+  </div>
+</div>
+
+<!-- ПРАВИЛА -->
+<div class="panel">
+  <h2>📋 5 правил работы команды</h2>
+  <ul class="rules">
+    <li><span class="num">1</span><span class="text"><b>Решения принимаешь только ты (владелец).</b> Агенты анализируют и рекомендуют — никакого автономного действия с финансовыми последствиями.</span></li>
+    <li><span class="num">2</span><span class="text"><b>Все артефакты — в свою папку.</b> Каждый агент пишет только в свою <code>~/Desktop/Bounty/org/&lt;NN-name&gt;/</code>, никаких пересечений.</span></li>
+    <li><span class="num">3</span><span class="text"><b>Перед финансовым ответом — через Стива.</b> Это правило из памяти системы (steve-as-chief-accountant). Bounty-business и pricing передают цифры Стиву на проверку.</span></li>
+    <li><span class="num">4</span><span class="text"><b>Все цифры — с источником.</b> Excel-книга, URL скрейпа, дата. Никаких «примерно» в финансовых отчётах.</span></li>
+    <li><span class="num">5</span><span class="text"><b>Эскалация на 8/10.</b> Если агент не уверен — стопает и спрашивает тебя через Chief of Staff. Лучше пауза, чем неверное решение.</span></li>
+  </ul>
+</div>
+
+<div class="footer">
+  Структура создана 2026-05-28 · Все sub-agent файлы в <code>~/.claude/agents/bounty-*.md</code><br>
+  Charter каждой роли: <code>~/Desktop/Bounty/org/&lt;NN-name&gt;/charter.md</code> · Индекс: <code>~/Desktop/Bounty/org/README.md</code>
+</div>
+
+</body>
+</html>

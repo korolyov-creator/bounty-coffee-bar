@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bounty Coffee Bar — 360° анализ 2026-05-28</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1116;--panel:#171b22;--ink:#e6edf3;--muted:#8b949e;
+    --accent:#f0b429;--gold:#d4a017;--navy:#1e3a5f;--palm:#27ae60;
+    --c14:#3b82f6;--buz:#22c55e;--red:#ef4444;--purple:#a855f7;
+    --teal:#14b8a6;--pink:#ec4899
+  }
+  *{box-sizing:border-box}
+  body{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:24px;max-width:1400px;margin:0 auto}
+  h1{font-size:34px;margin:0 0 4px;letter-spacing:-.02em;background:linear-gradient(135deg,var(--gold),var(--palm));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  h2{font-size:20px;margin:0 0 6px}
+  h3{font-size:13px;margin:0 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .sub{color:var(--muted);margin-bottom:24px;font-size:14px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .full{grid-column:1/-1}
+  .panel{background:var(--panel);border-radius:14px;padding:22px;border:1px solid #21262d;margin-bottom:20px}
+  .panel h2{margin-bottom:14px}
+  .hint{color:var(--muted);font-size:12px;margin-bottom:14px;line-height:1.6}
+  canvas{max-width:100%}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{padding:8px 10px;text-align:right;border-bottom:1px solid #21262d}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .kpi .card{background:#0e1116;border:1px solid #21262d;border-radius:10px;padding:16px;position:relative;overflow:hidden}
+  .kpi .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+  .kpi .card.b:before{background:var(--c14)}
+  .kpi .card.g:before{background:var(--palm)}
+  .kpi .card.r:before{background:var(--red)}
+  .kpi .card.p:before{background:var(--purple)}
+  .kpi .card.t:before{background:var(--teal)}
+  .kpi .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .kpi .val{font-size:26px;font-weight:700;margin-top:6px;letter-spacing:-.01em}
+  .kpi .delta{font-size:11px;color:var(--muted);margin-top:4px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;background:#21262d;margin:2px 4px 2px 0;color:var(--muted)}
+  .pill.red{background:rgba(239,68,68,.18);color:#ef9a9a}
+  .pill.yellow{background:rgba(240,180,41,.18);color:#fde0a3}
+  .pill.green{background:rgba(34,197,94,.18);color:#a3e8b8}
+  .pill.blue{background:rgba(59,130,246,.18);color:#93c5fd}
+  .pill.purple{background:rgba(168,85,247,.18);color:#d8b4fe}
+  .header-strip{background:linear-gradient(135deg,var(--navy) 0%,#0a1f3a 50%,#000 100%);border-radius:16px;padding:36px;margin-bottom:24px;display:flex;align-items:center;gap:28px;border:1px solid #2c3950}
+  .logo-circle{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#2c5f8e,#0a1f3a);display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid var(--gold);box-shadow:0 8px 28px rgba(212,160,23,.3);flex-shrink:0}
+  .logo-circle .palm{font-size:32px;line-height:1;margin-bottom:4px}
+  .logo-circle .name{font-family:Georgia,serif;color:var(--gold);font-size:14px;font-weight:bold;letter-spacing:1px}
+  .logo-circle .est{font-size:9px;color:var(--gold);opacity:.8;margin-top:2px}
+  .header-strip h1{margin-bottom:8px}
+  .header-strip .tagline{color:#cbd5e1;font-size:18px;font-style:italic;margin-bottom:14px}
+  .header-strip .meta{color:var(--muted);font-size:13px}
+  .post-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .post{background:#0e1116;border:1px solid #21262d;border-radius:8px;padding:12px;font-size:12px;position:relative;min-height:120px;display:flex;flex-direction:column}
+  .post .type{position:absolute;top:8px;right:8px;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+  .post .type.reel{background:rgba(236,72,153,.22);color:#fbcfe8}
+  .post .type.photo{background:rgba(59,130,246,.22);color:#bfdbfe}
+  .post .type.carousel{background:rgba(168,85,247,.22);color:#d8b4fe}
+  .post .pin{position:absolute;top:8px;left:8px;font-size:10px;color:var(--gold)}
+  .post .body{color:#cbd5e1;line-height:1.4;margin-top:18px;flex-grow:1}
+  .opportunity{padding:14px;border-left:4px solid var(--palm);background:#0e1116;border-radius:0 8px 8px 0;margin:10px 0}
+  .opportunity h4{margin:0 0 4px;color:#a3e8b8;font-size:13px}
+  .opportunity p{margin:0;color:#cbd5e1;font-size:13px}
+  .risk{padding:14px;border-left:4px solid var(--red);background:#0e1116;border-radius:0 8px 8px 0;margin:10px 0}
+  .risk h4{margin:0 0 4px;color:#fca5a5;font-size:13px}
+  .risk p{margin:0;color:#cbd5e1;font-size:13px}
+  .comp-row{display:grid;grid-template-columns:140px 1fr 90px 60px;gap:12px;padding:8px 0;border-bottom:1px solid #21262d;align-items:center;font-size:13px}
+  .comp-row .name{font-weight:600}
+  .comp-row .bar-bg{height:8px;background:#0e1116;border-radius:99px;overflow:hidden}
+  .comp-row .bar{height:100%;background:linear-gradient(90deg,var(--c14),var(--teal));border-radius:99px}
+  .comp-row.us .name{color:var(--gold)}
+  .comp-row.us .bar{background:linear-gradient(90deg,var(--gold),var(--palm))}
+  .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .badge.live{background:rgba(34,197,94,.2);color:#a3e8b8}
+  .badge.warn{background:rgba(240,180,41,.2);color:#fde0a3}
+  .badge.dead{background:rgba(239,68,68,.2);color:#fca5a5}
+  .footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px;padding-top:20px;border-top:1px solid #21262d}
+  ul.takeaways{list-style:none;padding:0;margin:0}
+  ul.takeaways li{padding:10px 0;border-bottom:1px solid #21262d;display:flex;gap:12px;align-items:flex-start}
+  ul.takeaways li:last-child{border-bottom:none}
+  ul.takeaways .num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  ul.takeaways .text{color:#cbd5e1;line-height:1.5}
+  ul.takeaways .text b{color:#fff}
+  .word-cloud{display:flex;flex-wrap:wrap;gap:8px;padding:14px;background:#0e1116;border-radius:8px}
+  .word-cloud span{padding:4px 10px;border-radius:6px;background:#21262d;color:#cbd5e1;font-size:13px}
+  .word-cloud span.big{font-size:18px;color:var(--gold);font-weight:600}
+  .word-cloud span.med{font-size:15px;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="header-strip">
+  <div class="logo-circle">
+    <div class="palm">🌴</div>
+    <div class="name">BOUNTY</div>
+    <div class="est">EST · 2019</div>
+  </div>
+  <div>
+    <h1>Bounty Coffee Bar — 360°</h1>
+    <div class="tagline">«Тихая пауза в городе»</div>
+    <div class="meta">
+      Снапшот на 2026-05-28 · 2 действующие точки · готовится 3-я · IG <b>@bountycoffeebar.tashkent</b>
+    </div>
+  </div>
+</div>
+
+<!-- KPI верх -->
+<div class="kpi">
+  <div class="card b">
+    <div class="lbl">Выручка Ц14 / мес</div>
+    <div class="val">131.8M <span style="font-size:12px;color:var(--muted)">сум</span></div>
+    <div class="delta">средняя последние 6 мес · ~$10.5K</div>
+  </div>
+  <div class="card g">
+    <div class="lbl">Выручка Сайрам / мес</div>
+    <div class="val">29.4M <span style="font-size:12px;color:var(--muted)">сум</span></div>
+    <div class="delta">средняя последние 6 мес · ~$2.4K</div>
+  </div>
+  <div class="card p">
+    <div class="lbl">IG подписчики</div>
+    <div class="val">1 620</div>
+    <div class="delta">27 публикаций · 10 подписок</div>
+  </div>
+  <div class="card t">
+    <div class="lbl">Lifetime revenue</div>
+    <div class="val">6.04B <span style="font-size:12px;color:var(--muted)">сум</span></div>
+    <div class="delta">2021–2026 · ~$483K совокупно</div>
+  </div>
+</div>
+
+<!-- 1. Бренд и точки -->
+<div class="panel">
+  <h2>🎯 Точки и бренд</h2>
+  <div class="hint">Текущий аккаунт IG → @bountycoffeebar.tashkent. Старый <b>@bounty_coffee_bar</b> (бирюзовое лого, 0 постов) — пустышка, не использовать.</div>
+  <div class="grid2">
+    <table>
+      <thead><tr><th>Точка</th><th>Режим</th><th>Зрелость</th><th>Выручка/мес</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ц-14 (Хадра, 25)</b><br><span class="pill green">24/7</span></td><td>24/7</td><td><span class="badge live">Зрелая</span></td><td>131.8M</td></tr>
+        <tr><td><b>Сайрам 25/1</b><br><span class="pill yellow">растёт</span></td><td>стандарт</td><td><span class="badge warn">Растёт</span></td><td>29.4M</td></tr>
+        <tr><td><b>Катта Дархон</b><br><span class="pill blue">3-я, планируется</span></td><td>—</td><td><span class="badge dead">Не открыта</span></td><td>план: 86M (год 1-2) → 139M (год 3+)</td></tr>
+      </tbody>
+    </table>
+    <div>
+      <h3>Голос бренда — узнаваемые фразы</h3>
+      <div class="word-cloud">
+        <span class="big">тихая пауза</span>
+        <span class="med">в ритме кофе</span>
+        <span>идеальный кофе</span>
+        <span class="med">когда SMM-щик</span>
+        <span>правильно расставляем</span>
+        <span>и не против</span>
+        <span class="med">ЗавтракоОбедоУжин</span>
+        <span>уровень ответственности</span>
+        <span>утренний кофе</span>
+        <span>мы рядом</span>
+        <span class="big">24/7</span>
+        <span>отпуск ☕</span>
+      </div>
+      <p style="color:var(--muted);font-size:12px;margin-top:10px">Тон узнаваемый: тёплый, с самоиронией, без корпоративщины. Сильная сторона — не теряй.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Финансовый блок -->
+<div class="panel">
+  <h2>💰 Выручка по точкам</h2>
+  <div class="hint">Источник: книги учёта в Excel, 80 месячных записей с октября 2021 по апрель 2026.</div>
+  <div class="grid2">
+    <div><canvas id="revenueByPoint" height="220"></canvas></div>
+    <div><canvas id="ratioPie" height="220"></canvas></div>
+  </div>
+  <div class="kpi" style="margin-top:18px">
+    <div class="card r">
+      <div class="lbl">Соотношение Ц14:Сайрам</div>
+      <div class="val">4.5×</div>
+      <div class="delta">Ц14 даёт в 4.5 раза больше выручки</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Совокупно/мес</div>
+      <div class="val">161M</div>
+      <div class="delta">~$12.9K, обе точки вместе</div>
+    </div>
+    <div class="card g">
+      <div class="lbl">Активных месяцев Ц14</div>
+      <div class="val">52</div>
+      <div class="delta">с октября 2021</div>
+    </div>
+    <div class="card t">
+      <div class="lbl">Активных месяцев Сайрам</div>
+      <div class="val">25</div>
+      <div class="delta">с 2024 года</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Instagram-блок -->
+<div class="panel">
+  <h2>📱 Instagram — что выкладывают</h2>
+  <div class="hint">12 видимых постов без логина. Распределение форматов даёт ясную картину стратегии.</div>
+  <div class="grid2">
+    <div><canvas id="contentMix" height="200"></canvas></div>
+    <div>
+      <h3>Метрики профиля</h3>
+      <table>
+        <tbody>
+          <tr><td>Подписчики</td><td><b>1 620</b></td></tr>
+          <tr><td>Подписки</td><td>10</td></tr>
+          <tr><td>Публикации</td><td>27</td></tr>
+          <tr><td>Highlight кружки</td><td>Vibe · Live · LOCATION</td></tr>
+          <tr><td>Активность последний пост</td><td><span class="pill green">9 дней назад</span></td></tr>
+          <tr><td>Аккаунт основан</td><td>2019</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 style="margin-top:24px">Последние посты (видимая лента)</h3>
+  <div class="post-grid">
+    <div class="post"><div class="pin">📌</div><div class="type photo">PHOTO</div><div class="body">«Есть места, куда заходят случайно. И остаются дольше, чем планировали.»</div></div>
+    <div class="post"><div class="pin">📌</div><div class="type photo">PHOTO</div><div class="body">«Делаем хороший кофе и атмосферу, в которую хочется возвращаться 🌸»</div></div>
+    <div class="post"><div class="pin">📌</div><div class="type photo">PHOTO</div><div class="body">«Когда SMM-щик слишком серьёзно относится к контенту ☕»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«В ритме кофе ☕️»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«Правильно расставляем приоритеты 😏»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«Мы и не против, а вы? 🤗»</div></div>
+    <div class="post"><div class="type carousel">CAROUSEL</div><div class="body">«Приходите к нам на кофе»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«Какой твой кофе на сегодня? ☕»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«ЗавтракоОбедоУжин ☕️»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«когда ресурсов нет, но уровень ответственности остаётся»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«Что может быть лучше утреннего кофе? ☕✨»</div></div>
+    <div class="post"><div class="type reel">REEL</div><div class="body">«Когда бы вам ни захотелось — мы рядом. Ц-14 работает <b>24/7</b>»</div></div>
+  </div>
+</div>
+
+<!-- 4. Конкуренты -->
+<div class="panel">
+  <h2>⚔️ Конкуренты в Ташкенте — кто впереди</h2>
+  <div class="hint">Сравнение по количеству IG-подписчиков. У всех конкурентов слабая Reels-стратегия — это окно Bounty.</div>
+  <div style="margin-top:14px">
+    <div class="comp-row">
+      <div class="name">@boncafe_uz</div>
+      <div class="bar-bg"><div class="bar" style="width:100%"></div></div>
+      <div style="text-align:right"><b>19 000</b></div>
+      <div><span class="pill">сеть 34</span></div>
+    </div>
+    <div class="comp-row">
+      <div class="name">@fayz_milliykafe</div>
+      <div class="bar-bg"><div class="bar" style="width:33%"></div></div>
+      <div style="text-align:right"><b>6 363</b></div>
+      <div><span class="pill">нац.кухня</span></div>
+    </div>
+    <div class="comp-row">
+      <div class="name">@community.tashkent</div>
+      <div class="bar-bg"><div class="bar" style="width:28%"></div></div>
+      <div style="text-align:right"><b>5 329</b></div>
+      <div><span class="pill red">прямой</span></div>
+    </div>
+    <div class="comp-row">
+      <div class="name">@coffeelabuz</div>
+      <div class="bar-bg"><div class="bar" style="width:15%"></div></div>
+      <div style="text-align:right"><b>2 767</b></div>
+      <div><span class="pill yellow">premium</span></div>
+    </div>
+    <div class="comp-row us">
+      <div class="name">@bountycoffeebar.tashkent</div>
+      <div class="bar-bg"><div class="bar" style="width:8.5%"></div></div>
+      <div style="text-align:right"><b>1 620</b></div>
+      <div><span class="pill green">мы</span></div>
+    </div>
+    <div class="comp-row">
+      <div class="name">@faizcoffeehouse</div>
+      <div class="bar-bg"><div class="bar" style="width:1.8%"></div></div>
+      <div style="text-align:right"><b>355</b></div>
+      <div><span class="pill">слабый</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Возможности -->
+<div class="grid2">
+  <div class="panel">
+    <h2>✅ Возможности (whitespace)</h2>
+    <div class="opportunity">
+      <h4>Никто не играет в «отпуск / тропики»</h4>
+      <p>У Bounty в лого пальма + «EST 2019» — можно усилить позиционирование: «остров спокойствия в шумном городе». Прямо в bio и highlight.</p>
+    </div>
+    <div class="opportunity">
+      <h4>24/7 — недоиспользованный актив</h4>
+      <p>Только Ц-14 работает 24/7. У всех остальных в городе кофе исчезает в 22:00. Это огромное конкурентное преимущество, но в bio и на сайте не упомянуто.</p>
+    </div>
+    <div class="opportunity">
+      <h4>Reels-стратегия выбрана правильно</h4>
+      <p>67% постов — Reels. Конкуренты (включая лидера @boncafe_uz) живут в фото-сетке. Reels = алгоритмический бустер. Продолжать.</p>
+    </div>
+    <div class="opportunity">
+      <h4>Голос бренда — реальный, не натянутый</h4>
+      <p>«Когда SMM-щик слишком серьёзно», «ресурсов нет, а ответственность есть» — это работает. Не превращать в полированный корпоратив.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>⚠️ Слабые места</h2>
+    <div class="risk">
+      <h4>Сайт — пустой</h4>
+      <p>bountycoffeebar.uz = только ссылки. Нет фото, меню только картинкой, не упомянут 24/7, нет SEO под «кофе Ташкент 24 часа».</p>
+    </div>
+    <div class="risk">
+      <h4>27 публикаций — мало для 7 лет</h4>
+      <p>4 поста в год. У @community.tashkent (запустился позже) — 258 постов. Аккаунту 27 постов — алгоритм не успевает понять, кто ты.</p>
+    </div>
+    <div class="risk">
+      <h4>1620 подписчиков — потолок не из-за охвата</h4>
+      <p>Это потолок из-за частоты постинга, а не аудитории. Город 3M, ниша «кофейни» — потенциал 10K+. При 1–2 reels/неделя за полгода реально 5K+.</p>
+    </div>
+    <div class="risk">
+      <h4>Несоответствие старого аккаунта</h4>
+      <p>Параллельно живёт @bounty_coffee_bar (27 фолловеров, 0 постов). Кто-то может на него заходить и не находить контент. Нужно закрыть или ребрендить как «архив».</p>
+    </div>
+    <div class="risk">
+      <h4>Disparity между точками — 4.5×</h4>
+      <p>Ц-14 даёт 4.5× больше Сайрам. Либо Сайрам новая (растёт), либо локация плохая. Перед 3-й точкой важно понять: разница из-за «созревания» или из-за «локации». Если 2-е — 3-я ($100K кредита!) рискована.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 6. Top-5 действий -->
+<div class="panel">
+  <h2>🎯 5 действий на ближайшие 30 дней</h2>
+  <ul class="takeaways">
+    <li><span class="num">1</span><span class="text"><b>Добавить «24/7» в bio Instagram и на главную сайта.</b> Это самое сильное конкурентное преимущество — никто из Ташкентских конкурентов так не работает. Прямо сейчас оно скрыто внутри 12-го поста.</span></li>
+    <li><span class="num">2</span><span class="text"><b>Удалить или скрыть старый @bounty_coffee_bar.</b> Чтобы поиск по бренду не вёл на пустую страницу. Минимум — поменять bio на «См. @bountycoffeebar.tashkent».</span></li>
+    <li><span class="num">3</span><span class="text"><b>Контент-план на 30 дней: 2 Reels + 1 carousel в неделю.</b> Тренд работает — продолжать его. Темы: 24/7 (ночные кадры), бариста-герои, утренние ритуалы, «как пишется заказ», локация Сайрам (она менее раскручена).</span></li>
+    <li><span class="num">4</span><span class="text"><b>Дифференциальный анализ Сайрам vs Ц-14.</b> Перед взятием кредита на 3-ю точку понять: разница в выручке — это «новая точка ещё не созрела» или «локация плохая». Если 2-е, идею 3-й переоценить.</span></li>
+    <li><span class="num">5</span><span class="text"><b>Усилить «островную» эстетику бренда.</b> Лого с пальмой + название Bounty (как остров) + «тихая пауза» = единая история. Меню, highlight-обложки, цвета — в эту сторону. Это белое пятно в Ташкенте.</span></li>
+  </ul>
+</div>
+
+<div class="footer">
+  Снапшот собран автоматически через GStack Browser · Данные: Instagram, bountycoffeebar.uz, книги учёта · 2026-05-28<br>
+  Raw JSON: <code>~/Desktop/Bounty/design/data/bounty-snapshot-2026-05-28.json</code>
+</div>
+
+<script>
+const grid = { color: '#21262d', drawBorder: false };
+const txt = { color: '#8b949e', font: { size: 11 } };
+
+// 1. Revenue by point bar
+new Chart(document.getElementById('revenueByPoint'), {
+  type: 'bar',
+  data: {
+    labels: ['Ноя 25', 'Дек 25', 'Янв 26', 'Фев 26', 'Мар 26', 'Апр 26'],
+    datasets: [
+      { label: 'Ц-14 (Хадра)', backgroundColor: '#3b82f6', data: [128, 142, 119, 135, 130, 137] },
+      { label: 'Сайрам', backgroundColor: '#22c55e', data: [25, 32, 27, 30, 31, 31] }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#e6edf3' } }, title: { display: true, text: 'Выручка по точкам (млн сум, последние 6 мес)', color: '#e6edf3', font: { size: 13 } } },
+    scales: { x: { ticks: txt, grid }, y: { ticks: txt, grid, beginAtZero: true } }
+  }
+});
+
+// 2. Ratio donut
+new Chart(document.getElementById('ratioPie'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Ц-14 (82%)', 'Сайрам (18%)'],
+    datasets: [{ data: [131.8, 29.4], backgroundColor: ['#3b82f6', '#22c55e'], borderColor: '#171b22', borderWidth: 4 }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#e6edf3' }, position: 'bottom' }, title: { display: true, text: 'Доля выручки', color: '#e6edf3', font: { size: 13 } } }
+  }
+});
+
+// 3. Content mix
+new Chart(document.getElementById('contentMix'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Reels (67%)', 'Photo (25%)', 'Carousel (8%)'],
+    datasets: [{ data: [8, 3, 1], backgroundColor: ['#ec4899', '#3b82f6', '#a855f7'], borderColor: '#171b22', borderWidth: 4 }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#e6edf3' }, position: 'bottom' }, title: { display: true, text: 'Микс контента (видимые 12 постов)', color: '#e6edf3', font: { size: 13 } } }
+  }
+});
+</script>
+
+</body>
+</html>

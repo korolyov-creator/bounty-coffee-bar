@@ -1,99 +1,133 @@
-# Bounty Coffee Bar — рабочая папка проекта
+# 🌴 Bounty Coffee Bar
 
-Все материалы по бизнесу Bounty Coffee Bar (Ташкент). 2 действующие точки (Ц14, Буз Базар) + планируемая 3-я.
+> «Тихая пауза в городе» — кофейный бар в Ташкенте с 2019 года
 
-## Структура
+![Status](https://img.shields.io/badge/status-active-success)
+![Locations](https://img.shields.io/badge/locations-2_+_планируется_3-blue)
+![Brand](https://img.shields.io/badge/brand-navy_%2B_gold-d4a017)
+![Updated](https://img.shields.io/badge/обновлено-2026--05--30-lightgrey)
+
+🌐 **Сайт-мокап:** [korolyov-creator.github.io/bounty-coffee-bar](https://korolyov-creator.github.io/bounty-coffee-bar/)
+📸 **Instagram:** [@bountycoffeebar.tashkent](https://www.instagram.com/bountycoffeebar.tashkent/)
+🌍 **Официальный сайт:** [bountycoffeebar.uz](https://www.bountycoffeebar.uz/)
+
+---
+
+## 📍 Точки
+
+| Точка | Адрес | Режим | Выручка/мес (2025-2026) |
+|---|---|---|---|
+| **Ц-14 Хадра** | Ц-14, Хадра 25 | **24/7** | ~131.8M сум (~$10.5K) |
+| **Сайрам** | улица Сайрам 25/1 | стандартный | ~29.4M сум (~$2.4K) |
+| **3-я точка** | планируется | — | под кредит $100K |
+
+---
+
+## 📁 Структура репозитория
 
 ```
 Bounty/
-├── README.md                           ← этот файл
-│
-├── (исходные документы)
-│   ├── Баунти вертикальное меню.jpg               текущее меню
-│   ├── Баунти вертикальное меню печать.cdr        CorelDraw исходник
-│   ├── Меню_Баунти_горизонтальное_печать.cdr      CorelDraw исходник (горизонт.)
-│   ├── Цены Баунти 2024-2025г.xlsx                актуальный прайс + себестоимость
-│   ├── КОФЕ учет Ц14 (2022-26год)-2.xlsx          учёт точки Ц14, 55 мес
-│   ├── Кофе учет Буз Базар 2024-26г-2.xlsx        учёт точки Буз Базар, 25 мес
-│   ├── Джентельменское соглашение .docx           предварит. договор аренды 3-й точки
-│   └── Кофейня обмерный план.pdf                  план помещения 3-й точки (46 м²)
-│
-├── analysis/                           ← графический анализ (фин-модель 3-й точки)
-│   ├── dashboard.html                  ← главный дашборд
-│   ├── 01-revenue-trend.png            тренд выручки
-│   ├── 02-payment-mix-c14.png          оплаты Ц14
-│   ├── 03-payment-mix-buz.png          оплаты Буз Базар
-│   ├── 04-payment-history-c14.png      стек оплат по месяцам
-│   ├── 05-revenue-vs-costs.png         выручка vs расходы
-│   ├── 06-yearly-summary.png           годовые итоги
-│   └── cafe-monthly.json               агрегированные месячные данные
-│
-├── business/                           ← рабочая папка агента `bounty-business`
-│   ├── tax-uz/                         налоговый кодекс РУз, льготы общепита
-│   ├── competitors/                    данные о конкурентах: цены, локации
-│   ├── pricing/                        решения о повышении цен с обоснованием
-│   └── reports/                        ежемесячные / квартальные сводки
-│
-└── design/                             ← рабочая папка агента `bounty-design`
-    ├── menu-drafts/                    варианты меню (HTML, изображения)
-    ├── instagram-bounty/               аудит и контент-план @bounty_coffee_bar
-    ├── instagram-competitors/          разборы конкурентов в Instagram
-    └── brand-assets/                   логотип, шрифты, палитра, фото-стиль
+├── README.md                       ← ты здесь
+├── analysis/                       ← финансовый анализ Excel + дашборды
+│   ├── cafe-monthly.json
+│   ├── dashboard.html              ← финмодель 3-й точки
+│   └── *.png                       ← графики выручки
+├── business/                       ← bounty-business агент
+│   └── competitors/                ← baseline по конкурентам
+├── design/                         ← bounty-design агент
+│   ├── brand-assets/               ← логотипы, цвета, шрифты
+│   │   ├── logo-clean/             ← 6 вариантов лого (gold-on-navy, white-on-black, и т.д.)
+│   │   └── sources/                ← оригинальные .cdr от Watta
+│   ├── menu-drafts/2026-05-29/     ← новое меню Phase 1 (PDF + HTML)
+│   │   ├── menu-vertical.pdf       ← 450×700мм
+│   │   └── menu-horizontal.pdf     ← 630×370мм
+│   ├── website-mockup/v2/          ← редизайн сайта (Starbucks-style)
+│   ├── dashboards/                 ← 5 HTML-дашбордов
+│   ├── data/                       ← snapshot-данные (JSON)
+│   ├── instagram-bounty/           ← HD-фото из IG
+│   ├── instagram-competitors/      ← разбор 8 конкурентов
+│   └── location-3-visualization/   ← проект 3-й точки + AI-рендеры
+├── org/                            ← оргструктура (11 AI-агентов)
+└── docs/                           ← GitHub Pages — публичные страницы
 ```
 
-## Агенты
+---
 
-Для работы с этим проектом созданы 2 специализированных агента:
+## 🎯 Активные направления
 
-### `bounty-business` — налоги, цены, конкуренты
+### 1. Запуск 3-й точки
+- **Бюджет:** $100K кредит (12%, 5 лет, 2 года grace)
+- **CapEx прогноз:** $24-46K (с HVAC и акустикой)
+- **Локация:** на стадии поиска (Юнусабад / Алмазар приоритет)
+- [📊 Дашборд анализа локации](./design/dashboards/bounty-location3-verified-2026-05-29.html)
 
-Запуск: `@bounty-business <запрос>` (или скажи: «спроси у bounty-business про X»)
+### 2. Повышение цен (Phase 1)
+- **Найдено:** 9 позиций с маржой <35% (сэндвичи 10%, Шмель 12.5%, Red Bull 15%)
+- **Эффект:** +5-12M сум/мес дополнительного дохода
+- [📊 Дашборд цен](./design/dashboards/bounty-prices-2026-05-29.html)
 
-**Может:**
-- Рассчитать налоги по НК РУз для общепита (упрощённая система)
-- Мониторить себестоимость и сигнализировать о необходимости повышать цены
-- Анализировать конкурентов (Coffee Inn, Bon!, Capha, локальные)
-- Готовить месячные и квартальные финансовые отчёты
-- Читать xlsx-учёт и считать маржу
+### 3. Бренд и SMM
+- Меню переделано в стиле оригинала Watta с новыми ценами
+- Сайт-мокап v2 в narrative-стиле
+- IG: 1620 фолловеров, 27 постов, 67% Reels
 
-Артефакты сохраняет в `business/`.
+---
 
-### `bounty-design` — меню, Instagram
+## 🤖 AI-команда (через Claude Code)
 
-Запуск: `@bounty-design <запрос>`
+Проект управляется через 11 специализированных AI-агентов:
 
-**Может:**
-- Разрабатывать варианты меню (печатное, цифровое, QR-меню)
-- Анализировать Instagram @bounty_coffee_bar и конкурентов
-- Составлять контент-план (посты, сториз, reels)
-- Готовить визуальные стандарты бренда
+| Pillar | Агенты |
+|---|---|
+| **Finance** | `steve` (CFO), `bounty-pricing` |
+| **Market** | `bounty-business`, `bounty-competitors` |
+| **Ops** | `bounty-ops` |
+| **Brand** | `bounty-design`, `bounty-smm`, `bounty-marketing` |
+| **Strategy** | `bounty-location`, `bounty-risk` |
+| **Координация** | Claude (Chief of Staff) |
 
-Артефакты сохраняет в `design/`.
+Полная оргструктура: [./design/dashboards/bounty-org-2026-05-28.html](./design/dashboards/bounty-org-2026-05-28.html)
 
-### Существующие агенты (общие, не только для Bounty)
+---
 
-- **steve** — бухгалтер для базовых проводок и расчётов
+## 📊 Дашборды
 
-## Финансовая модель 3-й точки — ключевые числа
+| Дашборд | Что показывает |
+|---|---|
+| [Overview 360°](./design/dashboards/bounty-360-2026-05-28.html) | Бренд, точки, IG, конкуренты, действия |
+| [Цены Phase 1](./design/dashboards/bounty-prices-2026-05-29.html) | Маржа по 49 позициям, рекомендации повышения |
+| [Оргструктура](./design/dashboards/bounty-org-2026-05-28.html) | 11 AI-агентов с зонами ответственности |
+| [3-я точка — карта](./design/dashboards/bounty-location3-verified-2026-05-29.html) | 12 районов Ташкента, шорт-лист 15 объявлений |
+| [3-я точка — дизайн](./design/location-3-visualization/new-design.html) | 2D-план + AI-рендеры + смета CapEx |
 
-См. `analysis/dashboard.html` (открой двойным кликом).
+---
 
-**Кредит $100,000 @ 12% годовых, 5 лет:**
-- Год 1-2 (только %): $1000/мес ≈ 12.8M сум
-- Год 3-5 (аннуитет): $3321/мес ≈ 42.5M сум
+## 💡 Как работать с проектом
 
-**Точка безубыточности:**
-- Год 1-2: 86M сум/мес (~64 чека/день при чеке 45k)
-- Год 3-5: 139M сум/мес (~104 чека/день)
+### Обновить файлы
+```bash
+cd ~/Desktop/Bounty
+git add -A
+git commit -m "что изменил"
+git push
+```
 
-**Сценарии за 5 лет:**
-- Пессимизм 50M/мес → -2353M сум (банкротство)
-- Реализм 100M/мес → -721M сум (тяжело)
-- Оптимизм 140M/мес → +585M сум (ROI 46%)
+### Скачать на другом устройстве
+```bash
+git clone git@github.com:korolyov-creator/bounty-coffee-bar.git
+```
 
-## Дальнейшие шаги
+### Открыть дашборд
+```bash
+open design/dashboards/bounty-org-2026-05-28.html
+```
 
-1. Запустить `bounty-business` на актуальные ставки налогов общепита РУз 2026
-2. Запустить `bounty-design` на аудит @bounty_coffee_bar
-3. Поставить триггер: ежеквартальная сверка себестоимости и цен конкурентов
-4. До открытия 3-й точки — провести замер трафика на локации (3 дня)
+---
+
+## 📜 История изменений
+
+См. [git log](https://github.com/korolyov-creator/bounty-coffee-bar/commits/main)
+
+---
+
+*Проект создан и поддерживается с помощью [Claude Code](https://claude.com/claude-code) от Anthropic.*
