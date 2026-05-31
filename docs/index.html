@@ -240,6 +240,12 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
   footer h4{font-size:12px}
 
   section[style*="paper-soft"] > .container > div[style*="repeat(6"]{grid-template-columns:repeat(3,1fr) !important}
+
+  /* App section на мобильных */
+  #app{padding:60px 0}
+  #app .container > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important;gap:40px !important}
+  #app h2{font-size:30px !important}
+  #app + section,#app div[style*="grid-template-columns:1fr 1fr"]:last-of-type{grid-template-columns:1fr !important}
 }
 </style>
 </head>
@@ -253,7 +259,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
     <li><a href="#menu">Самое популярное</a></li>
     <li><a href="menu.html">Полное меню</a></li>
     <li><a href="#locations">Наши локации</a></li>
-    <li><a href="app/" style="color:var(--gold-bright)">📱 Приложение</a></li>
+    <li><a href="#app" style="color:var(--gold-bright)">📱 Приложение</a></li>
   </ul>
   <a href="#order" class="nav-cta">Заказать</a>
 </nav>
@@ -480,6 +486,77 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
       <a href="https://wa.me/998900000000" target="_blank" class="btn-channel btn-whatsapp">💬 WhatsApp</a>
       <a href="tel:+998900000000" class="btn-channel btn-call">📞 Позвонить</a>
     </div>
+  </div>
+</section>
+
+<!-- APP DOWNLOAD -->
+<section id="app" style="padding:100px 0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);color:var(--paper);overflow:hidden">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;max-width:1100px;margin:0 auto">
+
+      <!-- Левая колонка: текст + QR -->
+      <div>
+        <div style="font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;font-weight:500">★ APP</div>
+        <h2 style="color:var(--paper);margin-bottom:12px;font-size:42px">Bounty в кармане<span style="font-family:'Cookie',cursive;color:var(--gold);font-size:30px;display:block;margin-top:4px">приложение в один скан</span></h2>
+        <p style="font-size:16px;color:rgba(242,234,215,.75);line-height:1.7;margin-bottom:30px">Копи Stars за каждую покупку. Покажи QR бариста — получи бесплатный напиток. Меню, акции, обе точки — в одном экране.</p>
+
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+          <div style="background:#fff;padding:14px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);flex-shrink:0">
+            <img src="app/qr-install.png" alt="QR Bounty App" style="width:160px;height:160px;display:block">
+          </div>
+          <div style="flex:1;min-width:200px">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:8px;color:var(--gold)">Наведи камеру</div>
+            <div style="font-size:13px;color:rgba(242,234,215,.7);line-height:1.6">iPhone: Камера сама распознаёт QR<br>Android: Камера или Google Lens<br><span style="color:var(--gold);font-weight:600">Открой → «На главный экран»</span></div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap">
+          <a href="app/" class="btn btn-primary" style="padding:14px 24px;font-size:13px">📱 Открыть приложение</a>
+        </div>
+      </div>
+
+      <!-- Правая колонка: phone mockup -->
+      <div style="text-align:center;position:relative">
+        <div style="position:relative;display:inline-block;max-width:280px;width:100%">
+          <!-- Phone frame -->
+          <div style="background:#0a1019;border-radius:42px;padding:14px 10px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1.5px rgba(201,161,74,.3);position:relative;border:4px solid #1a2030">
+            <!-- Notch -->
+            <div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#0a1019;border-radius:99px;z-index:10"></div>
+            <!-- Screen -->
+            <img src="app/preview-screen.png" alt="Bounty App preview" style="width:100%;display:block;border-radius:30px">
+          </div>
+          <!-- Glow -->
+          <div style="position:absolute;inset:-30px;background:radial-gradient(circle,rgba(201,161,74,.15),transparent 60%);z-index:-1;border-radius:50%"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- iOS / Android инструкции -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:60px auto 0">
+      <div style="background:rgba(242,234,215,.05);border:1px solid rgba(201,161,74,.18);border-radius:14px;padding:24px">
+        <div style="font-size:32px;margin-bottom:8px"></div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);margin-bottom:10px;font-weight:700">iPhone</div>
+        <ol style="font-size:14px;color:rgba(242,234,215,.85);line-height:1.8;padding-left:18px">
+          <li>Открой ссылку в <b>Safari</b> (не Chrome!)</li>
+          <li>Нажми <b>Share</b> (квадрат со стрелкой ↑)</li>
+          <li>Прокрути и выбери <b>«На экран Домой»</b></li>
+          <li>Готово — иконка Bounty 🌴 на главном экране</li>
+        </ol>
+      </div>
+      <div style="background:rgba(242,234,215,.05);border:1px solid rgba(201,161,74,.18);border-radius:14px;padding:24px">
+        <div style="font-size:32px;margin-bottom:8px">🤖</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);margin-bottom:10px;font-weight:700">Android</div>
+        <ol style="font-size:14px;color:rgba(242,234,215,.85);line-height:1.8;padding-left:18px">
+          <li>Открой ссылку в <b>Chrome</b></li>
+          <li>Появится баннер <b>«Установить»</b> — нажми</li>
+          <li>Или: ⋮ Меню → <b>«Добавить на главный экран»</b></li>
+          <li>Готово — иконка Bounty в списке приложений</li>
+        </ol>
+      </div>
+    </div>
+
+    <p style="text-align:center;color:rgba(242,234,215,.5);font-size:13px;margin-top:40px;font-style:italic">Это <b style="color:var(--gold)">PWA</b> — современный формат веб-приложения. Не занимает место в App Store, обновляется автоматически, работает оффлайн.</p>
   </div>
 </section>
 
