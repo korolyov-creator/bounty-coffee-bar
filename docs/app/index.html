@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Bounty Coffee Bar</title>
+<meta name="theme-color" content="#0F1F3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bounty">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Cookie&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--navy-light:#1e3a5f;
+  --gold:#C9A14A;--gold-light:#E0BE6A;--gold-deep:#9c7a2f;
+  --paper:#F2EAD7;--paper-soft:#FAF6EC;
+  --ink:#0b0f17;--muted:#6b7280;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --tab-h:72px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45;overscroll-behavior:none}
+.app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;position:relative}
+
+/* SCREENS */
+.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(var(--safe-top) + 14px) 18px calc(var(--tab-h) + var(--safe-bot) + 20px);display:none;animation:fade .25s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* HEADERS */
+.scr-head{margin-bottom:18px}
+.scr-head .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+.scr-head h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1.05;letter-spacing:-.01em}
+.scr-head h1 .script{font-family:'Cookie',cursive;color:var(--gold);font-size:.7em;font-weight:400;display:block;margin-top:2px;line-height:1}
+.scr-head .greet{color:rgba(242,234,215,.7);font-size:14px;margin-top:6px}
+
+/* CARDS */
+.card{background:rgba(242,234,215,.06);border:1px solid rgba(201,161,74,.15);border-radius:14px;padding:18px;margin-bottom:14px;transition:transform .15s}
+.card.gold{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--navy);border:none}
+.card.dark{background:var(--navy-deep);border-color:rgba(201,161,74,.25)}
+.card h3{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:8px;font-weight:700}
+.card.gold h3{color:var(--navy);opacity:.8}
+.card .big{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1}
+.card .sub{font-size:13px;opacity:.7;margin-top:4px}
+
+/* STARS BAR (loyalty progress) */
+.stars-row{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.stars-row .count{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1}
+.stars-row .label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:700}
+.progress{height:6px;background:rgba(15,31,58,.3);border-radius:99px;overflow:hidden;margin-top:8px}
+.progress .bar{height:100%;background:var(--navy);border-radius:99px;transition:width .4s}
+.tier-badges{display:flex;gap:10px;margin-top:14px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.tier-badges span{padding:5px 10px;border-radius:99px;background:rgba(15,31,58,.15)}
+.tier-badges span.active{background:var(--navy);color:var(--gold)}
+
+/* QR CARD */
+.qr-card{background:#fff;border-radius:18px;padding:22px;text-align:center;color:var(--navy)}
+.qr-img{width:100%;max-width:240px;margin:14px auto;aspect-ratio:1}
+.qr-card .name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:.05em;margin-bottom:6px}
+.qr-card .id{font-family:Menlo,monospace;font-size:13px;letter-spacing:.15em;color:var(--muted)}
+.qr-card .balance{margin-top:14px;font-size:13px;color:var(--muted)}
+.qr-card .balance b{color:var(--navy);font-size:18px;display:block;margin-top:2px;font-family:'Playfair Display',serif}
+
+/* MENU CATEGORIES */
+.cats{display:flex;gap:8px;overflow-x:auto;margin:0 -18px 14px;padding:0 18px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cats button{flex:none;padding:8px 14px;background:transparent;border:1px solid rgba(201,161,74,.3);border-radius:99px;color:var(--paper);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.02em}
+.cats button.active{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+
+/* MENU ITEMS */
+.menu-list{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;gap:14px;padding:14px;background:rgba(242,234,215,.05);border-radius:12px;border:1px solid rgba(201,161,74,.1);align-items:center}
+.item .ic{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--gold-deep),var(--navy));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px}
+.item .info{flex:1;min-width:0}
+.item .info h4{font-size:15px;font-weight:600;margin-bottom:2px;color:var(--paper)}
+.item .info p{font-size:11px;color:rgba(242,234,215,.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .price{font-family:'Playfair Display',serif;font-size:16px;color:var(--gold);font-weight:700;flex-shrink:0;text-align:right}
+.item .price small{font-size:10px;opacity:.65;display:block;font-family:'Inter';font-weight:500}
+.item .add{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--navy);border:none;font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}
+
+/* LOCATIONS */
+.loc-card{background:rgba(242,234,215,.05);border-radius:14px;overflow:hidden;border:1px solid rgba(201,161,74,.15);margin-bottom:14px}
+.loc-card .img{height:140px;background-size:cover;background-position:center;background-color:var(--navy-light);position:relative}
+.loc-card .badge{position:absolute;top:10px;left:10px;background:var(--gold);color:var(--navy);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.loc-card .info{padding:16px}
+.loc-card .name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.loc-card .addr{font-size:13px;color:rgba(242,234,215,.7);margin-bottom:10px;display:flex;gap:6px;align-items:flex-start}
+.loc-card .hours{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(242,234,215,.7);margin-bottom:12px}
+.loc-card .hours .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,.25)}50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+.loc-card .acts{display:flex;gap:8px;flex-wrap:wrap}
+.loc-card .acts a{flex:1;text-align:center;padding:9px;background:rgba(201,161,74,.15);color:var(--paper);text-decoration:none;border-radius:8px;font-size:12px;font-weight:600;min-width:90px}
+
+/* PROFILE */
+.prof-head{text-align:center;padding:20px 0}
+.prof-head .ava{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--navy);font-weight:800;font-family:'Playfair Display',serif;margin:0 auto 14px}
+.prof-head .name{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:4px}
+.prof-head .level{display:inline-block;padding:4px 12px;background:rgba(201,161,74,.2);color:var(--gold);border-radius:99px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+
+.menu-list-rows{display:flex;flex-direction:column;background:rgba(242,234,215,.05);border-radius:14px;overflow:hidden;border:1px solid rgba(201,161,74,.15)}
+.menu-list-rows .row{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid rgba(201,161,74,.08);cursor:pointer}
+.menu-list-rows .row:last-child{border-bottom:none}
+.menu-list-rows .row .l{display:flex;gap:12px;align-items:center}
+.menu-list-rows .row .l span:first-child{font-size:22px;width:30px;text-align:center}
+.menu-list-rows .row .l span:last-child{font-size:14px;color:var(--paper);font-weight:500}
+.menu-list-rows .row .r{color:rgba(242,234,215,.4);font-size:18px}
+
+/* TAB BAR */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--safe-bot));background:rgba(9,21,41,.96);backdrop-filter:blur(20px);border-top:1px solid rgba(201,161,74,.18);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px;padding-bottom:var(--safe-bot);z-index:50}
+.tab{flex:1;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:rgba(242,234,215,.5);font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:color .15s;-webkit-tap-highlight-color:transparent}
+.tab .ico{font-size:22px;line-height:1}
+.tab.active{color:var(--gold)}
+
+/* INSTALL prompt */
+.install-banner{position:absolute;left:14px;right:14px;bottom:calc(var(--tab-h) + var(--safe-bot) + 12px);background:var(--gold);color:var(--navy);padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(201,161,74,.3);z-index:60}
+.install-banner.show{display:flex}
+.install-banner button{margin-left:auto;background:var(--navy);color:var(--gold);border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer}
+.install-banner .x{background:transparent;color:var(--navy);padding:4px 8px;font-size:18px}
+
+/* UTILS */
+.row-flex{display:flex;gap:10px}
+.row-flex .col{flex:1}
+.btn-big{display:block;width:100%;padding:14px;background:var(--gold);color:var(--navy);border:none;border-radius:12px;font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;font-family:inherit}
+.btn-ghost{background:transparent;color:var(--gold);border:1px solid rgba(201,161,74,.4)}
+.tip{font-size:12px;color:rgba(242,234,215,.55);font-style:italic;text-align:center;margin-top:10px}
+.divider{height:1px;background:rgba(201,161,74,.15);margin:18px 0}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ HOME ============ -->
+  <main class="screen active" id="scr-home">
+    <div class="scr-head">
+      <div class="eyebrow">★ С ВОЗВРАЩЕНИЕМ</div>
+      <h1>Привет<span class="script">Дмитрий</span></h1>
+      <div class="greet">Тихая пауза ждёт тебя — Ц-14 открыт 24/7</div>
+    </div>
+
+    <!-- Loyalty card preview -->
+    <div class="card gold">
+      <h3>★ ТВОИ STARS</h3>
+      <div class="stars-row">
+        <span class="count">42</span>
+        <span class="label">/ 50 до награды</span>
+      </div>
+      <div class="progress"><div class="bar" style="width:84%"></div></div>
+      <div class="sub" style="margin-top:10px;opacity:.85">8 stars до бесплатного капучино ☕</div>
+      <div class="tier-badges">
+        <span>● Green</span>
+        <span class="active">● Gold</span>
+        <span>● Reserve</span>
+      </div>
+    </div>
+
+    <!-- Текущая акция -->
+    <div class="card dark" style="background-image:linear-gradient(135deg,rgba(15,31,58,.85),rgba(201,161,74,.15)),url('../assets/img/barista-pour.jpg');background-size:cover;background-position:center">
+      <h3>★ Акция дня</h3>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1.1;margin-bottom:6px">Ночной эспрессо<br>−20% после 23:00</div>
+      <div class="sub" style="opacity:.85">Только на Ц-14 · 24/7</div>
+    </div>
+
+    <!-- Твой обычный -->
+    <div class="card">
+      <h3>★ Твой обычный</h3>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+        <div style="width:60px;height:60px;border-radius:12px;background:linear-gradient(135deg,var(--gold-deep),var(--navy));display:flex;align-items:center;justify-content:center;font-size:32px">☕</div>
+        <div style="flex:1">
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700">Капучино 250 мл</div>
+          <div class="sub">с овсяным молоком · посл. заказ 2 дня назад</div>
+        </div>
+        <button class="add" style="width:42px;height:42px;font-size:22px">+</button>
+      </div>
+    </div>
+
+    <button class="btn-big" onclick="go('order')">Заказать сейчас →</button>
+  </main>
+
+  <!-- ============ ORDER ============ -->
+  <main class="screen" id="scr-order">
+    <div class="scr-head">
+      <div class="eyebrow">★ MENU</div>
+      <h1>Что хочешь?<span class="script">выбирай</span></h1>
+    </div>
+
+    <div class="cats" id="cats"></div>
+
+    <div class="menu-list" id="menu-list"></div>
+  </main>
+
+  <!-- ============ CARD (QR) ============ -->
+  <main class="screen" id="scr-card">
+    <div class="scr-head">
+      <div class="eyebrow">★ КАРТА ЛОЯЛЬНОСТИ</div>
+      <h1>Покажи бариста<span class="script">для начисления stars</span></h1>
+    </div>
+
+    <div class="qr-card">
+      <div class="name">BOUNTY · DMITRIY</div>
+      <div class="id">BNT-2026-04F9-K1</div>
+      <svg class="qr-img" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#fff"/>
+        <g fill="#0F1F3A">
+          <!-- Stylized QR placeholder (3 corner markers + dots) -->
+          <rect x="10" y="10" width="40" height="40"/>
+          <rect x="18" y="18" width="24" height="24" fill="#fff"/>
+          <rect x="22" y="22" width="16" height="16"/>
+          <rect x="150" y="10" width="40" height="40"/>
+          <rect x="158" y="18" width="24" height="24" fill="#fff"/>
+          <rect x="162" y="22" width="16" height="16"/>
+          <rect x="10" y="150" width="40" height="40"/>
+          <rect x="18" y="158" width="24" height="24" fill="#fff"/>
+          <rect x="22" y="162" width="16" height="16"/>
+          <!-- Random dots для имитации QR -->
+          <rect x="60" y="14" width="8" height="8"/><rect x="76" y="14" width="8" height="8"/>
+          <rect x="92" y="22" width="8" height="8"/><rect x="108" y="14" width="8" height="8"/>
+          <rect x="124" y="22" width="8" height="8"/><rect x="68" y="30" width="8" height="8"/>
+          <rect x="84" y="38" width="8" height="8"/><rect x="100" y="30" width="8" height="8"/>
+          <rect x="116" y="38" width="8" height="8"/><rect x="132" y="30" width="8" height="8"/>
+          <rect x="14" y="60" width="8" height="8"/><rect x="22" y="76" width="8" height="8"/>
+          <rect x="38" y="68" width="8" height="8"/><rect x="60" y="60" width="8" height="8"/>
+          <rect x="76" y="68" width="8" height="8"/><rect x="92" y="76" width="8" height="8"/>
+          <rect x="108" y="60" width="8" height="8"/><rect x="124" y="76" width="8" height="8"/>
+          <rect x="140" y="68" width="8" height="8"/><rect x="156" y="76" width="8" height="8"/>
+          <rect x="172" y="60" width="8" height="8"/><rect x="60" y="92" width="8" height="8"/>
+          <rect x="76" y="100" width="8" height="8"/><rect x="92" y="108" width="8" height="8"/>
+          <rect x="108" y="92" width="8" height="8"/><rect x="124" y="100" width="8" height="8"/>
+          <rect x="140" y="108" width="8" height="8"/><rect x="14" y="100" width="8" height="8"/>
+          <rect x="30" y="108" width="8" height="8"/><rect x="46" y="92" width="8" height="8"/>
+          <rect x="60" y="124" width="8" height="8"/><rect x="76" y="132" width="8" height="8"/>
+          <rect x="92" y="140" width="8" height="8"/><rect x="108" y="124" width="8" height="8"/>
+          <rect x="124" y="132" width="8" height="8"/><rect x="140" y="140" width="8" height="8"/>
+          <rect x="156" y="124" width="8" height="8"/><rect x="172" y="140" width="8" height="8"/>
+          <rect x="60" y="156" width="8" height="8"/><rect x="76" y="164" width="8" height="8"/>
+          <rect x="92" y="172" width="8" height="8"/><rect x="108" y="156" width="8" height="8"/>
+          <rect x="124" y="164" width="8" height="8"/><rect x="140" y="172" width="8" height="8"/>
+          <rect x="156" y="172" width="8" height="8"/><rect x="172" y="156" width="8" height="8"/>
+        </g>
+      </svg>
+      <div class="balance">Баланс на карте<b>185 000 сум</b></div>
+    </div>
+
+    <div class="row-flex" style="margin-top:14px">
+      <button class="btn-big col" style="font-size:13px">Пополнить</button>
+      <button class="btn-big btn-ghost col" style="font-size:13px">История</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card">
+      <h3>★ КАК РАБОТАЕТ</h3>
+      <p style="font-size:13px;line-height:1.6;color:rgba(242,234,215,.75)">
+        Каждые <b style="color:var(--gold)">10 000 сум</b> в заказе = <b style="color:var(--gold)">1 star</b>. Накопил <b style="color:var(--gold)">50 stars</b> — получи бесплатный напиток до 35 000 сум.
+        <br><br>
+        <b style="color:var(--gold)">100 stars</b> — любой напиток + десерт. <b style="color:var(--gold)">200 stars</b> — все напитки в обмен на твою историю в нашем IG.
+      </p>
+    </div>
+  </main>
+
+  <!-- ============ LOCATIONS ============ -->
+  <main class="screen" id="scr-locations">
+    <div class="scr-head">
+      <div class="eyebrow">★ ГДЕ МЫ</div>
+      <h1>Наши локации<span class="script">в двух шагах</span></h1>
+    </div>
+
+    <div class="loc-card">
+      <div class="img" style="background-image:url('../assets/img/interior-2.jpg')">
+        <div class="badge">⚡ 24/7</div>
+      </div>
+      <div class="info">
+        <div class="name">Bounty Хадра</div>
+        <div class="addr">📍 Ц-14, Хадра 25 · Ташкент</div>
+        <div class="hours"><span class="dot"></span>Открыто сейчас — никогда не закрывается</div>
+        <div class="acts">
+          <a href="https://maps.app.goo.gl/iJ69khEz8cmU9ahu7" target="_blank">Google Maps</a>
+          <a href="https://yandex.ru/maps/org/139748196138/" target="_blank">Yandex</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="loc-card">
+      <div class="img" style="background-image:url('../assets/img/interior-1.jpg')"></div>
+      <div class="info">
+        <div class="name">Bounty Сайрам</div>
+        <div class="addr">📍 улица Сайрам 25/1 · Ташкент</div>
+        <div class="hours"><span class="dot"></span>Открыто · 08:00–23:00</div>
+        <div class="acts">
+          <a href="https://maps.app.goo.gl/iok3Hvfezpa393VC8" target="_blank">Google Maps</a>
+          <a href="https://yandex.ru/maps/org/218338813837/" target="_blank">Yandex</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,rgba(201,161,74,.18),rgba(201,161,74,.05));border-color:rgba(201,161,74,.3);text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:6px">3-я точка скоро 🌴</div>
+      <div class="sub">Открытие — лето 2026 · подпишись в IG чтобы узнать первым</div>
+    </div>
+  </main>
+
+  <!-- ============ PROFILE ============ -->
+  <main class="screen" id="scr-profile">
+    <div class="prof-head">
+      <div class="ava">Д</div>
+      <div class="name">Дмитрий</div>
+      <div class="level">★ GOLD MEMBER</div>
+    </div>
+
+    <div class="row-flex" style="margin-bottom:18px">
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700">42</div><div class="sub" style="margin-top:0">Stars сейчас</div></div>
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700">87</div><div class="sub" style="margin-top:0">Заказов всего</div></div>
+    </div>
+
+    <div class="menu-list-rows">
+      <div class="row" onclick="go('order')">
+        <div class="l"><span>📋</span><span>История заказов</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row">
+        <div class="l"><span>♥</span><span>Любимое</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row">
+        <div class="l"><span>🎁</span><span>Подарочные карты</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row">
+        <div class="l"><span>🔔</span><span>Уведомления</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row" onclick="window.open('https://www.instagram.com/bountycoffeebar.tashkent/','_blank')">
+        <div class="l"><span>📸</span><span>Instagram @bounty</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row" onclick="window.open('https://t.me/bountycoffeebar','_blank')">
+        <div class="l"><span>✈️</span><span>Telegram канал</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row">
+        <div class="l"><span>⚙</span><span>Настройки</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row">
+        <div class="l"><span>❓</span><span>Помощь</span></div>
+        <div class="r">›</div>
+      </div>
+    </div>
+
+    <div class="tip" style="margin-top:18px">Bounty App · v1.0 · 2026<br>Демо-прототип · реальный заказ и оплата — в разработке</div>
+  </main>
+
+  <!-- Install banner (iOS hint) -->
+  <div class="install-banner" id="install-banner">
+    <span>📲 Добавь на главный экран — будет как приложение</span>
+    <button onclick="installApp()">Установить</button>
+    <button class="x" onclick="hideInstall()">×</button>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tabbar">
+    <button class="tab active" data-scr="home" onclick="go('home')"><span class="ico">🏠</span><span>Главная</span></button>
+    <button class="tab" data-scr="order" onclick="go('order')"><span class="ico">☕</span><span>Меню</span></button>
+    <button class="tab" data-scr="card" onclick="go('card')"><span class="ico">🎫</span><span>Карта</span></button>
+    <button class="tab" data-scr="locations" onclick="go('locations')"><span class="ico">📍</span><span>Точки</span></button>
+    <button class="tab" data-scr="profile" onclick="go('profile')"><span class="ico">👤</span><span>Профиль</span></button>
+  </nav>
+
+</div>
+
+<script>
+// === ROUTER ===
+function go(scr){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('scr-'+scr).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.scr===scr));
+  window.scrollTo(0,0);
+  document.querySelector('.screen.active').scrollTop = 0;
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+// === MENU DATA ===
+const MENU = {
+  'Кофе':[
+    {n:'Эспрессо', d:'двойной шот · 25 мл', p:'22 000', ic:'☕'},
+    {n:'Американо', d:'250 / 500 мл', p:'22 / 26 000', ic:'☕'},
+    {n:'Лонг блэк', d:'250 / 500 мл', p:'30 / 35 000', ic:'☕'}
+  ],
+  'С молоком':[
+    {n:'Капучино', d:'250 / 500 мл', p:'25 / 30 000', ic:'☕'},
+    {n:'Латте', d:'500 мл', p:'28 000', ic:'☕'},
+    {n:'Флэт уайт', d:'250 / 500 мл', p:'30 / 37 500', ic:'☕'},
+    {n:'Раф Bounty', d:'250 / 500 мл', p:'34 / 46 500', ic:'☕'},
+    {n:'Мокко', d:'250 / 500 мл', p:'32 / 36 000', ic:'🍫'},
+  ],
+  'Холодные':[
+    {n:'Айс-латте', d:'500 мл', p:'28 000', ic:'🧊'},
+    {n:'Эспрессо-тоник', d:'500 мл · лимит лето', p:'46 000', ic:'🍋'},
+    {n:'Cold Brew', d:'250 / 500 мл', p:'28 / 38 000', ic:'🧊'},
+    {n:'Фраппучино', d:'500 мл', p:'45 000', ic:'🥤'},
+    {n:'Шмель', d:'500 мл · фирменный', p:'83 000', ic:'🌺'},
+  ],
+  'Напитки':[
+    {n:'Чай облепиха-имбирь', d:'500 мл', p:'30 000', ic:'🍵'},
+    {n:'Чай ягодный', d:'500 мл', p:'30 000', ic:'🍵'},
+    {n:'Айс-Ти', d:'500 мл', p:'33 000', ic:'🧊'},
+    {n:'Фрэш яблочный', d:'250 / 500 мл', p:'35.5 / 53.5K', ic:'🍎'},
+    {n:'Фрэш апельсиновый', d:'250 / 500 мл', p:'57 / 94.5K', ic:'🍊'},
+    {n:'Мохито', d:'500 мл · без алк.', p:'33 000', ic:'🌿'},
+  ],
+  'Выпечка':[
+    {n:'Брауни', d:'свежий', p:'24 000', ic:'🍫'},
+    {n:'Орешки со сгущёнкой', d:'18 шт', p:'45 500', ic:'🥜'},
+    {n:'Муравейник', d:'1 уп', p:'29 500', ic:'🍪'},
+    {n:'Овсяные печеньки', d:'1 шт', p:'13 000', ic:'🍪'},
+    {n:'Сэндвич', d:'классический', p:'33 000', ic:'🥪'},
+  ]
+};
+
+// === Render menu ===
+function renderMenu(cat){
+  const list = document.getElementById('menu-list');
+  list.innerHTML = MENU[cat].map(i=>`
+    <div class="item">
+      <div class="ic">${i.ic}</div>
+      <div class="info">
+        <h4>${i.n}</h4>
+        <p>${i.d}</p>
+      </div>
+      <div class="price">${i.p}<small>сум</small></div>
+      <button class="add" onclick="addItem('${i.n}')">+</button>
+    </div>`).join('');
+}
+function addItem(name){
+  if (navigator.vibrate) navigator.vibrate(15);
+  // mock toast
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);padding:10px 18px;border-radius:99px;font-weight:700;font-size:13px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3);animation:fade .3s';
+  t.textContent = `+ ${name} в корзину`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1400);
+}
+// Init categories
+(function(){
+  const c = document.getElementById('cats');
+  Object.keys(MENU).forEach((k,i)=>{
+    const b = document.createElement('button');
+    b.textContent = k;
+    if (i===0) b.classList.add('active');
+    b.onclick = () => {
+      document.querySelectorAll('.cats button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      renderMenu(k);
+    };
+    c.appendChild(b);
+  });
+  renderMenu(Object.keys(MENU)[0]);
+})();
+
+// === PWA Install ===
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+function installApp(){
+  if (deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; hideInstall(); });
+  } else {
+    alert('iOS: нажми Share (квадрат со стрелкой) → "На экран Домой"\nAndroid: Меню → "Добавить на главный экран"');
+  }
+}
+function hideInstall(){ document.getElementById('install-banner').classList.remove('show'); }
+
+// Hint for iOS (no beforeinstallprompt)
+setTimeout(()=>{
+  if (!deferredPrompt && /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches){
+    document.getElementById('install-banner').classList.add('show');
+  }
+}, 4000);
+
+// === Service Worker ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').catch(e => console.log('SW err', e));
+}
+</script>
+
+</body>
+</html>
