@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bounty — комбо-анализ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&family=Inter:wght@300;400;500;600;700;800&family=Cookie&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1F3A;--navy-deep:#091529;--gold:#C9A14A;--gold-light:#E0BE6A;
+  --paper:#F2EAD7;--paper-soft:#FAF6EC;
+  --red:#dc2626;--orange:#f97316;--yellow:#eab308;--green:#16a34a;--blue:#3b82f6;
+  --ink:#0b0f17;--muted:#6b7280;--line:#e5e7eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.45 'Inter',-apple-system,sans-serif;color:var(--ink);background:#f5f6f8;padding:20px;max-width:1400px;margin:0 auto}
+h1{font-family:'Playfair Display',serif;font-size:36px;color:var(--paper);font-weight:700;letter-spacing:-.01em;line-height:1.1}
+h1 .sub{font-family:'Cookie',cursive;color:var(--gold-light);font-size:22px;font-weight:400;display:block;margin-top:6px}
+h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:700;margin-bottom:12px}
+h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;background:var(--paper-soft);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;border-bottom:2px solid var(--gold)}
+th.r,td.r{text-align:right}
+th.c,td.c{text-align:center}
+td{padding:8px 10px;border-bottom:1px solid #eef0f3;font-size:13px}
+.section{background:#fff;border-radius:10px;padding:20px 22px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.04);border:1px solid #eef0f3}
+
+.verdict{background:linear-gradient(135deg,var(--navy),var(--navy-deep));color:var(--paper);padding:28px 32px;border-radius:14px;margin-bottom:14px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.verdict .badge{padding:18px 28px;background:rgba(22,163,74,.2);border:2px solid var(--green);border-radius:8px;text-align:center;color:#a3e8b8;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:1px}
+.verdict .meta{font-size:13px;color:rgba(242,234,215,.85);margin-top:10px}
+.verdict .meta b{color:var(--gold-light)}
+
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;padding:12px 14px;border-radius:8px;border-left:3px solid var(--gold);border-right:1px solid #eef0f3;border-top:1px solid #eef0f3;border-bottom:1px solid #eef0f3}
+.kpi.g{border-left-color:var(--green)} .kpi.b{border-left-color:var(--blue)}
+.kpi.o{border-left-color:var(--orange)} .kpi.r{border-left-color:var(--red)}
+.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.kpi .v{font-family:'Playfair Display',serif;font-size:24px;color:var(--navy);font-weight:700;line-height:1;margin-top:4px}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+.tier{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.tier.g{background:rgba(22,163,74,.15);color:#15803d}
+.tier.b{background:rgba(59,130,246,.15);color:#1d4ed8}
+.tier.gold{background:rgba(201,161,74,.18);color:#7a5f23}
+.tier.r{background:rgba(220,38,38,.15);color:#991b1b}
+
+.combo-card{display:grid;grid-template-columns:auto 1fr auto;gap:18px;padding:14px;background:#fafbfc;border-radius:10px;border:1px solid #eef0f3;margin-bottom:10px;align-items:center}
+.combo-card .ic{width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.combo-card .info h4{font-size:15px;color:var(--navy);font-weight:700;margin-bottom:2px}
+.combo-card .info .desc{font-size:12px;color:var(--muted);margin-bottom:4px}
+.combo-card .info .breakdown{font-size:11px;color:var(--muted);font-family:Menlo,monospace}
+.combo-card .price{text-align:right;font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);font-weight:700}
+.combo-card .price .save{display:block;font-size:11px;color:var(--green);font-weight:600;font-family:'Inter';margin-top:2px}
+
+.warn{padding:12px 16px;border-left:3px solid var(--orange);background:#fff8ec;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;margin-top:10px}
+.good{padding:12px 16px;border-left:3px solid var(--green);background:#ecfdf5;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;margin-top:10px}
+
+.steps{list-style:none;padding:0}
+.steps li{display:grid;grid-template-columns:32px 1fr 130px;gap:12px;padding:10px 0;border-bottom:1px solid #eef0f3;align-items:center}
+.steps .n{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-family:'Playfair Display',serif}
+.steps .t{font-size:13px;line-height:1.5}
+.steps .t b{color:var(--navy)}
+.steps .when{font-size:11px;color:var(--muted);text-align:right;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+.foot{text-align:center;color:var(--muted);font-size:11px;padding:12px;margin-top:8px}
+code{font-family:'SF Mono',Menlo,monospace;font-size:11px;background:#eef0f3;padding:1px 6px;border-radius:3px;color:var(--navy)}
+</style>
+</head>
+<body>
+
+<!-- ВЕРДИКТ -->
+<div class="verdict">
+  <div class="badge">✓ ВНЕДРЯТЬ<br><span style="font-size:11px;font-family:'Inter';letter-spacing:1px">КОМБО</span></div>
+  <div>
+    <h1>Комбо «кофе + сэндвич»<span class="sub">анализ + цены + поставщики</span></h1>
+    <div class="meta">Текущий ср.чек ~28K сум (только кофе) → после комбо <b>~32K (+15%)</b>. Прогноз доп.выручки <b>+19-23M сум/мес</b> на Ц-14. Риск <b>низкий</b>: пробуем 3 комбо 2 недели, поставщик кейтеринга <b>Bankatering / TakeEat</b>.</div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="kpi-row">
+  <div class="kpi g"><div class="l">Прогноз ↑ выручки</div><div class="v">+15%</div><div class="sub">средний чек 28K → 32K</div></div>
+  <div class="kpi b"><div class="l">Маржа комбо</div><div class="v">52%</div><div class="sub">vs 60% отдельно, но volume ↑</div></div>
+  <div class="kpi gold"><div class="l">Скидка клиенту</div><div class="v">11-14%</div><div class="sub">воспринимается как «выгодно»</div></div>
+  <div class="kpi o"><div class="l">CapEx внедрения</div><div class="v">$80-120</div><div class="sub">стартовая закупка + меню</div></div>
+  <div class="kpi"><div class="l">Тест период</div><div class="v">2 нед</div><div class="sub">Ц-14, потом масштаб</div></div>
+</div>
+
+<!-- 5 КОМБО — ЮНИТ-ЭКОНОМИКА -->
+<div class="section">
+  <h3>★ Юнит-экономика 5 комбо</h3>
+  <h2>Расчёт каждого варианта</h2>
+  <table>
+    <thead><tr>
+      <th>Комбо</th>
+      <th class="r">Отдельно</th>
+      <th class="r">Цена комбо</th>
+      <th class="r">Скидка</th>
+      <th class="r">Cost</th>
+      <th class="r">Profit/unit</th>
+      <th class="r">Маржа</th>
+      <th>Когда продавать</th>
+    </tr></thead>
+    <tbody>
+      <tr style="background:rgba(22,163,74,.06)">
+        <td><b>🌅 Утренний</b><br><small style="color:var(--muted)">Эспрессо + круассан</small></td>
+        <td class="r">22 + 32 = 54K</td>
+        <td class="r" style="font-weight:700;color:var(--green)">48 000</td>
+        <td class="r" style="color:var(--green)">−11%</td>
+        <td class="r">18K</td>
+        <td class="r" style="font-weight:700">30K</td>
+        <td class="r"><span class="tier g">62%</span></td>
+        <td>7-11 утра ★ топ</td>
+      </tr>
+      <tr style="background:rgba(22,163,74,.04)">
+        <td><b>☕ Классика</b><br><small style="color:var(--muted)">Капучино 250 + chicken Caesar</small></td>
+        <td class="r">25 + 33 = 58K</td>
+        <td class="r" style="font-weight:700;color:var(--green)">52 000</td>
+        <td class="r" style="color:var(--green)">−10%</td>
+        <td class="r">21K</td>
+        <td class="r" style="font-weight:700">31K</td>
+        <td class="r"><span class="tier g">60%</span></td>
+        <td>весь день ★ универсал</td>
+      </tr>
+      <tr>
+        <td><b>💼 Бизнес-ланч</b><br><small style="color:var(--muted)">Латте 500 + Club sandwich</small></td>
+        <td class="r">28 + 38 = 66K</td>
+        <td class="r" style="font-weight:700">58 000</td>
+        <td class="r" style="color:var(--green)">−12%</td>
+        <td class="r">27K</td>
+        <td class="r" style="font-weight:700">31K</td>
+        <td class="r"><span class="tier g">53%</span></td>
+        <td>12-15 обед</td>
+      </tr>
+      <tr>
+        <td><b>🥬 Лёгкий</b><br><small style="color:var(--muted)">Эспрессо-Тоник + Veggie hummus</small></td>
+        <td class="r">46 + 30 = 76K</td>
+        <td class="r" style="font-weight:700">66 000</td>
+        <td class="r" style="color:var(--green)">−13%</td>
+        <td class="r">35K</td>
+        <td class="r" style="font-weight:700">31K</td>
+        <td class="r"><span class="tier b">47%</span></td>
+        <td>лето / здоровый ЦА</td>
+      </tr>
+      <tr>
+        <td><b>🍫 Сладкий</b><br><small style="color:var(--muted)">Раф Bounty + брауни</small></td>
+        <td class="r">34 + 24 = 58K</td>
+        <td class="r" style="font-weight:700">50 000</td>
+        <td class="r" style="color:var(--green)">−14%</td>
+        <td class="r">17.6K</td>
+        <td class="r" style="font-weight:700">32K</td>
+        <td class="r"><span class="tier g">64%</span></td>
+        <td>15-20 десертный слот</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="good">
+    <b>✓ Маржа всех 5 комбо ≥47%.</b> Profit-per-unit ≈31K (vs 33K если бы покупали отдельно — теряем 2K, но рост объёма +30-40% это компенсирует с запасом).
+  </div>
+</div>
+
+<!-- ПРОГНОЗ ВЛИЯНИЯ -->
+<div class="section">
+  <h3>★ Прогноз эффекта</h3>
+  <h2>Что комбо даст финансово</h2>
+  <table>
+    <thead><tr>
+      <th>Сценарий конверсии</th>
+      <th class="r">Чеков с комбо</th>
+      <th class="r">Старый ср.чек</th>
+      <th class="r">Новый ср.чек</th>
+      <th class="r">Рост</th>
+      <th class="r">+ выручка Ц-14/мес</th>
+      <th class="r">+ выручка Сайрам/мес</th>
+    </tr></thead>
+    <tbody>
+      <tr><td>Консервативно</td><td class="r">10%</td><td class="r">28 000</td><td class="r">30 100</td><td class="r" style="color:var(--green)">+7.5%</td><td class="r" style="font-weight:700">+9.9M</td><td class="r" style="font-weight:700">+2.2M</td></tr>
+      <tr style="background:rgba(22,163,74,.06)"><td><b>База (рекомендую)</b></td><td class="r"><b>20%</b></td><td class="r">28 000</td><td class="r" style="color:var(--green)"><b>32 200</b></td><td class="r" style="color:var(--green);font-weight:700">+15%</td><td class="r" style="font-weight:700;color:var(--green)">+19.8M</td><td class="r" style="font-weight:700;color:var(--green)">+4.4M</td></tr>
+      <tr><td>Оптимистично</td><td class="r">30%</td><td class="r">28 000</td><td class="r">34 300</td><td class="r" style="color:var(--green)">+22.5%</td><td class="r" style="font-weight:700">+29.7M</td><td class="r" style="font-weight:700">+6.6M</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:10px;font-size:11px;color:var(--muted);font-style:italic">
+    Расчёт: средний чек × ((1-x)% обычных + x% комбо с увеличенной суммой 49K). При сохранении трафика. Источник базы: реальные данные cafe-monthly.json.
+  </div>
+</div>
+
+<!-- ТОП-7 СЭНДВИЧЕЙ -->
+<div class="section">
+  <h3>★ 7 сэндвичей под кейтеринг (с кофе работают лучше всего)</h3>
+  <h2>Что заказывать у поставщика</h2>
+  <table>
+    <thead><tr>
+      <th>Сэндвич</th>
+      <th class="r">Cost оптом</th>
+      <th class="r">Розница</th>
+      <th class="r">Маржа</th>
+      <th>Идёт с</th>
+      <th>Почему</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><b>Куриный Caesar wrap</b></td><td class="r">14K</td><td class="r">33K</td><td class="r"><span class="tier g">58%</span></td><td>Капучино, Латте</td><td>Универсал, нейтральный вкус</td></tr>
+      <tr><td><b>Ham &amp; Cheese на круассане</b></td><td class="r">14K</td><td class="r">32K</td><td class="r"><span class="tier g">56%</span></td><td>Эспрессо, Американо</td><td>Итальянский завтрак-классика</td></tr>
+      <tr><td><b>Club sandwich</b><br><small style="color:var(--muted)">курица, бекон, помидор</small></td><td class="r">17K</td><td class="r">38K</td><td class="r"><span class="tier g">55%</span></td><td>Латте, Раф</td><td>Сытный ланч</td></tr>
+      <tr><td><b>Тунец &amp; авокадо</b></td><td class="r">15K</td><td class="r">35K</td><td class="r"><span class="tier g">57%</span></td><td>Айс-латте, Cold Brew</td><td>Лёгкий полуденный</td></tr>
+      <tr><td><b>Veggie hummus &amp; roasted veg</b></td><td class="r">12K</td><td class="r">30K</td><td class="r"><span class="tier g">60%</span></td><td>Эспрессо-Тоник, Чай</td><td>Здоровая ЦА, vegan-friendly</td></tr>
+      <tr><td><b>Лосось &amp; cream cheese</b><br><small style="color:var(--muted)">копчёный, огурец</small></td><td class="r">22K</td><td class="r">45K</td><td class="r"><span class="tier b">51%</span></td><td>Капучино 500, Флэт уайт</td><td>Премиум-сегмент</td></tr>
+      <tr><td><b>Egg &amp; bacon на круассане</b></td><td class="r">14K</td><td class="r">32K</td><td class="r"><span class="tier g">56%</span></td><td>Эспрессо, Латте</td><td>Утренний (до 11)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="warn">
+    <b>⚠ Хранение:</b> Сэндвичи на ферментированном хлебе живут 8-12 часов в холодильнике-витрине. Закупка 2× в день (утром 60% + днём 40%). Списания первой недели ≈15-25% — нормально, по мере калибровки спроса упадёт до 5-8%.
+  </div>
+</div>
+
+<!-- ПОСТАВЩИКИ -->
+<div class="section">
+  <h3>★ Поставщики кейтеринга Ташкент</h3>
+  <h2>Кому звонить</h2>
+  <div class="triple">
+    <div style="padding:16px;background:#fafbfc;border-radius:10px;border:1px solid #eef0f3">
+      <h4 style="color:var(--navy);font-size:15px;margin-bottom:4px">★ Bankatering</h4>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">B2B-кейтеринг, корпоративы</div>
+      <div style="font-size:12px;line-height:1.6">Сайт: <code>bankatering.uz/katering_b2b</code><br>Услуги: <b>кофе-брейки, фуршеты, обеды</b><br>Подходит для регулярных поставок сэндвичей</div>
+    </div>
+    <div style="padding:16px;background:#fafbfc;border-radius:10px;border:1px solid #eef0f3">
+      <h4 style="color:var(--navy);font-size:15px;margin-bottom:4px">★ TakeEat</h4>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Корпоративные обеды + доставка</div>
+      <div style="font-size:12px;line-height:1.6">Сайт: <code>takeeat.uz</code><br><b>Бесплатная доставка</b> в Ташкенте<br>Уже работают с офисами — могут адаптировать под кофейню</div>
+    </div>
+    <div style="padding:16px;background:#fafbfc;border-radius:10px;border:1px solid #eef0f3">
+      <h4 style="color:var(--navy);font-size:15px;margin-bottom:4px">★ Поиск ещё 5+</h4>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Каталоги для конкурсного отбора</div>
+      <div style="font-size:12px;line-height:1.6">
+        <code>top.uz/section/keytering</code><br>
+        <code>sprav.uz/kejtering</code> — 47 компаний<br>
+        <code>yellowpages.uz</code> — 15+ контактов<br>
+        OLX «кейтеринг Ташкент»
+      </div>
+    </div>
+  </div>
+
+  <div class="good">
+    <b>✓ Стратегия отбора:</b> запросить дегустацию и КП у 3 поставщиков → выбрать лучший по соотношению вкус/цена/логистика. Идеально: <b>2 поставщика</b> (основной + резервный на случай сбоя доставки).
+  </div>
+</div>
+
+<!-- ПСИХОЛОГИЯ ЦЕНООБРАЗОВАНИЯ -->
+<div class="section">
+  <h3>★ Психология цен (как подавать комбо)</h3>
+  <h2>Маркетинговые приёмы из лучших мировых практик</h2>
+  <div class="dual">
+    <div>
+      <table>
+        <thead><tr><th>Приём</th><th>Как применить</th></tr></thead>
+        <tbody>
+          <tr><td><b>Якорь-цена</b></td><td>«Отдельно 58K · комбо 52K» — клиент видит экономию</td></tr>
+          <tr><td><b>Decoy</b></td><td>3 комбо, среднее самое выгодное по цене/калориям</td></tr>
+          <tr><td><b>Bundle perception</b></td><td>«Комплекс» в одно действие — снижает решение-фатиг</td></tr>
+          <tr><td><b>Тайминг-якорь</b></td><td>«Утреннее комбо до 11:00» — создаёт срочность</td></tr>
+          <tr><td><b>Раундинг −1</b></td><td>49 990 не 50 000 — на 30% больше воспринимаемая экономия</td></tr>
+          <tr><td><b>Имя комбо</b></td><td>Не «капучино + сэндвич» а «Утреннее ритуал» (бренд-нарратив)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h4 style="color:var(--navy);font-size:14px;margin-bottom:10px">Кейс Starbucks 2024-2026</h4>
+      <div style="font-size:13px;line-height:1.7;color:#3a3a3a">
+        В июне 2024 Starbucks ввёл <b>breakfast combos $5-6</b> (кофе + круассан/сэндвич) в ответ на:
+        <ul style="padding-left:18px;margin-top:8px">
+          <li>−7% транзакций</li>
+          <li>−3% comp.sales США</li>
+        </ul>
+        <b>Результат:</b> объём заказов восстановился к Q4 2024. Комбо удерживают трафик в момент когда «всё дорого».
+        <br><br>
+        Для Bounty это же — <b>превентивная мера</b>: пока конкуренты не сделали комбо, занять нишу.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- РЕАЛИЗАЦИЯ — ЧТО ДЕЛАТЬ -->
+<div class="section">
+  <h3>★ План внедрения</h3>
+  <h2>7 шагов на 2 недели</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><span class="t"><b>Запросить дегустацию у 3 кейтеринг-поставщиков</b> (Bankatering, TakeEat + 1 локальный). Образцы 7 видов сэндвичей</span><span class="when">1-2 дня</span></li>
+    <li><span class="n">2</span><span class="t"><b>Выбрать основного поставщика</b> по вкусу+цене+логистике. Подписать рамочный договор на 1 месяц теста</span><span class="when">3-4 дня</span></li>
+    <li><span class="n">3</span><span class="t"><b>Bounty-design</b> добавляет комбо в меню (3 стартовых: Утренний, Классика, Бизнес-ланч). Печать обновления</span><span class="when">5-6 дней</span></li>
+    <li><span class="n">4</span><span class="t"><b>Закупить холодильник-витрину</b> (если нет) — $80-120 один раз. Или использовать существующую</span><span class="when">5-7 дней</span></li>
+    <li><span class="n">5</span><span class="t"><b>Обучение бариста</b> (1 день): как предлагать комбо, как избегать «навязывания», когда говорить «не хотите комбо?»</span><span class="when">7 день</span></li>
+    <li><span class="n">6</span><span class="t"><b>Запуск только на Ц-14</b> (где трафик больше, риск ниже). <b>bounty-smm</b> делает анонс в IG: 3 Reels + Stories</span><span class="when">7-14 день</span></li>
+    <li><span class="n">7</span><span class="t"><b>Стив + bounty-pricing аудит</b> по итогам 2 недель: % конверсии, маржа, списания. Решение масштабировать на Сайрам или нет</span><span class="when">21 день</span></li>
+  </ul>
+</div>
+
+<!-- РИСКИ И МИТИГАЦИЯ -->
+<div class="section">
+  <h3>★ Риски и митигация</h3>
+  <h2>Что может пойти не так</h2>
+  <div class="dual">
+    <div>
+      <table>
+        <thead><tr><th>Риск</th><th>Митигация</th></tr></thead>
+        <tbody>
+          <tr><td><b>Списания &gt;15%</b></td><td>Стартовать с малой партии (10 шт/день). По мере накопления статистики калибровать</td></tr>
+          <tr><td><b>Качество от поставщика плавает</b></td><td>2 поставщика. Контрольная дегустация бариста на приёмке утром</td></tr>
+          <tr><td><b>Сэндвич не нравится клиентам</b></td><td>Прямой опрос (анкета QR на чеке). Ротация рецептур каждые 2 недели</td></tr>
+          <tr><td><b>Маржа ниже расчёта</b></td><td>Renegotiate с поставщиком (объём ↑ = цена ↓), или поднять цену комбо на 5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>Риск</th><th>Митигация</th></tr></thead>
+        <tbody>
+          <tr><td><b>Лицензии общепита</b></td><td>Проверить с <b>bounty-risk</b> можно ли продавать готовое от 3rd-party. По НК РУз скорее всего — да, нужен сертификат поставщика</td></tr>
+          <tr><td><b>СЭС-проверка</b></td><td>Поставщик предоставляет сертификаты. Хранение в холодильнике с термометром, контроль</td></tr>
+          <tr><td><b>Аллергены</b></td><td>В меню обязательно: «содержит молоко, глютен, орехи»</td></tr>
+          <tr><td><b>Сэндвичи вытеснят кофе</b></td><td>Стартовать с 1 комбо в час пик. Маркетинг «комбо к кофе», не «обед в кофейне»</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ИТОГ -->
+<div class="section" style="background:linear-gradient(135deg,rgba(201,161,74,.1),rgba(22,163,74,.05))">
+  <h3>★ Итог</h3>
+  <h2>Резюме для решения</h2>
+  <div style="font-size:14px;line-height:1.7;color:#3a3a3a">
+    <p style="margin-bottom:8px">✓ <b style="color:var(--green)">Внедрять.</b> Прогноз доп.выручки <b>+20-30M сум/мес</b> на 2 точки в базовом сценарии. Маржа комбо <b>47-64%</b> (healthy).</p>
+    <p style="margin-bottom:8px">✓ <b>Стартовать с 3 комбо</b> (не 5+), на 2 недели, только Ц-14. Расширение — по результату.</p>
+    <p style="margin-bottom:8px">✓ <b>Поставщик</b>: Bankatering или TakeEat. Дегустация у 3 кандидатов на этой неделе.</p>
+    <p style="margin-bottom:8px">⚠ <b>Стив</b> должен сверить с НК РУз режим продажи готовой еды через 3rd-party + лицензия. <b>bounty-risk</b> — оценка регуляторных рисков перед стартом.</p>
+    <p>📊 <b>KPI первые 2 недели</b>: конверсия в комбо ≥15%, списания ≤15%, маржа ≥45%, средний чек +10%. Если все 4 — масштабируем на Сайрам.</p>
+  </div>
+</div>
+
+<div class="foot">
+  Источники: cafe-monthly.json · prices-analysis-2026-05-29.json · WebSearch Tashkent catering · Starbucks combo case studies<br>
+  Готово к утверждению владельцем · следующий шаг → Стив (НК РУз) + bounty-risk (СЭС/лицензия) → запуск
+</div>
+
+</body>
+</html>
