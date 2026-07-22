@@ -134,7 +134,8 @@ img{max-width:100%;display:block}
 .locations h2{color:var(--paper)}
 .locations .script{color:var(--gold);font-size:42px;display:block;margin-top:4px}
 .locations .eyebrow{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;font-weight:500}
-.location-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px}
+.location-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+@media(max-width:1100px){.location-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){.location-grid{grid-template-columns:1fr}}
 .location-card{background:rgba(242,234,215,.04);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:border-color .25s}
 .location-card:hover{border-color:var(--gold)}
@@ -263,7 +264,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
         <div class="drink-info">
           <h3>Эспрессо</h3>
           <p class="desc">Двойной шот. Тёмная обжарка. Утренний удар по сонливости.</p>
-          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">22 / 26 000</span></div>
+          <div class="price-row"><span class="size">одинарный / двойной</span><span class="price">26 / 32 000</span></div>
         </div>
       </div>
 
@@ -272,7 +273,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
         <div class="drink-info">
           <h3>Капучино</h3>
           <p class="desc">Молочная пена, тонкая корица. Классика, которая не подведёт.</p>
-          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">25 / 30 000</span></div>
+          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">30 / 36 000</span></div>
         </div>
       </div>
 
@@ -281,7 +282,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
         <div class="drink-info">
           <h3>Раф Bounty</h3>
           <p class="desc">Сливки, сахар, шот эспрессо, ваниль. Тёплый и обнимающий.</p>
-          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">34 / 46 500</span></div>
+          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">40 / 46 000</span></div>
         </div>
       </div>
 
@@ -290,7 +291,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
         <div class="drink-info">
           <h3>Флэт Уайт</h3>
           <p class="desc">Премиум-молочный. Плотный шот + бархатное молоко. Без сахара.</p>
-          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">30 / 37 500</span></div>
+          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">36 / 45 000</span></div>
         </div>
       </div>
 
@@ -299,7 +300,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
         <div class="drink-info">
           <h3>Эспрессо-Тоник</h3>
           <p class="desc">Освежающий микс эспрессо и тоника. Лёд, лимон. Лето в стакане.</p>
-          <div class="price-row"><span class="size">500 мл</span><span class="price">46 000 сум</span></div>
+          <div class="price-row"><span class="size">500 мл</span><span class="price">45 000 сум</span></div>
         </div>
       </div>
 
@@ -308,7 +309,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
         <div class="drink-info">
           <h3>Cold Brew</h3>
           <p class="desc">12 часов холодной экстракции. Мягко, без горечи, насыщенно.</p>
-          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">28 / 38 000</span></div>
+          <div class="price-row"><span class="size">250 / 500 мл</span><span class="price">35 / 45 000</span></div>
         </div>
       </div>
 
@@ -353,7 +354,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
 <section class="locations" id="locations">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">★ TWO PLACES ★</div>
+      <div class="eyebrow">★ THREE PLACES ★</div>
       <h2>Найди нас<span class="script">в двух шагах</span></h2>
     </div>
     <div class="location-grid">
@@ -383,6 +384,17 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
             <a href="https://maps.app.goo.gl/iok3Hvfezpa393VC8" target="_blank">Google Maps</a>
             <a href="https://yandex.ru/maps/org/218338813837/" target="_blank">Яндекс.карты</a>
           </div>
+        </div>
+      </div>
+
+      <div class="location-card">
+        <div class="location-img" style="background-image:url('assets/img/kd-render-facade.jpg')">
+          <div class="badge-247">🔜 Открытие скоро</div>
+        </div>
+        <div class="location-info">
+          <h3>Bounty Катта Дархон</h3>
+          <div class="addr">ул. Катта Дархон 15 · Ташкент</div>
+          <div class="hours">Скоро открытие — осень 2026</div>
         </div>
       </div>
 
