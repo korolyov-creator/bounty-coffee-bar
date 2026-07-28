@@ -548,6 +548,22 @@ function acceptOferta(){
   localStorage.setItem('bounty_oferta', JSON.stringify({v: OFERTA_VERSION, ts: new Date().toISOString()}));
   document.getElementById('oferta-overlay').classList.remove('show');
   if (navigator.vibrate) navigator.vibrate(20);
+  syncClient(true);
+}
+
+// === SYNC: отправка данных клиента на сервер (база для рассылок) ===
+function syncClient(force){
+  const c = getClient();
+  let o = null; try { o = JSON.parse(localStorage.getItem('bounty_oferta')); } catch(e){}
+  if (!c || !o) return;
+  const today = new Date().toISOString().slice(0,10);
+  if (!force && localStorage.getItem('bounty_sync_day') === today) return;
+  fetch('../api/register.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name:c.name, phone:c.phone, id:c.id, reg:c.reg,
+      stamps:c.stamps, total:c.total, free:c.free, oferta_v:o.v, oferta_ts:o.ts})
+  }).then(r => { if (r.ok) localStorage.setItem('bounty_sync_day', today); }).catch(()=>{});
 }
 
 // === LOYALTY: клиент, панч-карта «6-й кофе бесплатно» ===
@@ -565,6 +581,7 @@ function registerClient(){
   saveClient({name, phone, id, stamps:0, total:0, free:0, reg: new Date().toISOString().slice(0,10)});
   document.getElementById('reg-overlay').classList.remove('show');
   if (navigator.vibrate) navigator.vibrate([20,40,20]);
+  syncClient(true);
 }
 
 function stampPurchase(){
@@ -624,7 +641,7 @@ function renderLoyalty(){
   document.getElementById('prof-total').textContent = c.total;
   document.getElementById('prof-free').textContent = c.free;
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); });
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); });
 
 // === PWA Install ===
 let deferredPrompt;
@@ -650,9 +667,22 @@ setTimeout(()=>{
   }
 }, 4000);
 
-// === Service Worker ===
+// === Service Worker + автообновление ===
+// Данные клиента живут в localStorage и обновлений не боятся.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js').catch(e => console.log('SW err', e));
+  navigator.serviceWorker.register('service-worker.js').then(reg => {
+    reg.update();
+    setInterval(() => reg.update(), 60 * 60 * 1000);
+  }).catch(e => console.log('SW err', e));
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) { hadController = true; return; }
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 14px);background:var(--gold);color:var(--navy);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:400;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+    t.textContent = '✨ Приложение обновлено до свежей версии';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+  });
 }
 </script>
 

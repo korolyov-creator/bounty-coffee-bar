@@ -1,5 +1,5 @@
-// Bounty PWA · Service Worker v2
-const CACHE = 'bounty-app-v2';
+// Bounty PWA · Service Worker v3
+const CACHE = 'bounty-app-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -22,9 +22,15 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network-first для HTML (чтобы получать обновления), cache-first для статики
+  // API и не-GET запросы не кэшируем — всегда сеть
+  if (e.request.method !== 'GET' || e.request.url.includes('/api/')) return;
+  // Network-first для HTML (обновления при каждом коннекте) + докэш свежей версии для офлайна
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
-    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
+    e.respondWith(fetch(e.request).then(resp => {
+      const copy = resp.clone();
+      caches.open(CACHE).then(c => c.put('./index.html', copy));
+      return resp;
+    }).catch(() => caches.match('./index.html')));
   } else {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
       const copy = resp.clone();
