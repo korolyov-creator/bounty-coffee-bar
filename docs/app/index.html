@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Cookie&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --navy:#0F1F3A;--navy-deep:#091529;--navy-light:#1e3a5f;
@@ -123,6 +124,26 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .install-banner button{margin-left:auto;background:var(--navy);color:var(--gold);border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer}
 .install-banner .x{background:transparent;color:var(--navy);padding:4px 8px;font-size:18px}
 
+/* REGISTRATION OVERLAY */
+.reg-overlay{position:absolute;inset:0;background:var(--navy-deep);z-index:200;display:none;flex-direction:column;justify-content:center;padding:32px 26px calc(var(--safe-bot) + 32px)}
+.reg-overlay.show{display:flex;animation:fade .3s ease}
+.reg-overlay .logo{font-family:'Cookie',cursive;font-size:52px;color:var(--gold);text-align:center;line-height:1;margin-bottom:6px}
+.reg-overlay .sub-t{text-align:center;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:rgba(242,234,215,.6);margin-bottom:36px}
+.reg-overlay label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);font-weight:700;display:block;margin:16px 0 6px}
+.reg-overlay input{width:100%;padding:14px;background:rgba(242,234,215,.07);border:1px solid rgba(201,161,74,.3);border-radius:10px;color:var(--paper);font-size:16px;font-family:inherit;outline:none}
+.reg-overlay input:focus{border-color:var(--gold)}
+.reg-overlay .hint{font-size:12px;color:rgba(242,234,215,.5);text-align:center;margin-top:14px;line-height:1.5}
+
+/* PUNCH CARD (6-й кофе бесплатно) */
+.punch{display:flex;justify-content:space-between;gap:6px;margin:14px 0 4px}
+.punch .cup{flex:1;aspect-ratio:1;border-radius:50%;border:2px dashed rgba(15,31,58,.35);display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(15,31,58,.35);transition:all .25s}
+.punch .cup.filled{border:2px solid var(--navy);background:var(--navy);color:var(--gold);transform:scale(1.05)}
+.punch .cup.gift{border:2px solid rgba(15,31,58,.5);font-size:18px}
+.punch .cup.gift.ready{background:#fff;border-color:#fff;color:var(--gold-deep);animation:bounce .6s infinite alternate}
+@keyframes bounce{from{transform:scale(1)}to{transform:scale(1.12)}}
+.qr-real{width:200px;height:200px;margin:14px auto;display:flex;align-items:center;justify-content:center}
+.qr-real img,.qr-real canvas{width:200px !important;height:200px !important}
+
 /* UTILS */
 .row-flex{display:flex;gap:10px}
 .row-flex .col{flex:1}
@@ -140,24 +161,19 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <main class="screen active" id="scr-home">
     <div class="scr-head">
       <div class="eyebrow">★ С ВОЗВРАЩЕНИЕМ</div>
-      <h1>Привет<span class="script">Дмитрий</span></h1>
+      <h1>Привет<span class="script" id="home-name">гость</span></h1>
       <div class="greet">Тихая пауза ждёт тебя — Ц-14 открыт 24/7</div>
     </div>
 
-    <!-- Loyalty card preview -->
-    <div class="card gold">
-      <h3>★ ТВОИ STARS</h3>
+    <!-- Loyalty punch preview -->
+    <div class="card gold" onclick="go('card')" style="cursor:pointer">
+      <h3>★ 6-Й КОФЕ БЕСПЛАТНО</h3>
       <div class="stars-row">
-        <span class="count">42</span>
-        <span class="label">/ 50 до награды</span>
+        <span class="count" id="home-stamps">0</span>
+        <span class="label">/ 5 покупок</span>
       </div>
-      <div class="progress"><div class="bar" style="width:84%"></div></div>
-      <div class="sub" style="margin-top:10px;opacity:.85">8 stars до бесплатного капучино ☕</div>
-      <div class="tier-badges">
-        <span>● Green</span>
-        <span class="active">● Gold</span>
-        <span>● Reserve</span>
-      </div>
+      <div class="progress"><div class="bar" id="home-bar" style="width:0%"></div></div>
+      <div class="sub" style="margin-top:10px;opacity:.85" id="home-loyalty-sub">Покажи карту бариста при покупке ☕</div>
     </div>
 
     <!-- Текущая акция -->
@@ -199,67 +215,33 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <main class="screen" id="scr-card">
     <div class="scr-head">
       <div class="eyebrow">★ КАРТА ЛОЯЛЬНОСТИ</div>
-      <h1>Покажи бариста<span class="script">для начисления stars</span></h1>
+      <h1>Покажи бариста<span class="script">для отметки покупки</span></h1>
     </div>
 
     <div class="qr-card">
-      <div class="name">BOUNTY · DMITRIY</div>
-      <div class="id">BNT-2026-04F9-K1</div>
-      <svg class="qr-img" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="200" fill="#fff"/>
-        <g fill="#0F1F3A">
-          <!-- Stylized QR placeholder (3 corner markers + dots) -->
-          <rect x="10" y="10" width="40" height="40"/>
-          <rect x="18" y="18" width="24" height="24" fill="#fff"/>
-          <rect x="22" y="22" width="16" height="16"/>
-          <rect x="150" y="10" width="40" height="40"/>
-          <rect x="158" y="18" width="24" height="24" fill="#fff"/>
-          <rect x="162" y="22" width="16" height="16"/>
-          <rect x="10" y="150" width="40" height="40"/>
-          <rect x="18" y="158" width="24" height="24" fill="#fff"/>
-          <rect x="22" y="162" width="16" height="16"/>
-          <!-- Random dots для имитации QR -->
-          <rect x="60" y="14" width="8" height="8"/><rect x="76" y="14" width="8" height="8"/>
-          <rect x="92" y="22" width="8" height="8"/><rect x="108" y="14" width="8" height="8"/>
-          <rect x="124" y="22" width="8" height="8"/><rect x="68" y="30" width="8" height="8"/>
-          <rect x="84" y="38" width="8" height="8"/><rect x="100" y="30" width="8" height="8"/>
-          <rect x="116" y="38" width="8" height="8"/><rect x="132" y="30" width="8" height="8"/>
-          <rect x="14" y="60" width="8" height="8"/><rect x="22" y="76" width="8" height="8"/>
-          <rect x="38" y="68" width="8" height="8"/><rect x="60" y="60" width="8" height="8"/>
-          <rect x="76" y="68" width="8" height="8"/><rect x="92" y="76" width="8" height="8"/>
-          <rect x="108" y="60" width="8" height="8"/><rect x="124" y="76" width="8" height="8"/>
-          <rect x="140" y="68" width="8" height="8"/><rect x="156" y="76" width="8" height="8"/>
-          <rect x="172" y="60" width="8" height="8"/><rect x="60" y="92" width="8" height="8"/>
-          <rect x="76" y="100" width="8" height="8"/><rect x="92" y="108" width="8" height="8"/>
-          <rect x="108" y="92" width="8" height="8"/><rect x="124" y="100" width="8" height="8"/>
-          <rect x="140" y="108" width="8" height="8"/><rect x="14" y="100" width="8" height="8"/>
-          <rect x="30" y="108" width="8" height="8"/><rect x="46" y="92" width="8" height="8"/>
-          <rect x="60" y="124" width="8" height="8"/><rect x="76" y="132" width="8" height="8"/>
-          <rect x="92" y="140" width="8" height="8"/><rect x="108" y="124" width="8" height="8"/>
-          <rect x="124" y="132" width="8" height="8"/><rect x="140" y="140" width="8" height="8"/>
-          <rect x="156" y="124" width="8" height="8"/><rect x="172" y="140" width="8" height="8"/>
-          <rect x="60" y="156" width="8" height="8"/><rect x="76" y="164" width="8" height="8"/>
-          <rect x="92" y="172" width="8" height="8"/><rect x="108" y="156" width="8" height="8"/>
-          <rect x="124" y="164" width="8" height="8"/><rect x="140" y="172" width="8" height="8"/>
-          <rect x="156" y="172" width="8" height="8"/><rect x="172" y="156" width="8" height="8"/>
-        </g>
-      </svg>
-      <div class="balance">Баланс на карте<b>185 000 сум</b></div>
+      <div class="name" id="card-name">BOUNTY</div>
+      <div class="id" id="card-id">—</div>
+      <div class="qr-real" id="qr-real"></div>
+
+      <!-- Панч-карта: 5 покупок + подарок -->
+      <div class="punch" id="punch"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px" id="punch-hint">5 покупок — шестой кофе бесплатно</div>
     </div>
 
     <div class="row-flex" style="margin-top:14px">
-      <button class="btn-big col" style="font-size:13px">Пополнить</button>
-      <button class="btn-big btn-ghost col" style="font-size:13px">История</button>
+      <button class="btn-big col" style="font-size:13px" onclick="stampPurchase()">☕ Отметить покупку</button>
+      <button class="btn-big btn-ghost col" style="font-size:13px;display:none" id="redeem-btn" onclick="redeemFree()">🎁 Бесплатный кофе</button>
     </div>
+    <div class="tip">Кнопки нажимает бариста — попроси отметить покупку</div>
 
     <div class="divider"></div>
 
     <div class="card">
       <h3>★ КАК РАБОТАЕТ</h3>
       <p style="font-size:13px;line-height:1.6;color:rgba(242,234,215,.75)">
-        Каждые <b style="color:var(--gold)">10 000 сум</b> в заказе = <b style="color:var(--gold)">1 star</b>. Накопил <b style="color:var(--gold)">50 stars</b> — получи бесплатный напиток до 35 000 сум.
+        Каждая покупка любого напитка = <b style="color:var(--gold)">1 отметка</b>. Собери <b style="color:var(--gold)">5 отметок</b> — <b style="color:var(--gold)">шестой напиток бесплатно</b> (до 35 000 сум).
         <br><br>
-        <b style="color:var(--gold)">100 stars</b> — любой напиток + десерт. <b style="color:var(--gold)">200 stars</b> — все напитки в обмен на твою историю в нашем IG.
+        Отметку ставит бариста на твоём телефоне при оплате. Карта действует во всех точках Bounty.
       </p>
     </div>
   </main>
@@ -317,14 +299,15 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ PROFILE ============ -->
   <main class="screen" id="scr-profile">
     <div class="prof-head">
-      <div class="ava">Д</div>
-      <div class="name">Дмитрий</div>
-      <div class="level">★ GOLD MEMBER</div>
+      <div class="ava" id="prof-ava">?</div>
+      <div class="name" id="prof-name">Гость</div>
+      <div class="level" id="prof-level">★ BOUNTY CLUB</div>
     </div>
 
     <div class="row-flex" style="margin-bottom:18px">
-      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700">42</div><div class="sub" style="margin-top:0">Stars сейчас</div></div>
-      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700">87</div><div class="sub" style="margin-top:0">Заказов всего</div></div>
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-stamps">0</div><div class="sub" style="margin-top:0">Отметок сейчас</div></div>
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-total">0</div><div class="sub" style="margin-top:0">Покупок всего</div></div>
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-free">0</div><div class="sub" style="margin-top:0">Бесплатных ☕</div></div>
     </div>
 
     <div class="menu-list-rows">
@@ -364,6 +347,20 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
     <div class="tip" style="margin-top:18px">Bounty App · v1.0 · 2026<br>Демо-прототип · реальный заказ и оплата — в разработке</div>
   </main>
+
+  <!-- REGISTRATION OVERLAY -->
+  <div class="reg-overlay" id="reg-overlay">
+    <div class="logo">Bounty</div>
+    <div class="sub-t">Coffee Bar · Клуб</div>
+    <label>Как тебя зовут?</label>
+    <input type="text" id="reg-name" placeholder="Имя" autocomplete="given-name" maxlength="30">
+    <label>Номер телефона</label>
+    <input type="tel" id="reg-phone" placeholder="+998 __ ___ __ __" autocomplete="tel" maxlength="17">
+    <div style="margin-top:26px">
+      <button class="btn-big" onclick="registerClient()">Получить карту ☕</button>
+    </div>
+    <div class="hint">Карта хранится на этом телефоне.<br>5 покупок — шестой кофе бесплатно.</div>
+  </div>
 
   <!-- Install banner (iOS hint) -->
   <div class="install-banner" id="install-banner">
@@ -500,6 +497,82 @@ function addItem(name){
   });
   renderMenu(Object.keys(MENU)[0]);
 })();
+
+// === LOYALTY: клиент, панч-карта «6-й кофе бесплатно» ===
+const PIN = '1414'; // код бариста
+const GOAL = 5;
+function getClient(){ try { return JSON.parse(localStorage.getItem('bounty_client')); } catch(e){ return null; } }
+function saveClient(c){ localStorage.setItem('bounty_client', JSON.stringify(c)); renderLoyalty(); }
+
+function registerClient(){
+  const name = document.getElementById('reg-name').value.trim();
+  const phone = document.getElementById('reg-phone').value.replace(/[^\d+]/g,'');
+  if (name.length < 2){ alert('Напиши имя'); return; }
+  if (phone.length < 9){ alert('Проверь номер телефона'); return; }
+  const id = 'BNT-' + phone.slice(-7) + '-' + Math.random().toString(36).slice(2,5).toUpperCase();
+  saveClient({name, phone, id, stamps:0, total:0, free:0, reg: new Date().toISOString().slice(0,10)});
+  document.getElementById('reg-overlay').classList.remove('show');
+  if (navigator.vibrate) navigator.vibrate([20,40,20]);
+}
+
+function stampPurchase(){
+  const c = getClient(); if (!c) return;
+  if (c.stamps >= GOAL){ alert('Карта полная — сначала выдай бесплатный кофе 🎁'); return; }
+  const pin = prompt('Код бариста:');
+  if (pin !== PIN){ if (pin !== null) alert('Неверный код'); return; }
+  c.stamps++; c.total++;
+  saveClient(c);
+  if (navigator.vibrate) navigator.vibrate(30);
+  if (c.stamps >= GOAL) alert('🎉 5 отметок! Следующий кофе — БЕСПЛАТНО');
+}
+
+function redeemFree(){
+  const c = getClient(); if (!c || c.stamps < GOAL) return;
+  const pin = prompt('Код бариста (выдача бесплатного кофе):');
+  if (pin !== PIN){ if (pin !== null) alert('Неверный код'); return; }
+  c.stamps = 0; c.free++; c.total++;
+  saveClient(c);
+  alert('🎁 Бесплатный кофе выдан. Наслаждайся!');
+}
+
+let qrObj = null;
+function renderLoyalty(){
+  const c = getClient();
+  const reg = document.getElementById('reg-overlay');
+  if (!c){ reg.classList.add('show'); return; }
+  reg.classList.remove('show');
+  // home
+  document.getElementById('home-name').textContent = c.name;
+  document.getElementById('home-stamps').textContent = c.stamps;
+  document.getElementById('home-bar').style.width = (c.stamps/GOAL*100) + '%';
+  document.getElementById('home-loyalty-sub').textContent = c.stamps >= GOAL
+    ? '🎁 Бесплатный кофе ждёт — покажи бариста!'
+    : 'Ещё ' + (GOAL - c.stamps) + ' — и кофе бесплатно ☕';
+  // card
+  document.getElementById('card-name').textContent = 'BOUNTY · ' + c.name.toUpperCase();
+  document.getElementById('card-id').textContent = c.id;
+  const qrEl = document.getElementById('qr-real');
+  if (typeof QRCode !== 'undefined'){
+    qrEl.innerHTML = '';
+    qrObj = new QRCode(qrEl, {text: c.id + '|' + c.phone, width: 200, height: 200, colorDark:'#0F1F3A', colorLight:'#ffffff'});
+  } else {
+    qrEl.innerHTML = '<div style="font-family:Menlo,monospace;font-size:20px;padding:60px 0">' + c.id + '</div>';
+  }
+  const punch = document.getElementById('punch');
+  let html = '';
+  for (let i = 0; i < GOAL; i++) html += '<div class="cup' + (i < c.stamps ? ' filled' : '') + '">☕</div>';
+  html += '<div class="cup gift' + (c.stamps >= GOAL ? ' ready' : '') + '">🎁</div>';
+  punch.innerHTML = html;
+  document.getElementById('redeem-btn').style.display = c.stamps >= GOAL ? 'block' : 'none';
+  // profile
+  document.getElementById('prof-ava').textContent = c.name[0].toUpperCase();
+  document.getElementById('prof-name').textContent = c.name;
+  document.getElementById('prof-level').textContent = c.free >= 3 ? '★ GOLD MEMBER' : '★ BOUNTY CLUB';
+  document.getElementById('prof-stamps').textContent = c.stamps;
+  document.getElementById('prof-total').textContent = c.total;
+  document.getElementById('prof-free').textContent = c.free;
+}
+window.addEventListener('load', renderLoyalty);
 
 // === PWA Install ===
 let deferredPrompt;
