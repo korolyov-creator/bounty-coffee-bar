@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Bounty · Заказы</title>
+<style>
+:root{--navy:#0F1F3A;--navy-deep:#0A1628;--gold:#D4AF37;--paper:#F2EAD7;--muted:#8B94A8}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--navy-deep);color:var(--paper);font:15px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif;padding:16px;padding-bottom:60px}
+h1{font-size:20px;margin-bottom:4px}
+h1 span{color:var(--gold)}
+.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filters button{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:8px 15px;font-size:13px;color:var(--paper);background:transparent;cursor:pointer}
+.filters button.sel{background:var(--gold);color:var(--navy);font-weight:700}
+.order{background:rgba(242,234,215,.05);border:1px solid rgba(212,175,55,.2);border-radius:14px;padding:14px;margin-bottom:12px}
+.order.st-ready{border-color:#4ade80}
+.order.st-done,.order.st-cancel{opacity:.45}
+.o-head{display:flex;justify-content:space-between;align-items:baseline}
+.o-num{font-size:19px;font-weight:800;color:var(--gold)}
+.o-total{font-weight:700}
+.o-meta{color:var(--muted);font-size:13px;margin:2px 0 8px}
+.o-items{font-size:14px;margin-bottom:4px}
+.o-items .ai{color:var(--gold);font-size:13px}
+.o-items .cm{color:#f0b866;font-size:13px}
+.o-btns{display:flex;gap:8px;margin-top:10px}
+.o-btns button{flex:1;border:none;border-radius:10px;padding:11px 0;font-size:14px;font-weight:700;cursor:pointer}
+.b-ready{background:#4ade80;color:#0A1628}
+.b-done{background:var(--gold);color:#0A1628}
+.b-cancel{background:transparent;border:1px solid rgba(242,234,215,.3)!important;color:var(--muted);flex:0 0 90px!important}
+.empty{text-align:center;color:var(--muted);padding:50px 0}
+.err{background:#7f1d1d;border-radius:10px;padding:12px;text-align:center;margin-bottom:12px;display:none}
+.bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);padding:8px;text-align:center;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<h1>☕ Bounty · <span>Предзаказы</span></h1>
+<div class="sub">Обновляется каждые 20 сек · новые сверху</div>
+<div class="err" id="err">Нет связи с сервером — проверь интернет</div>
+<div class="filters" id="filters">
+  <button class="sel" data-p="">Все точки</button>
+  <button data-p="hadra">Хадра · Ц-14</button>
+  <button data-p="sayram">Сайрам</button>
+</div>
+<div id="list"><div class="empty">Загружаем…</div></div>
+<div class="bar" id="bar">—</div>
+<script>
+const KEY = new URLSearchParams(location.search).get('key') || '';
+const API = 'api/orders.php?key=' + encodeURIComponent(KEY);
+let filterPoint = '', orders = [], knownIds = new Set(), firstLoad = true;
+
+document.querySelectorAll('#filters button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#filters button').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel'); filterPoint = b.dataset.p; render();
+});
+
+function fmt(n){ return n.toLocaleString('ru-RU').replace(/,/g,' '); }
+function beep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880; g.gain.value = .3;
+    o.start(); o.stop(ctx.currentTime + .35);
+  }catch(e){}
+}
+
+function load(){
+  fetch(API).then(r => { if(!r.ok) throw 0; return r.json(); }).then(res => {
+    if (!res.ok) throw 0;
+    document.getElementById('err').style.display = 'none';
+    orders = res.orders.sort((a,b) => b.ts.localeCompare(a.ts));
+    const fresh = orders.filter(o => !knownIds.has(o.id) && o.status === 'new');
+    orders.forEach(o => knownIds.add(o.id));
+    if (!firstLoad && fresh.length) beep();
+    firstLoad = false;
+    document.getElementById('bar').textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU') + ' · активных: ' + orders.filter(o=>o.status==='new'||o.status==='ready').length;
+    render();
+  }).catch(() => { document.getElementById('err').style.display = 'block'; });
+}
+
+function render(){
+  const list = document.getElementById('list');
+  const show = orders.filter(o => !filterPoint || o.point === filterPoint);
+  if (!show.length){ list.innerHTML = '<div class="empty">Заказов пока нет ☕</div>'; return; }
+  const stName = {new:'🕐 НОВЫЙ', ready:'✅ ГОТОВ', done:'Выдан', cancel:'Отменён'};
+  list.innerHTML = show.map(o => {
+    const d = new Date(o.ts);
+    const items = o.items.map(i =>
+      '<div>' + i.qty + '× <b>' + i.n + '</b>' + (i.size ? ' (' + i.size + ')' : '') +
+      (i.addons && i.addons.length ? '<div class="ai">＋ ' + i.addons.join(', ') + '</div>' : '') +
+      (i.comment ? '<div class="cm">💬 ' + i.comment + '</div>' : '') + '</div>').join('');
+    const btns = o.status === 'new'
+      ? '<button class="b-ready" onclick="setSt(\'' + o.id + '\',\'ready\')">Готов ✓</button><button class="b-cancel" onclick="setSt(\'' + o.id + '\',\'cancel\')">Отмена</button>'
+      : o.status === 'ready'
+      ? '<button class="b-done" onclick="setSt(\'' + o.id + '\',\'done\')">Выдан клиенту ✓</button>'
+      : '';
+    return '<div class="order st-' + o.status + '">' +
+      '<div class="o-head"><span class="o-num">№' + o.num + ' · ' + stName[o.status] + '</span><span class="o-total">' + fmt(o.total) + ' сум</span></div>' +
+      '<div class="o-meta">' + o.point_name + ' · ' + o.pickup + ' · ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) +
+      (o.name ? ' · ' + o.name : '') + (o.phone ? ' · ' + o.phone : '') + '</div>' +
+      '<div class="o-items">' + items + '</div>' +
+      (btns ? '<div class="o-btns">' + btns + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function setSt(id, status){
+  if (status === 'cancel' && !confirm('Отменить заказ?')) return;
+  fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, status})})
+    .then(r=>r.json()).then(res => {
+      if (res.ok){ const o = orders.find(x=>x.id===id); if (o) o.status = status; render(); }
+    }).catch(()=>alert('Не удалось — попробуй ещё раз'));
+}
+
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>
