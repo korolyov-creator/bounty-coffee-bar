@@ -124,6 +124,18 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .install-banner button{margin-left:auto;background:var(--navy);color:var(--gold);border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer}
 .install-banner .x{background:transparent;color:var(--navy);padding:4px 8px;font-size:18px}
 
+/* OFERTA CONSENT OVERLAY */
+.oferta-overlay{position:absolute;inset:0;background:var(--navy-deep);z-index:300;display:none;flex-direction:column;justify-content:center;padding:32px 26px calc(var(--safe-bot) + 32px)}
+.oferta-overlay.show{display:flex;animation:fade .3s ease}
+.oferta-overlay .logo{font-family:'Cookie',cursive;font-size:44px;color:var(--gold);text-align:center;line-height:1;margin-bottom:4px}
+.oferta-overlay h2{font-family:'Playfair Display',serif;font-size:19px;text-align:center;margin:14px 0 16px;color:var(--paper)}
+.oferta-terms{background:rgba(242,234,215,.06);border:1px solid rgba(201,161,74,.25);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.55;color:rgba(242,234,215,.8);max-height:38vh;overflow-y:auto}
+.oferta-terms li{margin:0 0 8px 16px}
+.oferta-check{display:flex;gap:10px;align-items:flex-start;margin:16px 0 14px;font-size:13px;color:rgba(242,234,215,.85);line-height:1.45}
+.oferta-check input{width:20px;height:20px;margin-top:1px;accent-color:var(--gold);flex-shrink:0}
+.oferta-check a{color:var(--gold)}
+.btn-big:disabled{opacity:.35;cursor:default}
+
 /* REGISTRATION OVERLAY */
 .reg-overlay{position:absolute;inset:0;background:var(--navy-deep);z-index:200;display:none;flex-direction:column;justify-content:center;padding:32px 26px calc(var(--safe-bot) + 32px)}
 .reg-overlay.show{display:flex;animation:fade .3s ease}
@@ -343,10 +355,35 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <div class="l"><span>❓</span><span>Помощь</span></div>
         <div class="r">›</div>
       </div>
+      <div class="row" onclick="window.open('../oferta.html','_blank')">
+        <div class="l"><span>📄</span><span>Публичная оферта</span></div>
+        <div class="r">›</div>
+      </div>
     </div>
 
     <div class="tip" style="margin-top:18px">Bounty App · v1.0 · 2026<br>Демо-прототип · реальный заказ и оплата — в разработке</div>
   </main>
+
+  <!-- OFERTA CONSENT OVERLAY -->
+  <div class="oferta-overlay" id="oferta-overlay">
+    <div class="logo">Bounty</div>
+    <h2>Условия использования</h2>
+    <div class="oferta-terms">
+      Чтобы пользоваться приложением, примите условия публичной оферты. Кратко:
+      <ul style="margin-top:8px">
+        <li>приложение и карта лояльности — сервис кофейни Bounty Coffee Bar (Ташкент);</li>
+        <li>имя и телефон используются только для карты лояльности и учёта бонусов, третьим лицам не передаются;</li>
+        <li>отметки и бонусы — скидка на будущие покупки, а не деньги: не обналичиваются и не передаются;</li>
+        <li>актуальные цены — на кассе кофейни; в приложении цены информационные;</li>
+        <li>условия кошелька (предоплаты) начнут действовать с запуска этой функции.</li>
+      </ul>
+    </div>
+    <label class="oferta-check">
+      <input type="checkbox" id="oferta-agree" onchange="document.getElementById('oferta-btn').disabled=!this.checked">
+      <span>Я принимаю условия <a href="../oferta.html" target="_blank" rel="noopener">публичной оферты</a> и даю согласие на обработку персональных данных</span>
+    </label>
+    <button class="btn-big" id="oferta-btn" disabled onclick="acceptOferta()">Принимаю условия</button>
+  </div>
 
   <!-- REGISTRATION OVERLAY -->
   <div class="reg-overlay" id="reg-overlay">
@@ -498,6 +535,21 @@ function addItem(name){
   renderMenu(Object.keys(MENU)[0]);
 })();
 
+// === OFERTA CONSENT (обязательное согласие) ===
+const OFERTA_VERSION = 1;
+function ofertaAccepted(){
+  try { const o = JSON.parse(localStorage.getItem('bounty_oferta')); return o && o.v >= OFERTA_VERSION; }
+  catch(e){ return false; }
+}
+function checkOferta(){
+  if (!ofertaAccepted()) document.getElementById('oferta-overlay').classList.add('show');
+}
+function acceptOferta(){
+  localStorage.setItem('bounty_oferta', JSON.stringify({v: OFERTA_VERSION, ts: new Date().toISOString()}));
+  document.getElementById('oferta-overlay').classList.remove('show');
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
 // === LOYALTY: клиент, панч-карта «6-й кофе бесплатно» ===
 const PIN = '1414'; // код бариста
 const GOAL = 5;
@@ -572,7 +624,7 @@ function renderLoyalty(){
   document.getElementById('prof-total').textContent = c.total;
   document.getElementById('prof-free').textContent = c.free;
 }
-window.addEventListener('load', renderLoyalty);
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); });
 
 // === PWA Install ===
 let deferredPrompt;
