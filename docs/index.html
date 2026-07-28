@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bounty Coffee Bar — Тихая пауза в городе</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/app/icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&family=Cookie&display=swap" rel="stylesheet">
@@ -41,7 +42,13 @@ img{max-width:100%;display:block}
 .nav ul a:hover{opacity:1;color:var(--gold-bright)}
 .nav .nav-cta{padding:10px 22px;background:var(--gold);color:var(--navy);border-radius:99px;font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;transition:transform .2s}
 .nav .nav-cta:hover{transform:translateY(-1px)}
-@media(max-width:768px){.nav ul{display:none}}
+.nav-burger{display:none;background:none;border:none;color:var(--paper);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1}
+@media(max-width:768px){
+.nav ul{display:none;position:fixed;top:56px;left:0;right:0;flex-direction:column;gap:0;background:rgba(9,21,41,.97);backdrop-filter:blur(12px);padding:8px 0 14px;border-bottom:1px solid rgba(201,161,74,.25)}
+.nav ul.open{display:flex}
+.nav ul li a{display:block;padding:13px 24px;font-size:15px}
+.nav-burger{display:block}
+}
 
 /* HERO */
 .hero{min-height:880px;background:linear-gradient(180deg,var(--navy) 0%,var(--navy-deep) 100%);color:var(--paper);position:relative;overflow:hidden;display:flex;align-items:center;padding:160px 0 100px}
@@ -253,14 +260,17 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
 <!-- NAV -->
 <nav class="nav">
   <a href="#" class="logo-mark"><span class="palm-mini"></span> Bounty</a>
-  <ul>
+  <ul id="nav-menu" onclick="this.classList.remove('open')">
     <li><a href="#story">История</a></li>
     <li><a href="#menu">Самое популярное</a></li>
     <li><a href="menu.html">Полное меню</a></li>
     <li><a href="#locations">Наши локации</a></li>
     <li><a href="#app" style="color:var(--gold-bright)">📱 Приложение</a></li>
   </ul>
-  <a href="#order" class="nav-cta">Заказать</a>
+  <div style="display:flex;align-items:center;gap:6px">
+    <a href="#order" class="nav-cta">Заказать</a>
+    <button class="nav-burger" aria-label="Меню" onclick="document.getElementById('nav-menu').classList.toggle('open')">☰</button>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -268,7 +278,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
   <div class="container">
     <div>
       <div class="eyebrow">★ EST · 2019 · TASHKENT ★</div>
-      <h1>Маленький <span class="accent">отпуск</span>,<br>в каждой чашке</h1>
+      <h1>Маленький <span class="accent">отпуск</span> —<br>в каждой чашке</h1>
       <div class="tagline">тихая пауза в городе</div>
       <p class="lead">Кофе, который встречает тебя в 7 утра, отвлекает в 3 часа дня и не спит вместе с тобой в 4 утра. Три места. Один ритуал. <strong>Филиал на Ц-14 — 24/7.</strong></p>
       <div class="cta-group">
@@ -299,11 +309,11 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
 <section class="story" id="story">
   <div class="container">
     <div class="story-img">
-      <img src="assets/img/barista-kristina.jpg" alt="Кристина, бариста Bounty">
+      <img src="assets/img/barista-kristina-clean.jpg" alt="Кристина, бариста Bounty">
       <div class="badge-est">EST · 2019</div>
     </div>
     <div>
-      <h2><span class="script-accent">от первой чашки —</span>до сегодняшних двух кофейных баров</h2>
+      <h2><span class="script-accent">от первой чашки —</span>до сегодняшних трёх кофейных баров</h2>
       <p>В 2019 мы открыли первую дверь на Ц-14. Цель была проста: место, где каждая чашка — это маленькая пауза от шума города.</p>
       <p>Пальма в нашем логотипе — не просто украшение. Это обещание: переступив порог Bounty, ты на 10 минут оказываешься где-то далеко от пробок и дедлайнов.</p>
       <p>Сегодня нас знают 1 600+ человек в Instagram. Завтра — будем знакомиться с тобой.</p>
@@ -423,7 +433,7 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
     <div class="location-grid">
 
       <div class="location-card">
-        <div class="location-img" style="background-image:url('assets/img/interior-2.jpg')">
+        <div class="location-img" style="background-image:url('assets/img/interior-hadra.jpg')">
           <div class="badge-247">⚡ 24/7</div>
         </div>
         <div class="location-info">
@@ -578,17 +588,15 @@ footer .copyright{text-align:center;border-top:1px solid var(--line);margin-top:
       <p>Кофейный бар в Ташкенте. С 2019 года делаем кофе так, как пили бы сами. Три места, чтобы заскочить — и остаться дольше, чем планировал.</p>
       <div class="social">
         <a href="https://www.instagram.com/bountycoffeebar.tashkent" target="_blank">📷</a>
-        <a href="https://www.facebook.com/bountycoffeebar.tashkent" target="_blank">f</a>
         <a href="https://t.me/bountycoffeebar" target="_blank">✈️</a>
       </div>
     </div>
     <div>
       <h4>Меню</h4>
       <ul>
-        <li><a href="#menu">Кофе</a></li>
-        <li><a href="#menu">Напитки</a></li>
-        <li><a href="#menu">Десерты</a></li>
-        <li><a href="#menu">Завтраки</a></li>
+        <li><a href="#menu">Фирменные напитки</a></li>
+        <li><a href="menu.html">Полное меню</a></li>
+        <li><a href="app/">Предзаказ в приложении</a></li>
       </ul>
     </div>
     <div>

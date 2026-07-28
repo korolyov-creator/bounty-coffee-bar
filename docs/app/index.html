@@ -53,7 +53,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 /* STARS BAR (loyalty progress) */
 .stars-row{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
 .stars-row .count{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1}
-.stars-row .label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:700}
+.stars-row .label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:rgba(15,31,58,.75);font-weight:700}
 .progress{height:6px;background:rgba(15,31,58,.3);border-radius:99px;overflow:hidden;margin-top:8px}
 .progress .bar{height:100%;background:var(--navy);border-radius:99px;transition:width .4s}
 .tier-badges{display:flex;gap:10px;margin-top:14px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
@@ -189,22 +189,22 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
 
     <!-- Текущая акция -->
-    <div class="card dark" style="background-image:linear-gradient(135deg,rgba(15,31,58,.85),rgba(201,161,74,.15)),url('../assets/img/barista-pour.jpg');background-size:cover;background-position:center">
+    <div class="card dark" style="background-image:linear-gradient(135deg,rgba(15,31,58,.85),rgba(201,161,74,.15)),url('../assets/img/post-2.jpg');background-size:cover;background-position:center 30%">
       <h3>★ Акция дня</h3>
       <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1.1;margin-bottom:6px">Ночной эспрессо<br>−20% после 23:00</div>
       <div class="sub" style="opacity:.85">Только на Ц-14 · 24/7</div>
     </div>
 
-    <!-- Твой обычный -->
-    <div class="card">
+    <!-- Твой обычный (последний заказ) -->
+    <div class="card" id="usual-card" style="display:none">
       <h3>★ Твой обычный</h3>
       <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
-        <div style="width:60px;height:60px;border-radius:12px;background:linear-gradient(135deg,var(--gold-deep),var(--navy));display:flex;align-items:center;justify-content:center;font-size:32px">☕</div>
+        <div style="width:60px;height:60px;border-radius:12px;background:linear-gradient(135deg,var(--gold-deep),var(--navy));display:flex;align-items:center;justify-content:center;font-size:32px" id="usual-ic">☕</div>
         <div style="flex:1">
-          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700">Капучино 250 мл</div>
-          <div class="sub">с овсяным молоком · посл. заказ 2 дня назад</div>
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700" id="usual-name"></div>
+          <div class="sub" id="usual-sub"></div>
         </div>
-        <button class="add" style="width:42px;height:42px;font-size:22px">+</button>
+        <button class="add" style="width:42px;height:42px;font-size:22px" onclick="repeatLast()">+</button>
       </div>
     </div>
 
@@ -266,7 +266,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
 
     <div class="loc-card">
-      <div class="img" style="background-image:url('../assets/img/interior-2.jpg')">
+      <div class="img" style="background-image:url('../assets/img/interior-hadra.jpg')">
         <div class="badge">⚡ 24/7</div>
       </div>
       <div class="info">
@@ -331,32 +331,16 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <div class="l"><span>📋</span><span>История покупок</span></div>
         <div class="r">›</div>
       </div>
-      <div class="row">
-        <div class="l"><span>♥</span><span>Любимое</span></div>
-        <div class="r">›</div>
-      </div>
-      <div class="row">
-        <div class="l"><span>🎁</span><span>Подарочные карты</span></div>
-        <div class="r">›</div>
-      </div>
-      <div class="row">
-        <div class="l"><span>🔔</span><span>Уведомления</span></div>
-        <div class="r">›</div>
-      </div>
       <div class="row" onclick="window.open('https://www.instagram.com/bountycoffeebar.tashkent/','_blank')">
-        <div class="l"><span>📸</span><span>Instagram @bounty</span></div>
+        <div class="l"><span>📸</span><span>Instagram @bountycoffeebar.tashkent</span></div>
         <div class="r">›</div>
       </div>
       <div class="row" onclick="window.open('https://t.me/bountycoffeebar','_blank')">
         <div class="l"><span>✈️</span><span>Telegram канал</span></div>
         <div class="r">›</div>
       </div>
-      <div class="row">
-        <div class="l"><span>⚙</span><span>Настройки</span></div>
-        <div class="r">›</div>
-      </div>
-      <div class="row">
-        <div class="l"><span>❓</span><span>Помощь</span></div>
+      <div class="row" onclick="window.open('https://t.me/bountycoffeebar','_blank')">
+        <div class="l"><span>❓</span><span>Помощь — напиши нам</span></div>
         <div class="r">›</div>
       </div>
       <div class="row" onclick="window.open('../oferta.html','_blank')">
@@ -395,7 +379,10 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <button class="btn-big" style="margin-top:14px" id="co-submit" onclick="submitOrder()">Оформить заказ ✓</button>
       <div class="tip" style="margin-top:10px">Оплата при получении — наличными или картой.<br>Скоро: оплата с кошелька в приложении.</div>
     </div>
-    <div class="tip" id="cart-empty" style="display:none;margin-top:20px">Корзина пуста — выбери что-нибудь в меню ☕</div>
+    <div id="cart-empty" style="display:none;margin-top:20px;text-align:center">
+      <div class="tip">Корзина пуста — выбери что-нибудь в меню ☕</div>
+      <button class="btn-big" style="margin-top:14px" onclick="go('order')">Перейти в меню →</button>
+    </div>
   </main>
 
   <!-- ============ ORDER OK ============ -->
@@ -513,14 +500,17 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
 <script>
 // === ROUTER ===
+const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile'};
 function go(scr){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('scr-'+scr).classList.add('active');
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.scr===scr));
+  const tab = TAB_MAP[scr] || scr;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.scr===tab));
   window.scrollTo(0,0);
   document.querySelector('.screen.active').scrollTop = 0;
   if (scr === 'cart') renderCart();
   if (scr === 'myorders'){ renderMyOrders(); pollOrders(); }
+  renderCartBar();
   if (navigator.vibrate) navigator.vibrate(10);
 }
 
@@ -650,7 +640,8 @@ function openProd(cat, idx){
     aw.style.display = 'block';
     document.getElementById('pr-addons').innerHTML = MENU['Добавки'].map((a,k) => {
       const price = parseP(a.p)[0];
-      return `<label class="p-add"><span>${a.ic} ${a.n} · +${fmtSum(price)}</span><input type="checkbox" data-k="${k}" onchange="prAddon(${k},this.checked)" style="width:18px;height:18px;accent-color:var(--gold)"></label>`;
+      const hint = a.n === 'Сироп' ? ' <small style="opacity:.7">(вкус — в комментарии)</small>' : '';
+      return `<label class="p-add"><span>${a.ic} ${a.n}${hint} · +${fmtSum(price)}</span><input type="checkbox" data-k="${k}" onchange="prAddon(${k},this.checked)" style="width:18px;height:18px;accent-color:var(--gold)"></label>`;
     }).join('');
   }
   document.getElementById('pr-qty').textContent = '1';
@@ -706,7 +697,9 @@ function cartTotal(c){ return (c||getCart()).reduce((s,i)=>s + i.unit*i.qty, 0);
 function renderCartBar(){
   const c = getCart();
   const bar = document.getElementById('cartbar');
-  if (!c.length){ bar.classList.remove('show'); return; }
+  const scr = document.querySelector('.screen.active');
+  const onCartScreens = scr && (scr.id === 'scr-cart' || scr.id === 'scr-orderok');
+  if (!c.length || onCartScreens){ bar.classList.remove('show'); return; }
   bar.classList.add('show');
   document.getElementById('cartbar-l').textContent = '🧾 Корзина · ' + c.reduce((s,i)=>s+i.qty,0) + ' поз.';
   document.getElementById('cartbar-r').textContent = fmtSum(cartTotal(c));
@@ -773,6 +766,7 @@ function submitOrder(){
       localStorage.setItem('bounty_orders', JSON.stringify(orders.slice(-20)));
       localStorage.removeItem('bounty_cart');
       renderCartBar();
+      renderUsual();
       document.getElementById('ok-num').textContent = '№' + res.num;
       document.getElementById('ok-details').innerHTML =
         '<strong>' + point.name + '</strong><br>' + PICKUP_TIMES[coTime] + '<br>' +
@@ -808,6 +802,30 @@ function renderMyOrders(){
     </div>`;
   }).join('');
 }
+// === «Твой обычный»: последний реальный заказ, повтор в один клик ===
+function renderUsual(){
+  const card = document.getElementById('usual-card');
+  const orders = getMyOrders();
+  if (!orders.length){ card.style.display = 'none'; return; }
+  const last = orders[orders.length - 1];
+  const first = last.items[0];
+  const days = Math.floor((Date.now() - new Date(last.ts)) / 86400000);
+  const ago = days === 0 ? 'сегодня' : days === 1 ? 'вчера' : days + ' дн. назад';
+  const mi = Object.values(MENU).flat().find(m => m.n === first.n);
+  document.getElementById('usual-ic').textContent = mi ? mi.ic : '☕';
+  document.getElementById('usual-name').textContent = first.n + (first.size ? ' · ' + first.size : '');
+  document.getElementById('usual-sub').textContent = (last.items.length > 1 ? '+ ещё ' + (last.items.length - 1) + ' поз. · ' : '') + 'заказ ' + ago;
+  card.style.display = 'block';
+}
+function repeatLast(){
+  const orders = getMyOrders();
+  if (!orders.length) return;
+  const last = orders[orders.length - 1];
+  saveCart(last.items.map(i => ({n:i.n, ic:(Object.values(MENU).flat().find(m=>m.n===i.n)||{}).ic||'☕', size:i.size, qty:i.qty, addons:i.addons||[], comment:i.comment||'', unit:i.unit})));
+  go('cart');
+  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+}
+
 function pollOrders(){
   const orders = getMyOrders();
   const active = orders.filter(o => o.status === 'new' || o.status === 'ready');
@@ -827,10 +845,10 @@ function pollOrders(){
     }).catch(()=>{});
 }
 setInterval(pollOrders, 25000);
-// Init categories
+// Init categories («Добавки» — не отдельный товар, доступны в карточках напитков)
 (function(){
   const c = document.getElementById('cats');
-  Object.keys(MENU).forEach((k,i)=>{
+  Object.keys(MENU).filter(k => k !== 'Добавки').forEach((k,i)=>{
     const b = document.createElement('button');
     b.textContent = k;
     if (i===0) b.classList.add('active');
@@ -973,7 +991,7 @@ function renderHistory(c){
       : '<div class="row"><div class="l"><span>☕</span><span>Покупка · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); renderCartBar(); pollOrders(); });
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); renderCartBar(); renderUsual(); pollOrders(); });
 
 // === PWA Install ===
 let deferredPrompt;
