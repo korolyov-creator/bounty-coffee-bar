@@ -323,8 +323,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
 
     <div class="menu-list-rows">
-      <div class="row" onclick="go('order')">
-        <div class="l"><span>📋</span><span>История заказов</span></div>
+      <div class="row" onclick="go('history')">
+        <div class="l"><span>📋</span><span>История покупок</span></div>
         <div class="r">›</div>
       </div>
       <div class="row">
@@ -362,6 +362,17 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
 
     <div class="tip" style="margin-top:18px">Bounty App · v1.0 · 2026<br>Демо-прототип · реальный заказ и оплата — в разработке</div>
+  </main>
+
+  <!-- ============ HISTORY ============ -->
+  <main class="screen" id="scr-history">
+    <div class="scr-head">
+      <div class="eyebrow">📋 ИСТОРИЯ ПОКУПОК</div>
+      <h1>Всё на месте<span class="script">каждая покупка — здесь</span></h1>
+    </div>
+    <div class="card" style="padding:14px 16px;margin-bottom:14px;font-size:14px" id="hist-progress"></div>
+    <div class="menu-list-rows" id="hist-list"></div>
+    <div class="tip" style="margin-top:14px">Запись появляется, когда бариста отмечает покупку по твоей карте.<br>Покупки суммируются: 5 отметок → шестой кофе бесплатно 🎁</div>
   </main>
 
   <!-- OFERTA CONSENT OVERLAY -->
@@ -514,7 +525,7 @@ function addItem(name){
   // mock toast
   const t = document.createElement('div');
   t.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);padding:10px 18px;border-radius:99px;font-weight:700;font-size:13px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3);animation:fade .3s';
-  t.textContent = `+ ${name} в корзину`;
+  t.textContent = `☕ ${name} — закажи у бариста, покажи карту для отметки`;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),1400);
 }
@@ -590,6 +601,7 @@ function stampPurchase(){
   const pin = prompt('Код бариста:');
   if (pin !== PIN){ if (pin !== null) alert('Неверный код'); return; }
   c.stamps++; c.total++;
+  (c.hist = c.hist || []).push({t:'stamp', d:new Date().toISOString(), n:c.stamps + '/' + GOAL});
   saveClient(c);
   if (navigator.vibrate) navigator.vibrate(30);
   if (c.stamps >= GOAL) alert('🎉 5 отметок! Следующий кофе — БЕСПЛАТНО');
@@ -600,6 +612,7 @@ function redeemFree(){
   const pin = prompt('Код бариста (выдача бесплатного кофе):');
   if (pin !== PIN){ if (pin !== null) alert('Неверный код'); return; }
   c.stamps = 0; c.free++; c.total++;
+  (c.hist = c.hist || []).push({t:'free', d:new Date().toISOString()});
   saveClient(c);
   alert('🎁 Бесплатный кофе выдан. Наслаждайся!');
 }
@@ -640,6 +653,27 @@ function renderLoyalty(){
   document.getElementById('prof-stamps').textContent = c.stamps;
   document.getElementById('prof-total').textContent = c.total;
   document.getElementById('prof-free').textContent = c.free;
+  renderHistory(c);
+}
+
+function renderHistory(c){
+  const prog = document.getElementById('hist-progress');
+  const list = document.getElementById('hist-list');
+  prog.innerHTML = c.stamps >= GOAL
+    ? '🎁 <strong>Бесплатный кофе готов</strong> — покажи карту бариста!'
+    : 'Накоплено <strong style="color:var(--gold)">' + c.stamps + ' из ' + GOAL + '</strong> · до бесплатного кофе ещё ' + (GOAL - c.stamps) + ' — покупки суммируются';
+  const hist = (c.hist || []).slice().reverse();
+  if (!hist.length){
+    list.innerHTML = '<div class="row"><div class="l"><span>☕</span><span>Пока пусто — первая покупка появится здесь</span></div></div>';
+    return;
+  }
+  list.innerHTML = hist.map(h => {
+    const d = new Date(h.d);
+    const ds = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    return h.t === 'free'
+      ? '<div class="row"><div class="l"><span>🎁</span><span>Бесплатный кофе</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>'
+      : '<div class="row"><div class="l"><span>☕</span><span>Покупка · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
+  }).join('');
 }
 window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); });
 
