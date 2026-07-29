@@ -701,8 +701,8 @@ function renderCartBar(){
   const c = getCart();
   const bar = document.getElementById('cartbar');
   const scr = document.querySelector('.screen.active');
-  const onCartScreens = scr && (scr.id === 'scr-cart' || scr.id === 'scr-orderok');
-  if (!c.length || onCartScreens){ bar.classList.remove('show'); return; }
+  const hideBar = scr && ['scr-cart','scr-orderok','scr-history','scr-myorders'].includes(scr.id);
+  if (!c.length || hideBar){ bar.classList.remove('show'); return; }
   bar.classList.add('show');
   document.getElementById('cartbar-l').textContent = '🧾 Корзина · ' + c.reduce((s,i)=>s+i.qty,0) + ' поз.';
   document.getElementById('cartbar-r').textContent = fmtSum(cartTotal(c));
