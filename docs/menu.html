@@ -86,26 +86,26 @@ body{display:flex;flex-direction:column}
 <header class="header">
   <div class="eyebrow">★ FULL MENU ★</div>
   <h1>Полное меню<span class="accent">Bounty Coffee Bar</span></h1>
-  <div class="meta">Цены актуальны с июня 2026 · Все позиции бара</div>
+  <div class="meta">Цены актуальны с 29 июля 2026 · Все позиции бара</div>
 </header>
 
 <main class="menu-wrap">
   <div class="menu-actions">
-    <a href="menu/bounty-menu-vertical.pdf" target="_blank" class="btn btn-gold">📄 Скачать PDF</a>
+    <a href="menu/bounty-menu-2026-07.pdf" target="_blank" class="btn btn-gold">📄 Скачать PDF</a>
     <button onclick="document.getElementById('zoom').classList.add('active')" class="btn btn-ghost">🔍 Увеличить</button>
   </div>
 
   <div class="menu-image-container" onclick="document.getElementById('zoom').classList.add('active')">
-    <img src="menu/bounty-menu-hd.png" alt="Меню Bounty Coffee Bar" loading="eager">
+    <img src="menu/bounty-menu-2026-07.jpg" alt="Меню Bounty Coffee Bar" loading="eager">
   </div>
 
-  <div class="hint">Нажми на меню чтобы увеличить · 4250×6613 px HD-качество</div>
+  <div class="hint">Нажми на меню чтобы увеличить</div>
 </main>
 
 <!-- Полноэкранный зум -->
 <div id="zoom" class="zoom-overlay" onclick="this.classList.remove('active')">
   <button class="zoom-close" onclick="event.stopPropagation();document.getElementById('zoom').classList.remove('active')">×</button>
-  <img src="menu/bounty-menu-hd.png" alt="Меню Bounty">
+  <img src="menu/bounty-menu-2026-07.jpg" alt="Меню Bounty">
 </div>
 
 <footer class="foot">
