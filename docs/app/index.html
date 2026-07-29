@@ -800,7 +800,7 @@ function renderMyOrders(){
     const ds = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
     return `<div class="cart-item">
       <div class="t"><span>${st[0]} Заказ №${o.num}</span><span style="color:var(--gold)">${fmtSum(o.total)}</span></div>
-      <div class="s">${st[1]} · ${o.point} · ${ds}</div>
+      <div class="s">${st[1]}${o.credited ? ' · отметка ✓' : ''} · ${o.point} · ${ds}</div>
       <div class="s">${o.items.map(i=>i.qty+'× '+i.n).join(', ')}</div>
     </div>`;
   }).join('');
@@ -838,7 +838,10 @@ function pollOrders(){
     .then(res => {
       if (!res || !res.ok) return;
       let changed = false;
-      orders.forEach(o => { if (res.statuses[o.id] && res.statuses[o.id] !== o.status){ o.status = res.statuses[o.id]; changed = true; } });
+      orders.forEach(o => { if (res.statuses[o.id] && res.statuses[o.id] !== o.status){
+        o.status = res.statuses[o.id]; changed = true;
+        if (o.status === 'done' && !o.credited){ o.credited = true; creditStamp(o.num); }
+      } });
       if (changed){
         localStorage.setItem('bounty_orders', JSON.stringify(orders));
         if (document.getElementById('scr-myorders').classList.contains('active')) renderMyOrders();
@@ -912,6 +915,17 @@ function registerClient(){
   document.getElementById('reg-overlay').classList.remove('show');
   if (navigator.vibrate) navigator.vibrate([20,40,20]);
   syncClient(true);
+}
+
+// Автоотметка лояльности при выдаче предзаказа (1 заказ = 1 отметка)
+function creditStamp(num){
+  const c = getClient(); if (!c) return;
+  if (c.stamps >= GOAL) return; // карта полная — сначала бесплатный кофе
+  c.stamps++; c.total++;
+  (c.hist = c.hist || []).push({t:'stamp', d:new Date().toISOString(), n:c.stamps + '/' + GOAL, o:num});
+  saveClient(c);
+  syncClient(true);
+  if (navigator.vibrate) navigator.vibrate(30);
 }
 
 function stampPurchase(){
@@ -991,7 +1005,7 @@ function renderHistory(c){
     const ds = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
     return h.t === 'free'
       ? '<div class="row"><div class="l"><span>🎁</span><span>Бесплатный кофе</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>'
-      : '<div class="row"><div class="l"><span>☕</span><span>Покупка · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
+      : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
 window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); renderCartBar(); renderUsual(); pollOrders(); });
