@@ -470,14 +470,25 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <div class="reg-overlay" id="reg-overlay">
     <div class="logo">Bounty</div>
     <div class="sub-t">Coffee Bar · Клуб</div>
-    <label>Как тебя зовут?</label>
-    <input type="text" id="reg-name" placeholder="Имя" autocomplete="given-name" maxlength="30">
-    <label>Номер телефона</label>
-    <input type="tel" id="reg-phone" placeholder="+998 __ ___ __ __" autocomplete="tel" maxlength="17">
-    <div style="margin-top:26px">
-      <button class="btn-big" onclick="registerClient()">Получить карту ☕</button>
+    <div id="reg-step1">
+      <label>Как тебя зовут?</label>
+      <input type="text" id="reg-name" placeholder="Имя" autocomplete="given-name" maxlength="30">
+      <label>Номер телефона</label>
+      <input type="tel" id="reg-phone" placeholder="+998 __ ___ __ __" autocomplete="tel" maxlength="17">
+      <div style="margin-top:26px">
+        <button class="btn-big" id="reg-btn" onclick="registerClient()">Получить карту ☕</button>
+      </div>
+      <div class="hint">Твоя карта и бонусы привязаны к номеру телефона —<br>5 покупок — шестой кофе бесплатно.</div>
     </div>
-    <div class="hint">Карта хранится на этом телефоне.<br>5 покупок — шестой кофе бесплатно.</div>
+    <div id="reg-step2" style="display:none">
+      <label>Код из SMS</label>
+      <input type="tel" id="reg-code" placeholder="•••••" autocomplete="one-time-code" inputmode="numeric" maxlength="5" style="text-align:center;letter-spacing:.5em;font-size:24px">
+      <div style="margin-top:26px">
+        <button class="btn-big" id="reg-verify-btn" onclick="verifyCode()">Войти ☕</button>
+      </div>
+      <div class="hint" id="reg-code-hint">Отправили код на твой номер.</div>
+      <div class="hint"><a href="#" id="reg-resend" onclick="resendCode(event)" style="color:var(--gold)">Отправить код ещё раз</a> · <a href="#" onclick="regBack(event)" style="color:rgba(242,234,215,.6)">Изменить номер</a></div>
+    </div>
   </div>
 
   <!-- Install banner (iOS hint) -->
@@ -897,6 +908,32 @@ function syncClient(force){
     body: JSON.stringify({name:c.name, phone:c.phone, id:c.id, reg:c.reg,
       stamps:c.stamps, total:c.total, free:c.free, oferta_v:o.v, oferta_ts:o.ts})
   }).then(r => { if (r.ok) localStorage.setItem('bounty_sync_day', today); }).catch(()=>{});
+  accountPush();
+}
+
+// === ACCOUNT: серверный кабинет (привязан к номеру, вход по SMS-коду) ===
+function accountPush(){
+  const c = getClient(); const token = localStorage.getItem('bounty_token');
+  if (!c || !token) return;
+  fetch('../api/account_sync.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({token, action:'sync', name:c.name, stamps:c.stamps, total:c.total, free:c.free, hist:(c.hist||[]).slice(-200)})
+  }).catch(()=>{});
+}
+function accountPull(){
+  const token = localStorage.getItem('bounty_token');
+  if (!token) return;
+  fetch('../api/account_sync.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({token, action:'get'})})
+    .then(r => r.json())
+    .then(j => {
+      if (!j.ok || !j.account) return;
+      const c = getClient(); const a = j.account;
+      // сервер главнее, если там больше активности (кабинет пополнялся с другого устройства)
+      if (!c || (a.total||0) > (c.total||0)){
+        saveClient({name:a.name, phone:a.phone, id:a.id, stamps:a.stamps||0, total:a.total||0, free:a.free||0, reg:a.reg, hist:a.hist||[]});
+      }
+    })
+    .catch(()=>{});
 }
 
 // === LOYALTY: клиент, панч-карта «6-й кофе бесплатно» ===
@@ -905,16 +942,103 @@ const GOAL = 5;
 function getClient(){ try { return JSON.parse(localStorage.getItem('bounty_client')); } catch(e){ return null; } }
 function saveClient(c){ localStorage.setItem('bounty_client', JSON.stringify(c)); renderLoyalty(); }
 
-function registerClient(){
-  const name = document.getElementById('reg-name').value.trim();
-  const phone = document.getElementById('reg-phone').value.replace(/[^\d+]/g,'');
-  if (name.length < 2){ alert('Напиши имя'); return; }
-  if (phone.length < 9){ alert('Проверь номер телефона'); return; }
+// Регистрация/вход: телефон → SMS-код → кабинет с сервера (на любом устройстве).
+// Если SMS-провайдер ещё не настроен, сервер отвечает sms_unavailable — работаем по-старому (локальная карта).
+let regPhone = '';
+function normPhone(p){
+  const d = p.replace(/\D/g,'');
+  if (d.length === 9) return '998' + d;
+  if (d.length === 12 && d.startsWith('998')) return d;
+  return null;
+}
+function registerLocal(name, phone){
   const id = 'BNT-' + phone.slice(-7) + '-' + Math.random().toString(36).slice(2,5).toUpperCase();
   saveClient({name, phone, id, stamps:0, total:0, free:0, reg: new Date().toISOString().slice(0,10)});
   document.getElementById('reg-overlay').classList.remove('show');
   if (navigator.vibrate) navigator.vibrate([20,40,20]);
   syncClient(true);
+}
+function registerClient(){
+  const name = document.getElementById('reg-name').value.trim();
+  const phone = normPhone(document.getElementById('reg-phone').value);
+  if (name.length < 2){ alert('Напиши имя'); return; }
+  if (!phone){ alert('Проверь номер телефона'); return; }
+  regPhone = phone;
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = 'Отправляем код…';
+  fetch('../api/otp_request.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone})})
+    .then(r => r.json())
+    .then(j => {
+      btn.disabled = false; btn.textContent = 'Получить карту ☕';
+      if (j.ok){
+        document.getElementById('reg-step1').style.display = 'none';
+        document.getElementById('reg-step2').style.display = 'block';
+        document.getElementById('reg-code-hint').textContent = 'Отправили код на +' + phone;
+        document.getElementById('reg-code').value = '';
+        document.getElementById('reg-code').focus();
+        startResendTimer();
+      } else if (j.reason === 'sms_unavailable'){
+        registerLocal(name, phone);
+      } else if (j.reason === 'rate_limit' || j.reason === 'too_soon'){
+        alert('Слишком много запросов кода. Подожди немного и попробуй снова.');
+      } else {
+        alert('Не получилось отправить SMS. Проверь номер и попробуй ещё раз.');
+      }
+    })
+    .catch(() => { btn.disabled = false; btn.textContent = 'Получить карту ☕'; registerLocal(name, phone); });
+}
+let resendT = null;
+function startResendTimer(){
+  const a = document.getElementById('reg-resend');
+  let s = 60;
+  a.style.pointerEvents = 'none'; a.style.opacity = '.4';
+  clearInterval(resendT);
+  resendT = setInterval(() => {
+    s--;
+    a.textContent = s > 0 ? 'Отправить код ещё раз (' + s + ')' : 'Отправить код ещё раз';
+    if (s <= 0){ clearInterval(resendT); a.style.pointerEvents = ''; a.style.opacity = ''; }
+  }, 1000);
+}
+function resendCode(e){
+  e.preventDefault();
+  fetch('../api/otp_request.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone: regPhone})})
+    .then(r => r.json())
+    .then(j => { if (!j.ok) alert('Пока нельзя отправить новый код — подожди минуту.'); })
+    .catch(()=>{});
+  startResendTimer();
+}
+function regBack(e){
+  e.preventDefault();
+  document.getElementById('reg-step2').style.display = 'none';
+  document.getElementById('reg-step1').style.display = 'block';
+}
+function verifyCode(){
+  const code = document.getElementById('reg-code').value.replace(/\D/g,'');
+  if (code.length !== 5){ alert('Введи 5 цифр из SMS'); return; }
+  const name = document.getElementById('reg-name').value.trim();
+  const btn = document.getElementById('reg-verify-btn');
+  btn.disabled = true; btn.textContent = 'Проверяем…';
+  fetch('../api/otp_verify.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone: regPhone, code, name})})
+    .then(r => r.json())
+    .then(j => {
+      btn.disabled = false; btn.textContent = 'Войти ☕';
+      if (j.ok && j.account){
+        localStorage.setItem('bounty_token', j.token);
+        const a = j.account;
+        saveClient({name: a.name, phone: a.phone, id: a.id, stamps: a.stamps||0, total: a.total||0, free: a.free||0, reg: a.reg, hist: a.hist||[]});
+        document.getElementById('reg-overlay').classList.remove('show');
+        document.getElementById('reg-step2').style.display = 'none';
+        document.getElementById('reg-step1').style.display = 'block';
+        if (navigator.vibrate) navigator.vibrate([20,40,20]);
+        syncClient(true);
+      } else if (j.reason === 'wrong_code'){
+        alert('Неверный код, попробуй ещё раз');
+      } else {
+        alert('Код устарел — запроси новый');
+        regBack({preventDefault:()=>{}});
+      }
+    })
+    .catch(() => { btn.disabled = false; btn.textContent = 'Войти ☕'; alert('Нет связи, попробуй ещё раз'); });
 }
 
 // Автоотметка лояльности при выдаче предзаказа (1 заказ = 1 отметка)
@@ -1008,7 +1132,7 @@ function renderHistory(c){
       : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); renderCartBar(); renderUsual(); pollOrders(); });
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); pollOrders(); });
 
 // === PWA Install ===
 let deferredPrompt;
