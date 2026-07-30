@@ -347,9 +347,13 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <div class="l"><span>📄</span><span>Публичная оферта</span></div>
         <div class="r">›</div>
       </div>
+      <div class="row" onclick="logoutAccount()">
+        <div class="l"><span>🚪</span><span style="color:#e88">Выйти из аккаунта</span></div>
+        <div class="r">›</div>
+      </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.1 · 2026<br>Предзаказ работает · оплата при получении · скоро — кошелёк</div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.2 · 2026<br>Предзаказ работает · оплата при получении · скоро — кошелёк</div>
   </main>
 
   <!-- ============ HISTORY ============ -->
@@ -478,7 +482,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div style="margin-top:26px">
         <button class="btn-big" id="reg-btn" onclick="registerClient()">Получить карту ☕</button>
       </div>
-      <div class="hint">Твоя карта и бонусы привязаны к номеру телефона —<br>5 покупок — шестой кофе бесплатно.</div>
+      <div class="hint">Вход и регистрация — по номеру телефона:<br>карта и бонусы привязаны к номеру, вход по коду из SMS.<br>5 покупок — шестой кофе бесплатно.</div>
     </div>
     <div id="reg-step2" style="display:none">
       <label>Код из SMS</label>
@@ -934,6 +938,28 @@ function accountPull(){
       }
     })
     .catch(()=>{});
+}
+
+// === LOGOUT: выход из аккаунта, повторный вход по SMS-коду ===
+function logoutAccount(){
+  const hasToken = !!localStorage.getItem('bounty_token');
+  const msg = hasToken
+    ? 'Выйти из аккаунта?\n\nКарта и бонусы сохранятся на сервере — войдёшь снова по номеру телефона и коду из SMS.'
+    : 'Выйти из аккаунта?\n\nВнимание: карта пока хранится только на этом устройстве. После выхода отметки обнулятся, вход — по номеру телефона.';
+  if (!confirm(msg)) return;
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day'].forEach(k => localStorage.removeItem(k));
+  document.getElementById('reg-step2').style.display = 'none';
+  document.getElementById('reg-step1').style.display = 'block';
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-phone').value = '';
+  document.getElementById('reg-code').value = '';
+  regPhone = '';
+  clearInterval(resendT);
+  go('home');
+  renderUsual();
+  renderCartBar();
+  renderLoyalty(); // клиента нет — покажет экран входа
+  if (navigator.vibrate) navigator.vibrate(20);
 }
 
 // === LOYALTY: клиент, панч-карта «6-й кофе бесплатно» ===
