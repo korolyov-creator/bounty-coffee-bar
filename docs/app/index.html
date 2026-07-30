@@ -156,6 +156,20 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .qr-real{width:200px;height:200px;margin:14px auto;display:flex;align-items:center;justify-content:center}
 .qr-real img,.qr-real canvas{width:200px !important;height:200px !important}
 
+/* POINT PICKER (выбор точки приготовления) */
+.point-overlay{position:fixed;inset:0;background:rgba(10,20,40,.82);z-index:150;display:none;align-items:flex-end;justify-content:center}
+.point-overlay.show{display:flex;animation:fade .25s ease}
+.point-sheet{background:var(--navy-deep);border:1px solid rgba(201,161,74,.25);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.point-sheet h2{font-family:'Playfair Display',serif;font-size:21px;margin-bottom:4px;color:var(--paper)}
+.point-sheet .sub{color:rgba(242,234,215,.6);font-size:13px;margin-bottom:14px}
+.point-btn{display:block;width:100%;padding:16px;margin-bottom:10px;background:rgba(242,234,215,.05);border:1px solid rgba(201,161,74,.25);border-radius:14px;color:var(--paper);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;text-align:left}
+.point-btn small{display:block;font-weight:500;font-size:12px;color:rgba(242,234,215,.6);margin-top:3px}
+.point-btn.sel{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.point-btn.sel small{color:rgba(15,31,58,.7)}
+.point-chip{display:flex;align-items:center;gap:8px;background:rgba(201,161,74,.12);border:1px solid rgba(201,161,74,.3);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;cursor:pointer;color:var(--paper)}
+.point-chip b{color:var(--gold)}
+.point-chip .chg{margin-left:auto;color:var(--gold);font-size:12px;font-weight:700;text-decoration:underline;flex-shrink:0}
+
 /* UTILS */
 .row-flex{display:flex;gap:10px}
 .row-flex .col{flex:1}
@@ -217,6 +231,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="eyebrow">★ MENU</div>
       <h1>Что хочешь?<span class="script">выбирай</span></h1>
     </div>
+
+    <div class="point-chip" id="order-point-chip" onclick="openPointPicker()"></div>
 
     <div class="cats" id="cats"></div>
 
@@ -353,7 +369,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.2 · 2026<br>Предзаказ работает · оплата при получении · скоро — кошелёк</div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.3 · 2026<br>Предзаказ работает · оплата при получении · скоро — кошелёк</div>
   </main>
 
   <!-- ============ HISTORY ============ -->
@@ -375,7 +391,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
     <div id="cart-items"></div>
     <div class="card" id="cart-checkout" style="margin-top:14px">
-      <h3>★ Откуда заберёшь?</h3>
+      <h3>★ Какая точка готовит?</h3>
       <div class="p-opts" id="co-points"></div>
       <h3 style="margin-top:16px">★ Когда?</h3>
       <div class="p-opts" id="co-times"></div>
@@ -448,6 +464,15 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
   </div>
   <div class="cartbar" id="cartbar" onclick="go('cart')"><span id="cartbar-l">🧾 Корзина</span><span id="cartbar-r"></span></div>
+
+  <!-- POINT PICKER OVERLAY (какая точка готовит заказ) -->
+  <div class="point-overlay" id="point-overlay" onclick="pointOverlayDismiss(event)">
+    <div class="point-sheet">
+      <h2>📍 Где приготовить заказ?</h2>
+      <div class="sub">Выбери точку Bounty — твой заказ будет готовить именно она, там и заберёшь</div>
+      <div id="point-list"></div>
+    </div>
+  </div>
 
   <!-- OFERTA CONSENT OVERLAY -->
   <div class="oferta-overlay" id="oferta-overlay">
@@ -525,6 +550,8 @@ function go(scr){
   document.querySelector('.screen.active').scrollTop = 0;
   if (scr === 'cart') renderCart();
   if (scr === 'myorders'){ renderMyOrders(); pollOrders(); }
+  if (scr === 'order') renderPointChip();
+  if ((scr === 'order' || scr === 'cart') && !pointChosen) openPointPicker();
   renderCartBar();
   if (navigator.vibrate) navigator.vibrate(10);
 }
@@ -727,8 +754,35 @@ const POINTS = [
   {id:'sayram', name:'Сайрам 25/1',  sub:'08:00 – 23:00'}
 ];
 const PICKUP_TIMES = ['Как можно скорее','Через 15 мин','Через 30 мин','Через 45 мин'];
-let coPoint = 'hadra', coTime = 0;
-function coSelPoint(id){ coPoint = id; document.querySelectorAll('#co-points .p-opt').forEach(b=>b.classList.toggle('sel', b.dataset.id===id)); }
+let coPoint = localStorage.getItem('bounty_point') || null, coTime = 0;
+let pointChosen = false; // подтверждён ли выбор точки для ТЕКУЩЕГО заказа
+function renderPointChip(){
+  const chip = document.getElementById('order-point-chip');
+  const p = POINTS.find(x=>x.id===coPoint);
+  chip.innerHTML = (pointChosen && p)
+    ? '📍 Готовит: <b>' + p.name + '</b><span class="chg">изменить</span>'
+    : '📍 <b>Выбери точку</b> — где приготовить заказ<span class="chg">выбрать</span>';
+}
+function openPointPicker(){
+  document.getElementById('point-list').innerHTML = POINTS.map(p =>
+    `<button class="point-btn${p.id===coPoint?' sel':''}" onclick="pickPoint('${p.id}')">${p.name}<small>${p.sub}</small></button>`).join('');
+  document.getElementById('point-overlay').classList.add('show');
+}
+function pickPoint(id){
+  coPoint = id; pointChosen = true;
+  localStorage.setItem('bounty_point', id);
+  document.getElementById('point-overlay').classList.remove('show');
+  renderPointChip();
+  if (document.getElementById('scr-cart').classList.contains('active')) renderCart();
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+function pointOverlayDismiss(ev){
+  if (ev.target !== ev.currentTarget) return;
+  document.getElementById('point-overlay').classList.remove('show');
+  if (coPoint){ pointChosen = true; renderPointChip(); if (document.getElementById('scr-cart').classList.contains('active')) renderCart(); }
+  else go('home');
+}
+function coSelPoint(id){ coPoint = id; pointChosen = true; localStorage.setItem('bounty_point', id); renderPointChip(); document.querySelectorAll('#co-points .p-opt').forEach(b=>b.classList.toggle('sel', b.dataset.id===id)); }
 function coSelTime(k){ coTime = k; document.querySelectorAll('#co-times .p-opt').forEach(b=>b.classList.toggle('sel', +b.dataset.k===k)); }
 function cartQty(idx, d){
   const c = getCart();
@@ -765,6 +819,7 @@ function submitOrder(){
   if (orderSending) return;
   const c = getCart();
   if (!c.length) return;
+  if (!coPoint || !pointChosen){ openPointPicker(); return; }
   const client = getClient();
   const btn = document.getElementById('co-submit');
   orderSending = true; btn.textContent = 'Отправляем…'; btn.disabled = true;
@@ -790,6 +845,7 @@ function submitOrder(){
         '<strong>' + point.name + '</strong><br>' + PICKUP_TIMES[coTime] + '<br>' +
         payload.items.map(i=>i.qty+'× '+i.n+(i.size?' ('+i.size+')':'')).join('<br>') +
         '<br><strong style="color:var(--gold)">' + fmtSum(payload.total) + '</strong>';
+      pointChosen = false; // следующий заказ снова начнётся с выбора точки
       go('orderok');
       if (navigator.vibrate) navigator.vibrate([30,60,30]);
     })
