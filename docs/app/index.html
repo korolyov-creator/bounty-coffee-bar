@@ -40,6 +40,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .scr-head h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1.05;letter-spacing:-.01em}
 .scr-head h1 .script{font-family:'Cookie',cursive;color:var(--gold);font-size:.7em;font-weight:400;display:block;margin-top:2px;line-height:1}
 .scr-head .greet{color:rgba(242,234,215,.7);font-size:14px;margin-top:6px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--gold);font-size:14px;font-weight:700;padding:0;margin-bottom:10px;cursor:pointer;font-family:inherit;letter-spacing:.02em}
 
 /* CARDS */
 .card{background:rgba(242,234,215,.06);border:1px solid rgba(201,161,74,.15);border-radius:14px;padding:18px;margin-bottom:14px;transition:transform .15s}
@@ -387,13 +388,14 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.5 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.6 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
   <!-- ============ HISTORY ============ -->
   <main class="screen" id="scr-history">
     <div class="scr-head">
+      <button class="back-btn" onclick="go('profile')">← Назад</button>
       <div class="eyebrow">📋 ИСТОРИЯ ПОКУПОК</div>
       <h1>Всё на месте<span class="script">каждая покупка — здесь</span></h1>
     </div>
@@ -405,6 +407,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ CART / CHECKOUT ============ -->
   <main class="screen" id="scr-cart">
     <div class="scr-head">
+      <button class="back-btn" onclick="go('order')">← Назад</button>
       <div class="eyebrow">🧾 ТВОЙ ЗАКАЗ</div>
       <h1>Корзина<span class="script">самовывоз без очереди</span></h1>
     </div>
@@ -443,6 +446,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ MY ORDERS ============ -->
   <main class="screen" id="scr-myorders">
     <div class="scr-head">
+      <button class="back-btn" onclick="go('profile')">← Назад</button>
       <div class="eyebrow">🧾 МОИ ЗАКАЗЫ</div>
       <h1>Предзаказы<span class="script">статус в реальном времени</span></h1>
     </div>
@@ -454,6 +458,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ WALLET ============ -->
   <main class="screen" id="scr-wallet">
     <div class="scr-head">
+      <button class="back-btn" onclick="go('profile')">← Назад</button>
       <div class="eyebrow">👛 КОШЕЛЁК</div>
       <h1>Твой баланс<span class="script">плати в одно касание</span></h1>
     </div>
@@ -487,6 +492,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ CHAT ============ -->
   <main class="screen" id="scr-chat">
     <div class="scr-head">
+      <button class="back-btn" onclick="go('myorders')">← Назад</button>
       <div class="eyebrow">💬 ЧАТ С БАРИСТА</div>
       <h1>Мы на связи<span class="script">ответим быстро</span></h1>
     </div>
@@ -1541,9 +1547,13 @@ function renderHistory(c){
 window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); pollOrders(); refreshWallet(); chatPoll(false); });
 
 // === PWA Install ===
+// В нативной обёртке (Capacitor) и в уже установленной PWA баннер не нужен
+const IS_APP = location.protocol === 'capacitor:' || !!window.Capacitor
+  || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
+  if (IS_APP) return;
   deferredPrompt = e;
   document.getElementById('install-banner').classList.add('show');
 });
@@ -1559,7 +1569,7 @@ function hideInstall(){ document.getElementById('install-banner').classList.remo
 
 // Hint for iOS (no beforeinstallprompt)
 setTimeout(()=>{
-  if (!deferredPrompt && /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches){
+  if (!IS_APP && !deferredPrompt && /iPhone|iPad|iPod/i.test(navigator.userAgent)){
     document.getElementById('install-banner').classList.add('show');
   }
 }, 4000);
