@@ -1,16 +1,16 @@
 <?php
 // API персонала (бариста / админ). POST JSON.
-// action:'login' {password}                      → {ok, role, key}
-// далее все запросы с {key}:
-//  'topups'                                      → заявки на пополнение (pending)
-//  'topup_confirm' {tid}                         → зачислить по заявке
-//  'topup_cancel' {tid}
-//  'topup_direct' {phone, amount}                → бариста принял деньги на кассе без заявки
-//  'chat_threads'                                → нити чата (последние сообщения)
-//  'chat_get' {phone}                            → нить клиента
-//  'chat_send' {phone, text}
-//  админ: 'overview'                             → клиенты, кошельки, статистика
-//  админ: 'adjust' {phone, amount, note}         → ручная корректировка кошелька (+/-)
+// action:'login' {login?, password}  → {ok, role, token, name}
+//   админ — пароль администратора (логин пуст или 'admin');
+//   бариста — личный логин+пароль; общий код работает, пока включён legacy-режим
+// action:'logout' {token}
+// далее все запросы с {token}:
+//  'topups' | 'topup_confirm' {tid} | 'topup_cancel' {tid} | 'topup_direct' {phone, amount}
+//  'chat_threads' | 'chat_get' {phone} | 'chat_send' {phone, text}
+//  админ: 'overview' | 'adjust' {phone, amount, note}
+//  админ: 'staff_list' | 'staff_invite' {phone, name?} | 'staff_invite_cancel' {phone}
+//  админ: 'staff_block'/'staff_unblock' {login} | 'staff_reset' {login} | 'legacy_toggle' {on}
+//  админ: 'client_block' {phone, note?} | 'client_unblock' {phone}
 require __DIR__ . '/_lib.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(['ok' => false], 405); }
 $d = json_body(16384);
@@ -18,20 +18,56 @@ if (!$d) { respond(['ok' => false], 400); }
 $action = (string)($d['action'] ?? '');
 
 if ($action === 'login') {
-  // Пароли: бариста — 1414 (общий код бариста), админ — см. креды у владельца
+  usleep(300000); // тормозим перебор
+  if (!login_rate_check()) { respond(['ok' => false, 'reason' => 'rate_limit'], 429); }
+  $login = strtolower(trim((string)($d['login'] ?? '')));
   $pass = (string)($d['password'] ?? '');
-  usleep(200000); // тормозим перебор
-  if (hash_equals(hash('sha256', 'bounty:' . $pass), hash('sha256', 'bounty:' . 'Bounty-Admin-8352'))) {
-    respond(['ok' => true, 'role' => 'admin', 'key' => BOUNTY_ADMIN_KEY]);
+  $cfg = auth_config();
+
+  // админ
+  if (($login === '' || $login === 'admin') && !empty($cfg['admin_hash']) && password_verify($pass, $cfg['admin_hash'])) {
+    $token = staff_session_create('admin', 'admin', 'Администратор');
+    audit('login_ok', array('login' => 'admin'));
+    respond(['ok' => true, 'role' => 'admin', 'token' => $token, 'name' => 'Администратор']);
   }
-  if (hash_equals(hash('sha256', 'bounty:' . $pass), hash('sha256', 'bounty:' . '1414'))) {
-    respond(['ok' => true, 'role' => 'barista', 'key' => BOUNTY_BARISTA_KEY]);
+  // личный аккаунт бариста
+  if ($login !== '' && $login !== 'admin') {
+    $acc = store_read('staff_accounts.json');
+    $a = $acc[$login] ?? null;
+    if ($a && password_verify($pass, $a['hash'])) {
+      if (($a['status'] ?? '') !== 'active') { audit('login_blocked', array('login' => $login)); respond(['ok' => false, 'reason' => 'blocked'], 403); }
+      store_update('staff_accounts.json', function ($data) use ($login) {
+        if (isset($data[$login])) { $data[$login]['last_login'] = date('c'); }
+        return [$data, true];
+      });
+      $token = staff_session_create($login, 'barista', $a['name']);
+      audit('login_ok', array('login' => $login));
+      respond(['ok' => true, 'role' => 'barista', 'token' => $token, 'name' => $a['name']]);
+    }
   }
+  // общий код бариста (legacy, можно выключить в админке)
+  if ($login === '' && !empty($cfg['legacy_barista']) && !empty($cfg['legacy_hash']) && password_verify($pass, $cfg['legacy_hash'])) {
+    $token = staff_session_create('_legacy', 'barista', 'Бариста (общий код)');
+    audit('login_ok', array('login' => '_legacy'));
+    respond(['ok' => true, 'role' => 'barista', 'token' => $token, 'name' => 'Бариста']);
+  }
+  login_rate_fail();
+  audit('login_fail', array('login' => $login));
   respond(['ok' => false, 'reason' => 'wrong_password'], 401);
 }
 
-$role = staff_role($d['key'] ?? '');
-if (!$role) { respond(['ok' => false, 'reason' => 'forbidden'], 403); }
+if ($action === 'logout') {
+  $token = (string)($d['token'] ?? '');
+  if (preg_match('/^[a-f0-9]{48}$/', $token)) {
+    store_update('staff_sessions.json', function ($data) use ($token) { unset($data[$token]); return [$data, true]; });
+  }
+  respond(['ok' => true]);
+}
+
+$sess = staff_auth($d['token'] ?? '');
+if (!$sess) { respond(['ok' => false, 'reason' => 'forbidden'], 403); }
+$role = $sess['role'];
+$who = $role === 'admin' ? 'admin' : $sess['login'];
 
 if ($action === 'topups') {
   $t = store_read('topups.json');
@@ -44,16 +80,17 @@ if ($action === 'topups') {
 if ($action === 'topup_confirm' || $action === 'topup_cancel') {
   $tid = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['tid'] ?? '')), 0, 12);
   $st = $action === 'topup_confirm' ? 'done' : 'cancel';
-  $t = store_update('topups.json', function ($data) use ($tid, $st, $role) {
+  $t = store_update('topups.json', function ($data) use ($tid, $st, $who) {
     if (!isset($data[$tid]) || $data[$tid]['status'] !== 'pending') { return [$data, null]; }
     $data[$tid]['status'] = $st;
-    $data[$tid]['by'] = $role;
+    $data[$tid]['by'] = $who;
     $data[$tid]['done_ts'] = date('c');
     return [$data, $data[$tid]];
   });
   if (!$t) { respond(['ok' => false, 'reason' => 'not_pending'], 422); }
   if ($st === 'done') {
-    wallet_credit($t['phone'], $t['amount'], 'topup', array('m' => $t['method'], 'by' => $role, 'id' => $t['id'] ?? '', 'name' => $t['name'] ?? ''));
+    wallet_credit($t['phone'], $t['amount'], 'topup', array('m' => $t['method'], 'by' => $who, 'id' => $t['id'] ?? '', 'name' => $t['name'] ?? ''));
+    audit('topup_confirm', array('by' => $who, 'phone' => $t['phone'], 'amount' => $t['amount']));
   }
   respond(['ok' => true]);
 }
@@ -62,7 +99,8 @@ if ($action === 'topup_direct') {
   $phone = norm_phone($d['phone'] ?? '');
   $amount = (int)($d['amount'] ?? 0);
   if (!$phone || $amount < 1000 || $amount > 5000000) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
-  $w = wallet_credit($phone, $amount, 'topup', array('m' => 'cash', 'by' => $role));
+  $w = wallet_credit($phone, $amount, 'topup', array('m' => 'cash', 'by' => $who));
+  audit('topup_direct', array('by' => $who, 'phone' => $phone, 'amount' => $amount));
   respond(['ok' => true, 'balance' => $w['balance']]);
 }
 
@@ -114,6 +152,7 @@ if ($action === 'overview') {
   // клиенты: серверные аккаунты + анкеты регистрации
   $accounts = store_read('accounts.json');
   $wallets = store_read('wallets.json');
+  $block = store_read('blocklist.json');
   $clients = array();
   $f = bdata_path('clients.jsonl');
   if (is_file($f)) {
@@ -132,7 +171,10 @@ if ($action === 'overview') {
       'name' => $a['name'], 'id' => $a['id'], 'reg' => $a['reg'],
       'stamps' => (int)$a['stamps'], 'total' => (int)$a['total'], 'free' => (int)$a['free'], 'account' => true));
   }
-  foreach ($clients as $p => &$c) { $c['wallet'] = (int)($wallets[$p]['balance'] ?? 0); }
+  foreach ($clients as $p => &$c) {
+    $c['wallet'] = (int)($wallets[$p]['balance'] ?? 0);
+    $c['blocked'] = isset($block['phones'][$p]);
+  }
   unset($c);
 
   // заказы за 7 дней + статусы
@@ -163,6 +205,7 @@ if ($action === 'overview') {
   $walletsOut = array();
   foreach ($wallets as $p => $w) {
     $walletsOut[] = array('phone' => $p, 'name' => $w['name'] ?? '', 'balance' => (int)$w['balance'],
+      'blocked' => isset($block['phones'][$p]),
       'tx' => array_slice(array_reverse($w['tx']), 0, 10));
   }
 
@@ -177,9 +220,122 @@ if ($action === 'adjust') {
   $phone = norm_phone($d['phone'] ?? '');
   $amount = (int)($d['amount'] ?? 0);
   $note = mb_substr(trim((string)($d['note'] ?? '')), 0, 100);
-  if (!$phone || $amount === 0) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+  if (!$phone || $amount === 0 || abs($amount) > 5000000) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
   $w = wallet_credit($phone, $amount, 'adjust', array('by' => 'admin', 'note' => $note));
+  audit('adjust', array('by' => 'admin', 'phone' => $phone, 'amount' => $amount, 'note' => $note));
   respond(['ok' => true, 'balance' => $w['balance']]);
+}
+
+// === УПРАВЛЕНИЕ ПЕРСОНАЛОМ ===
+
+if ($action === 'staff_list') {
+  $acc = store_read('staff_accounts.json');
+  $out = array();
+  foreach ($acc as $login => $a) {
+    $out[] = array('login' => $login, 'name' => $a['name'], 'phone' => $a['phone'] ?? '',
+      'status' => $a['status'], 'created' => $a['created'] ?? '', 'last_login' => $a['last_login'] ?? '');
+  }
+  $inv = store_read('staff_invites.json');
+  $invites = array();
+  $now = time();
+  foreach ($inv as $p => $v) {
+    if (($v['exp'] ?? 0) >= $now) { $invites[] = array('phone' => $p, 'name' => $v['name'] ?? '', 'exp' => date('c', $v['exp'])); }
+  }
+  $cfg = auth_config();
+  respond(['ok' => true, 'staff' => $out, 'invites' => $invites, 'legacy' => !empty($cfg['legacy_barista'])]);
+}
+
+if ($action === 'staff_invite') {
+  $phone = norm_phone($d['phone'] ?? '');
+  $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
+  if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
+  $code = (string)random_int(100000, 999999);
+  store_update('staff_invites.json', function ($data) use ($phone, $code, $name) {
+    $now = time();
+    foreach ($data as $k => $v) { if (($v['exp'] ?? 0) < $now) unset($data[$k]); }
+    $data[$phone] = array('h' => hash('sha256', $phone . ':' . $code), 'exp' => $now + 86400, 'tries' => 0, 'name' => $name);
+    return [$data, true];
+  });
+  audit('staff_invite', array('phone' => $phone, 'name' => $name));
+  $sent = sms_send($phone, "Bounty Coffee Bar: kod registratsii barista $code. Deystvuet 24 chasa.");
+  // если SMS-провайдер не настроен — код показываем админу, он передаёт бариста лично
+  respond(['ok' => true, 'sms_sent' => $sent, 'code' => $sent ? null : $code]);
+}
+
+if ($action === 'staff_invite_cancel') {
+  $phone = norm_phone($d['phone'] ?? '');
+  if (!$phone) { respond(['ok' => false], 422); }
+  store_update('staff_invites.json', function ($data) use ($phone) { unset($data[$phone]); return [$data, true]; });
+  respond(['ok' => true]);
+}
+
+if ($action === 'staff_block' || $action === 'staff_unblock') {
+  $login = strtolower(preg_replace('/[^a-z0-9\-]/', '', (string)($d['login'] ?? '')));
+  $st = $action === 'staff_block' ? 'blocked' : 'active';
+  $ok = store_update('staff_accounts.json', function ($data) use ($login, $st) {
+    if (!isset($data[$login])) { return [$data, false]; }
+    $data[$login]['status'] = $st;
+    return [$data, true];
+  });
+  if (!$ok) { respond(['ok' => false, 'reason' => 'not_found'], 404); }
+  if ($st === 'blocked') { staff_sessions_kill($login); }
+  audit($action, array('login' => $login));
+  respond(['ok' => true]);
+}
+
+if ($action === 'staff_reset') {
+  $login = strtolower(preg_replace('/[^a-z0-9\-]/', '', (string)($d['login'] ?? '')));
+  $password = gen_password(12);
+  $ok = store_update('staff_accounts.json', function ($data) use ($login, $password) {
+    if (!isset($data[$login])) { return [$data, false]; }
+    $data[$login]['hash'] = password_hash($password, PASSWORD_DEFAULT);
+    return [$data, true];
+  });
+  if (!$ok) { respond(['ok' => false, 'reason' => 'not_found'], 404); }
+  staff_sessions_kill($login);
+  audit('staff_reset', array('login' => $login));
+  respond(['ok' => true, 'login' => $login, 'password' => $password]);
+}
+
+if ($action === 'legacy_toggle') {
+  $on = !empty($d['on']);
+  store_update('auth.json', function ($data) use ($on) {
+    $data['legacy_barista'] = $on;
+    return [$data, true];
+  });
+  if (!$on) { staff_sessions_kill('_legacy'); }
+  audit('legacy_toggle', array('on' => $on));
+  respond(['ok' => true, 'legacy' => $on]);
+}
+
+// === БЛОКИРОВКА КЛИЕНТОВ ===
+
+if ($action === 'client_block' || $action === 'client_unblock') {
+  $phone = norm_phone($d['phone'] ?? '');
+  $note = mb_substr(trim((string)($d['note'] ?? '')), 0, 100);
+  if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
+  $blockIt = $action === 'client_block';
+  // блокируем и телефон, и привязанную карту (client_id), чтобы не обойти сменой номера в форме
+  $wallets = store_read('wallets.json');
+  $accounts = store_read('accounts.json');
+  $ids = array();
+  if (!empty($wallets[$phone]['id'])) { $ids[] = $wallets[$phone]['id']; }
+  if (!empty($accounts[$phone]['id'])) { $ids[] = $accounts[$phone]['id']; }
+  store_update('blocklist.json', function ($data) use ($phone, $ids, $blockIt, $note) {
+    if (!isset($data['phones'])) { $data['phones'] = array(); }
+    if (!isset($data['ids'])) { $data['ids'] = array(); }
+    if ($blockIt) {
+      $data['phones'][$phone] = array('ts' => date('c'), 'note' => $note);
+      foreach ($ids as $id) { $data['ids'][$id] = array('ts' => date('c'), 'phone' => $phone); }
+    } else {
+      unset($data['phones'][$phone]);
+      foreach ($data['ids'] as $id => $v) { if (($v['phone'] ?? '') === $phone) unset($data['ids'][$id]); }
+      foreach ($ids as $id) { unset($data['ids'][$id]); }
+    }
+    return [$data, true];
+  });
+  audit($action, array('phone' => $phone, 'note' => $note));
+  respond(['ok' => true]);
 }
 
 respond(['ok' => false, 'reason' => 'bad_action'], 422);

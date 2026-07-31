@@ -992,6 +992,10 @@ function submitOrder(){
     .then(r => r.json())
     .then(res => {
       if (!res || !res.ok){
+        if (res && res.error === 'blocked'){
+          alert('Заказы для этого аккаунта временно недоступны.\nОбратись к администратору кофейни.');
+          return;
+        }
         if (res && res.error === 'insufficient'){
           wallet.balance = res.balance || 0;
           renderPayOptions();

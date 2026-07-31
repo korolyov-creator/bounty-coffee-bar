@@ -7,6 +7,7 @@ $d = json_body();
 if (!$d) { respond(['ok' => false], 400); }
 $phone = norm_phone($d['phone'] ?? '');
 if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
+client_guard($phone);
 
 if (!sms_config()) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
 

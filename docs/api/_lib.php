@@ -58,16 +58,115 @@ function norm_phone($p) {
 
 function client_ip() { return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'; }
 
-// === STAFF (бариста / админ) ===
-define('BOUNTY_BARISTA_KEY', 'd1015884097fe84349700f90e7d38d0a');
-define('BOUNTY_ADMIN_KEY', '8ea8d889a4058e9f0647f925ca8168de');
+// === АУДИТ ===
+function audit($ev, $extra = array()) {
+  $rec = array_merge(array('ts' => date('c'), 'ev' => $ev, 'ip' => client_ip()), $extra);
+  file_put_contents(bdata_path('audit.jsonl'), json_encode($rec, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+}
 
-// null | 'barista' | 'admin' (админ имеет все права баристы)
-function staff_role($key) {
-  $key = (string)$key;
-  if (hash_equals(BOUNTY_ADMIN_KEY, $key)) { return 'admin'; }
-  if (hash_equals(BOUNTY_BARISTA_KEY, $key)) { return 'barista'; }
-  return null;
+// === АУТЕНТИФИКАЦИЯ ПЕРСОНАЛА ===
+// Секреты живут ТОЛЬКО на сервере в bounty_data/auth.json (вне webroot):
+// {"admin_hash":"$2y$...","legacy_barista":true,"legacy_hash":"$2y$..."}
+function auth_config() { return store_read('auth.json'); }
+
+define('STAFF_SESSION_TTL', 30 * 86400);
+
+// Выдать сессионный токен персонала
+function staff_session_create($login, $role, $name) {
+  $token = bin2hex(random_bytes(24));
+  store_update('staff_sessions.json', function ($data) use ($token, $login, $role, $name) {
+    $now = time();
+    foreach ($data as $t => $s) { if (($s['exp'] ?? 0) < $now) unset($data[$t]); }
+    $data[$token] = array('login' => $login, 'role' => $role, 'name' => $name, 'ts' => $now, 'exp' => $now + STAFF_SESSION_TTL);
+    return [$data, true];
+  });
+  return $token;
+}
+
+function staff_sessions_kill($login) {
+  store_update('staff_sessions.json', function ($data) use ($login) {
+    foreach ($data as $t => $s) { if (($s['login'] ?? '') === $login) unset($data[$t]); }
+    return [$data, true];
+  });
+}
+
+// Проверка токена → array{login,role,name} | null. Учитывает блокировку бариста.
+function staff_auth($token) {
+  $token = (string)$token;
+  if (!preg_match('/^[a-f0-9]{48}$/', $token)) { return null; }
+  $sessions = store_read('staff_sessions.json');
+  $s = $sessions[$token] ?? null;
+  if (!$s || ($s['exp'] ?? 0) < time()) { return null; }
+  if ($s['role'] === 'barista' && $s['login'] !== '_legacy') {
+    $acc = store_read('staff_accounts.json');
+    if (($acc[$s['login']]['status'] ?? '') !== 'active') { return null; }
+  }
+  if ($s['role'] === 'barista' && $s['login'] === '_legacy') {
+    $cfg = auth_config();
+    if (empty($cfg['legacy_barista'])) { return null; }
+  }
+  return $s;
+}
+
+// Совместимость: роль по токену ('admin'|'barista'|null)
+function staff_role($token) {
+  $s = staff_auth($token);
+  return $s ? $s['role'] : null;
+}
+
+// Рейт-лимит неудачных входов персонала: 15 за час с одного IP
+function login_rate_check() {
+  $ip = client_ip(); $now = time();
+  $fails = store_read('login_fails.json');
+  $list = array_filter($fails[$ip] ?? array(), function ($t) use ($now) { return $now - $t < 3600; });
+  return count($list) < 15;
+}
+function login_rate_fail() {
+  $ip = client_ip(); $now = time();
+  store_update('login_fails.json', function ($data) use ($ip, $now) {
+    foreach ($data as $k => $ts) {
+      $data[$k] = array_values(array_filter($ts, function ($t) use ($now) { return $now - $t < 3600; }));
+      if (!$data[$k]) unset($data[$k]);
+    }
+    $data[$ip][] = $now;
+    return [$data, true];
+  });
+}
+
+// Генерация креденшлов бариста
+function gen_password($len = 12) {
+  $alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  $p = '';
+  for ($i = 0; $i < $len; $i++) { $p .= $alpha[random_int(0, strlen($alpha) - 1)]; }
+  return $p;
+}
+
+function translit_login($name) {
+  $map = array('а'=>'a','б'=>'b','в'=>'v','г'=>'g','д'=>'d','е'=>'e','ё'=>'e','ж'=>'zh','з'=>'z','и'=>'i','й'=>'y','к'=>'k','л'=>'l','м'=>'m','н'=>'n','о'=>'o','п'=>'p','р'=>'r','с'=>'s','т'=>'t','у'=>'u','ф'=>'f','х'=>'h','ц'=>'c','ч'=>'ch','ш'=>'sh','щ'=>'sch','ъ'=>'','ы'=>'y','ь'=>'','э'=>'e','ю'=>'yu','я'=>'ya');
+  $s = mb_strtolower(trim($name));
+  $out = '';
+  for ($i = 0; $i < mb_strlen($s); $i++) {
+    $c = mb_substr($s, $i, 1);
+    if ($c === ' ' || $c === '-') break;
+    if (preg_match('/[a-z0-9]/', $c)) { $out .= $c; }
+    elseif (isset($map[$c])) { $out .= $map[$c]; }
+  }
+  $out = substr($out, 0, 10);
+  return $out !== '' ? $out : 'barista';
+}
+
+// === БЛОК-ЛИСТ КЛИЕНТОВ ===
+// blocklist.json: {"phones":{"998...":{ts,note}},"ids":{"CARD-ID":{ts,note}}}
+function is_blocked($phone, $id = '') {
+  $b = store_read('blocklist.json');
+  if ($phone && isset($b['phones'][$phone])) { return true; }
+  if ($id !== '' && isset($b['ids'][$id])) { return true; }
+  return false;
+}
+
+// Guard для клиентских API: блокированный получает 403 {reason:'blocked'}
+function client_guard($phone, $id = '') {
+  if (is_blocked($phone, $id)) { respond(['ok' => false, 'reason' => 'blocked', 'error' => 'blocked'], 403); }
 }
 
 // === WALLET ===

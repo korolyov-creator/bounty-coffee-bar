@@ -35,6 +35,9 @@ if (!$items || $total <= 0) { http_response_code(422); echo '{"ok":false,"error"
 $dir = dirname(__DIR__, 2) . '/bounty_data';
 if (!is_dir($dir)) { mkdir($dir, 0700, true); }
 
+// блокировка клиента админом
+client_guard(norm_phone($d['phone'] ?? ''), substr(preg_replace('/[^A-Za-z0-9\-]/', '', (string)($d['client_id'] ?? '')), 0, 32));
+
 // Способ оплаты: pickup (при получении) | wallet (списание с кошелька при оформлении)
 $pay = (string)($d['pay'] ?? 'pickup');
 if (!in_array($pay, array('pickup', 'wallet'), true)) { $pay = 'pickup'; }

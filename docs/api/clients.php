@@ -1,8 +1,10 @@
 <?php
-$KEY = 'fddec01c0ab722e9d71a3764c2a57ad4';
-if (!hash_equals($KEY, (string)($_GET['key'] ?? ''))) { http_response_code(403); exit('forbidden'); }
+// Экспорт клиентов CSV (только админ, по сессионному токену)
+require __DIR__ . '/_lib.php';
+$sess = staff_auth($_GET['token'] ?? '');
+if (!$sess || $sess['role'] !== 'admin') { http_response_code(403); exit('forbidden'); }
 
-$f = dirname(__DIR__, 2) . '/bounty_data/clients.jsonl';
+$f = bdata_path('clients.jsonl');
 if (!is_file($f)) { exit('no data yet'); }
 
 $by = array();

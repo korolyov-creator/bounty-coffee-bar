@@ -65,11 +65,21 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
   <button data-t="orders">Заказы</button>
   <button data-t="clients">Клиенты</button>
   <button data-t="wallets">Кошельки</button>
+  <button data-t="staff">Персонал</button>
 </div>
 
 <div class="pane sel" id="pane-summary">
   <div class="grid" id="stats"></div>
   <div class="card"><h2 style="margin-top:0">По точкам · сегодня</h2><div id="bypoint"></div></div>
+  <div class="card">
+    <h2 style="margin-top:0">📊 Отчёт для бухгалтера</h2>
+    <div class="sub">Все движения за период: предзаказы, пополнения, оплаты и возвраты по кошелькам, корректировки + итоги (CSV для Excel)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input type="date" id="rep-from" style="flex:1;min-width:130px">
+      <input type="date" id="rep-to" style="flex:1;min-width:130px">
+      <button class="gold" onclick="downloadReport()">⬇ Скачать отчёт</button>
+    </div>
+  </div>
   <div class="card">
     <h2 style="margin-top:0">Быстрые действия</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -86,6 +96,29 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
 <div class="pane" id="pane-clients">
   <div class="card"><input id="cl-search" placeholder="🔍 Поиск: имя или телефон" style="width:100%" oninput="renderClients()"></div>
   <div class="card" style="overflow-x:auto"><table id="clients-t"></table></div>
+</div>
+
+<div class="pane" id="pane-staff">
+  <div class="card">
+    <h2 style="margin-top:0">➕ Пригласить бариста</h2>
+    <div class="sub">Бариста получит 6-значный код (по SMS, а пока SMS не подключено — код покажется здесь, передай лично). По коду бариста регистрируется на barista.html и получает личный логин и пароль.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="tel" id="inv-phone" placeholder="Телефон 9XXXXXXXX" style="flex:2;min-width:140px">
+      <input type="text" id="inv-name" placeholder="Имя (необязательно)" style="flex:2;min-width:120px">
+      <button class="gold" onclick="staffInvite()">Создать код</button>
+    </div>
+    <div id="inv-result" style="margin-top:10px;display:none" class="card"></div>
+    <div id="inv-list" style="margin-top:10px"></div>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <h2 style="margin-top:0">Бариста</h2>
+    <table id="staff-t"></table>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Общий код бариста (старый, 1414)</h2>
+    <div class="sub">Пока включён — вход по общему коду работает. Когда все бариста зарегистрируются, выключи его.</div>
+    <button class="chip" id="legacy-btn" onclick="legacyToggle()">…</button>
+  </div>
 </div>
 
 <div class="pane" id="pane-wallets">
@@ -121,14 +154,15 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
 <div class="bar" id="bar">—</div>
 
 <script>
-let KEY = localStorage.getItem('bounty_admin_key') || '';
+let KEY = localStorage.getItem('bounty_admin_token') || '';
+localStorage.removeItem('bounty_admin_key'); // старые статические ключи отозваны
 let DATA = {clients:[], orders:[], wallets:[]};
 
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmt(n){ return (+n).toLocaleString('ru-RU').replace(/,/g,' '); }
 function staffReq(action, extra){
   return fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(Object.assign({key:KEY, action}, extra||{}))}).then(r=>r.json());
+    body: JSON.stringify(Object.assign({token:KEY, action}, extra||{}))}).then(r=>r.json());
 }
 
 function doLogin(){
@@ -136,12 +170,13 @@ function doLogin(){
     body: JSON.stringify({action:'login', password: document.getElementById('login-pass').value})})
     .then(r=>r.json()).then(j => {
       if (j.ok && j.role === 'admin'){
-        KEY = j.key;
-        localStorage.setItem('bounty_admin_key', KEY);
+        KEY = j.token;
+        localStorage.setItem('bounty_admin_token', KEY);
         document.getElementById('login').style.display = 'none';
         start();
       } else {
-        document.getElementById('login-err').textContent = j.ok ? 'Это пароль баристы — нужен пароль администратора' : 'Неверный пароль';
+        document.getElementById('login-err').textContent = j.ok ? 'Это вход баристы — нужен пароль администратора'
+          : j.reason === 'rate_limit' ? 'Слишком много попыток — подожди час' : 'Неверный пароль';
         document.getElementById('login-err').style.display = 'block';
       }
     }).catch(()=>{ document.getElementById('login-err').textContent='Нет связи'; document.getElementById('login-err').style.display='block'; });
@@ -149,7 +184,9 @@ function doLogin(){
 document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 function logout(){
   if (!confirm('Выйти?')) return;
-  localStorage.removeItem('bounty_admin_key');
+  fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'logout', token:KEY})}).catch(()=>{});
+  localStorage.removeItem('bounty_admin_token');
   location.reload();
 }
 
@@ -237,12 +274,93 @@ function renderClients(){
   const list = DATA.clients.filter(c => !q || (c.name||'').toLowerCase().includes(q) || String(c.phone).includes(q))
     .sort((a,b) => (b.total||0) - (a.total||0));
   const rows = list.map(c =>
-    '<tr><td><b>' + esc(c.name||'—') + '</b>' + (c.account ? ' <span class="pill p-green">SMS</span>' : '') + '<br><small>' + esc(c.id||'') + '</small></td>' +
+    '<tr' + (c.blocked ? ' style="opacity:.55"' : '') + '><td><b>' + esc(c.name||'—') + '</b>' + (c.account ? ' <span class="pill p-green">SMS</span>' : '') + (c.blocked ? ' <span class="pill p-red">БЛОК</span>' : '') + '<br><small>' + esc(c.id||'') + '</small></td>' +
     '<td><a href="tel:+' + c.phone + '">+' + c.phone + '</a> <a href="#" onclick="openChat(\'' + c.phone + '\',\'' + esc(c.name||'') + '\');return false">💬</a></td>' +
     '<td>' + (c.stamps||0) + '/5</td><td>' + (c.total||0) + '</td><td>' + (c.free||0) + '</td>' +
     '<td><b style="color:var(--gold)">' + fmt(c.wallet||0) + '</b></td>' +
-    '<td><small>' + esc(c.reg||'') + '</small></td></tr>').join('');
-  document.getElementById('clients-t').innerHTML = '<tr><th>Клиент</th><th>Телефон</th><th>Отметки</th><th>Покупок</th><th>Беспл.</th><th>Кошелёк</th><th>Рег.</th></tr>' + (rows || '<tr><td colspan="7" class="sub">Не найдено</td></tr>');
+    '<td><small>' + esc(c.reg||'') + '</small></td>' +
+    '<td>' + (c.blocked
+      ? '<button class="chip" onclick="clientBlock(\'' + c.phone + '\',false)">Разблокировать</button>'
+      : '<button class="chip" style="color:#f87171;border-color:#f87171" onclick="clientBlock(\'' + c.phone + '\',true)">Блок</button>') + '</td></tr>').join('');
+  document.getElementById('clients-t').innerHTML = '<tr><th>Клиент</th><th>Телефон</th><th>Отметки</th><th>Покупок</th><th>Беспл.</th><th>Кошелёк</th><th>Рег.</th><th></th></tr>' + (rows || '<tr><td colspan="8" class="sub">Не найдено</td></tr>');
+}
+
+function clientBlock(phone, block){
+  const note = block ? (prompt('Причина блокировки (необязательно):') || '') : '';
+  if (block && !confirm('Заблокировать клиента +' + phone + '?\nОн не сможет заказывать, пополнять кошелёк и писать в чат.')) return;
+  staffReq(block ? 'client_block' : 'client_unblock', {phone, note}).then(j => {
+    if (j.ok){ load(); } else alert('Не получилось (' + (j.reason||'') + ')');
+  }).catch(()=>alert('Нет связи'));
+}
+
+// === ОТЧЁТ ДЛЯ БУХГАЛТЕРА ===
+function downloadReport(){
+  const from = document.getElementById('rep-from').value;
+  const to = document.getElementById('rep-to').value;
+  if (!from || !to){ alert('Выбери период'); return; }
+  location.href = 'api/report.php?token=' + encodeURIComponent(KEY) + '&from=' + from + '&to=' + to;
+}
+
+// === ПЕРСОНАЛ ===
+function loadStaff(){
+  staffReq('staff_list').then(j => {
+    if (!j.ok) return;
+    const rows = (j.staff||[]).map(s =>
+      '<tr' + (s.status === 'blocked' ? ' style="opacity:.55"' : '') + '><td><b>' + esc(s.name) + '</b><br><small style="color:var(--gold)">' + esc(s.login) + '</small></td>' +
+      '<td>' + (s.phone ? '<a href="tel:+' + s.phone + '">+' + s.phone + '</a>' : '—') + '</td>' +
+      '<td>' + (s.status === 'active' ? '<span class="pill p-green">активен</span>' : '<span class="pill p-red">заблокирован</span>') + '</td>' +
+      '<td><small>' + (s.last_login ? new Date(s.last_login).toLocaleString('ru-RU') : 'ещё не входил') + '</small></td>' +
+      '<td style="white-space:nowrap">' + (s.status === 'active'
+        ? '<button class="chip" style="color:#f87171;border-color:#f87171" onclick="staffBlock(\'' + esc(s.login) + '\',true)">Блок</button> '
+        : '<button class="chip" onclick="staffBlock(\'' + esc(s.login) + '\',false)">Разблок.</button> ') +
+      '<button class="chip" onclick="staffReset(\'' + esc(s.login) + '\')">Сбросить пароль</button></td></tr>').join('');
+    document.getElementById('staff-t').innerHTML = '<tr><th>Бариста</th><th>Телефон</th><th>Статус</th><th>Последний вход</th><th></th></tr>' + (rows || '<tr><td colspan="5" class="sub">Пока никто не зарегистрирован</td></tr>');
+    document.getElementById('inv-list').innerHTML = (j.invites||[]).length
+      ? '<div class="sub" style="margin-bottom:4px">Ожидают регистрации:</div>' + j.invites.map(i =>
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(242,234,215,.07)"><span>+' + i.phone + (i.name ? ' · ' + esc(i.name) : '') + '</span>' +
+        '<button class="chip" onclick="inviteCancel(\'' + i.phone + '\')">✕ отменить</button></div>').join('')
+      : '';
+    const lb = document.getElementById('legacy-btn');
+    lb.textContent = j.legacy ? '🔓 Общий код ВКЛЮЧЁН — выключить' : '🔒 Общий код выключен — включить';
+    lb.dataset.on = j.legacy ? '1' : '';
+  }).catch(()=>{});
+}
+function staffInvite(){
+  const phone = document.getElementById('inv-phone').value.trim();
+  const name = document.getElementById('inv-name').value.trim();
+  if (!phone){ alert('Укажи телефон бариста'); return; }
+  staffReq('staff_invite', {phone, name}).then(j => {
+    if (!j.ok){ alert('Не получилось (' + (j.reason||'') + ')'); return; }
+    const r = document.getElementById('inv-result');
+    r.style.display = 'block';
+    r.innerHTML = j.sms_sent
+      ? '✅ Код отправлен по SMS на +' + esc(phone)
+      : '📱 SMS не подключено — передай бариста код лично:<div style="font-size:30px;font-weight:800;color:var(--gold);text-align:center;letter-spacing:.2em;margin-top:6px">' + esc(j.code) + '</div><div class="sub" style="text-align:center">Действует 24 часа · регистрация на bountycoffeebar.uz/barista.html</div>';
+    document.getElementById('inv-phone').value = ''; document.getElementById('inv-name').value = '';
+    loadStaff();
+  }).catch(()=>alert('Нет связи'));
+}
+function inviteCancel(phone){
+  staffReq('staff_invite_cancel', {phone}).then(()=>loadStaff());
+}
+function staffBlock(login, block){
+  if (block && !confirm('Заблокировать вход для ' + login + '? Его сессии будут завершены немедленно.')) return;
+  staffReq(block ? 'staff_block' : 'staff_unblock', {login}).then(j => {
+    if (j.ok) loadStaff(); else alert('Не получилось');
+  }).catch(()=>alert('Нет связи'));
+}
+function staffReset(login){
+  if (!confirm('Сгенерировать новый пароль для ' + login + '? Старый перестанет работать.')) return;
+  staffReq('staff_reset', {login}).then(j => {
+    if (j.ok) alert('Новый пароль для ' + j.login + ':\n\n' + j.password + '\n\nПокажи его бариста — больше он нигде не отобразится.');
+    else alert('Не получилось');
+    loadStaff();
+  }).catch(()=>alert('Нет связи'));
+}
+function legacyToggle(){
+  const on = !document.getElementById('legacy-btn').dataset.on;
+  if (!on && !confirm('Выключить общий код 1414? Бариста без личного логина не смогут войти.')) return;
+  staffReq('legacy_toggle', {on}).then(()=>loadStaff());
 }
 
 function adjust(){
@@ -291,9 +409,13 @@ function chatReply(){
 document.getElementById('chat-inp').addEventListener('keydown', e => { if (e.key === 'Enter') chatReply(); });
 
 function start(){
-  document.getElementById('csv-link').href = 'api/clients.php?key=fddec01c0ab722e9d71a3764c2a57ad4';
-  load();
+  document.getElementById('csv-link').href = 'api/clients.php?token=' + encodeURIComponent(KEY);
+  const d = new Date();
+  document.getElementById('rep-from').value = d.toISOString().slice(0,8) + '01';
+  document.getElementById('rep-to').value = d.toISOString().slice(0,10);
+  load(); loadStaff();
   setInterval(load, 30000);
+  setInterval(loadStaff, 60000);
 }
 if (KEY){ document.getElementById('login').style.display = 'none'; start(); }
 </script>

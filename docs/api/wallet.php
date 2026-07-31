@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(['ok' => false], 405); }
 $d = json_body();
 if (!$d) { respond(['ok' => false], 400); }
 list($phone, $id) = wallet_auth($d);
+client_guard($phone, $id);
 $action = (string)($d['action'] ?? 'get');
 $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
 

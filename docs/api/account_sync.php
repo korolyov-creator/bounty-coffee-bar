@@ -10,6 +10,7 @@ if (!preg_match('/^[a-f0-9]{48}$/', $token)) { respond(['ok' => false, 'reason' 
 $tokens = store_read('tokens.json');
 if (!isset($tokens[$token])) { respond(['ok' => false, 'reason' => 'bad_token'], 401); }
 $phone = $tokens[$token]['phone'];
+client_guard($phone);
 
 $action = (string)($d['action'] ?? 'get');
 

@@ -66,11 +66,36 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
 <body>
 
 <div id="login">
-  <h1>☕ Bounty · <span>вход для персонала</span></h1>
-  <input type="password" id="login-pass" placeholder="Пароль" autocomplete="current-password">
-  <button class="gold" onclick="doLogin()">Войти</button>
-  <div class="sub" style="text-align:center">Бариста — код бариста. Админ — пароль администратора.</div>
-  <div class="err" id="login-err">Неверный пароль</div>
+  <div id="login-form">
+    <h1>☕ Bounty · <span>вход для персонала</span></h1>
+    <input type="text" id="login-login" placeholder="Логин (выдан при регистрации)" autocomplete="username" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
+    <input type="password" id="login-pass" placeholder="Пароль" autocomplete="current-password">
+    <button class="gold" onclick="doLogin()" style="margin-top:10px">Войти</button>
+    <div class="sub" style="text-align:center;margin-top:8px">Админ: логин оставь пустым, введи пароль администратора</div>
+    <div class="err" id="login-err">Неверный логин или пароль</div>
+    <button class="chip" style="margin-top:14px" onclick="showReg()">Первый раз? Регистрация по коду из SMS</button>
+  </div>
+  <div id="reg-form" style="display:none">
+    <h1>☕ Bounty · <span>регистрация бариста</span></h1>
+    <div class="sub" style="text-align:center">Код регистрации выдаёт администратор (приходит по SMS или лично)</div>
+    <input type="tel" id="reg-phone" placeholder="Телефон 9XXXXXXXX" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
+    <input type="tel" id="reg-code" placeholder="Код из SMS (6 цифр)" style="margin-bottom:10px">
+    <input type="text" id="reg-name" placeholder="Твоё имя" style="letter-spacing:normal;font-size:16px">
+    <button class="gold" onclick="doRegister()" style="margin-top:10px">Зарегистрироваться</button>
+    <div class="err" id="reg-err"></div>
+    <button class="chip" style="margin-top:14px" onclick="showLoginForm()">← У меня уже есть логин</button>
+  </div>
+  <div id="reg-done" style="display:none">
+    <h1>✅ <span>Готово!</span></h1>
+    <div class="card" style="text-align:center">
+      <div class="sub">Твои данные для входа. Сфотографируй или запиши — пароль показывается ТОЛЬКО ОДИН РАЗ:</div>
+      <div style="font-size:15px;margin:10px 0">Логин</div>
+      <div style="font-size:26px;font-weight:800;color:var(--gold)" id="cred-login"></div>
+      <div style="font-size:15px;margin:10px 0">Пароль</div>
+      <div style="font-size:26px;font-weight:800;color:var(--gold);letter-spacing:.1em" id="cred-pass"></div>
+    </div>
+    <button class="gold" onclick="afterReg()">Я сохранил(а) — открыть панель</button>
+  </div>
 </div>
 
 <h1>☕ Bounty · <span>Панель бариста</span> <button class="chip" style="float:right;font-size:12px" onclick="logout()">Выйти</button></h1>
@@ -122,9 +147,11 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
 </div>
 
 <script>
-let KEY = localStorage.getItem('bounty_staff_key') || new URLSearchParams(location.search).get('key') || '';
+let KEY = localStorage.getItem('bounty_staff_token') || '';
 let ROLE = localStorage.getItem('bounty_staff_role') || '';
-const api = () => 'api/orders.php?key=' + encodeURIComponent(KEY);
+let SNAME = localStorage.getItem('bounty_staff_name') || '';
+localStorage.removeItem('bounty_staff_key'); // старые статические ключи отозваны
+const api = () => 'api/orders.php?token=' + encodeURIComponent(KEY);
 let filterPoint = '', orders = [], knownIds = new Set(), firstLoad = true;
 let lastChatTs = localStorage.getItem('bounty_staff_chat_seen') || '';
 
@@ -141,35 +168,74 @@ function beep(freq){
 }
 function staffReq(action, extra){
   return fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(Object.assign({key:KEY, action}, extra||{}))}).then(r=>r.json());
+    body: JSON.stringify(Object.assign({token:KEY, action}, extra||{}))}).then(r=>r.json());
 }
 
 // === LOGIN ===
 function showLogin(){ document.getElementById('login').style.display = 'flex'; }
 function hideLogin(){ document.getElementById('login').style.display = 'none'; }
+function saveSession(j){
+  KEY = j.token; ROLE = j.role; SNAME = j.name || '';
+  localStorage.setItem('bounty_staff_token', KEY);
+  localStorage.setItem('bounty_staff_role', ROLE);
+  localStorage.setItem('bounty_staff_name', SNAME);
+}
 function doLogin(){
+  const login = document.getElementById('login-login').value.trim();
   const pass = document.getElementById('login-pass').value;
   fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({action:'login', password:pass})})
+    body: JSON.stringify({action:'login', login, password:pass})})
     .then(r=>r.json()).then(j => {
       if (j.ok){
-        KEY = j.key; ROLE = j.role;
-        localStorage.setItem('bounty_staff_key', KEY);
-        localStorage.setItem('bounty_staff_role', ROLE);
+        saveSession(j);
         hideLogin(); startPanel();
-        if (j.role === 'admin' && !location.pathname.includes('admin')){ /* админ может работать и тут */ }
       } else {
-        document.getElementById('login-err').style.display = 'block';
+        const e = document.getElementById('login-err');
+        e.textContent = j.reason === 'blocked' ? 'Твой доступ заблокирован администратором'
+          : j.reason === 'rate_limit' ? 'Слишком много попыток — подожди час'
+          : 'Неверный логин или пароль';
+        e.style.display = 'block';
       }
     }).catch(()=>{ document.getElementById('login-err').textContent='Нет связи'; document.getElementById('login-err').style.display='block'; });
 }
 document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 function logout(){
   if (!confirm('Выйти из панели?')) return;
-  localStorage.removeItem('bounty_staff_key');
+  fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'logout', token:KEY})}).catch(()=>{});
+  localStorage.removeItem('bounty_staff_token');
   localStorage.removeItem('bounty_staff_role');
+  localStorage.removeItem('bounty_staff_name');
   location.reload();
 }
+
+// === РЕГИСТРАЦИЯ БАРИСТА ===
+function showReg(){ document.getElementById('login-form').style.display='none'; document.getElementById('reg-form').style.display='block'; }
+function showLoginForm(){ document.getElementById('reg-form').style.display='none'; document.getElementById('login-form').style.display='block'; }
+function doRegister(){
+  const phone = document.getElementById('reg-phone').value.trim();
+  const code = document.getElementById('reg-code').value.trim();
+  const name = document.getElementById('reg-name').value.trim();
+  const err = document.getElementById('reg-err');
+  if (!phone || !code || !name){ err.textContent='Заполни все поля'; err.style.display='block'; return; }
+  fetch('api/staff_register.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({phone, code, name})})
+    .then(r=>r.json()).then(j => {
+      if (j.ok){
+        saveSession(j);
+        document.getElementById('cred-login').textContent = j.login;
+        document.getElementById('cred-pass').textContent = j.password;
+        document.getElementById('reg-form').style.display='none';
+        document.getElementById('reg-done').style.display='block';
+      } else {
+        err.textContent = {no_invite:'Для этого номера нет приглашения — обратись к администратору',
+          expired:'Код истёк — попроси новый у администратора', wrong_code:'Неверный код',
+          too_many_tries:'Слишком много попыток — попроси новый код', rate_limit:'Слишком много попыток — подожди час'}[j.reason] || 'Не получилось, проверь данные';
+        err.style.display='block';
+      }
+    }).catch(()=>{ err.textContent='Нет связи'; err.style.display='block'; });
+}
+function afterReg(){ hideLogin(); startPanel(); }
 
 // === ORDERS ===
 document.querySelectorAll('#filters button').forEach(b => b.onclick = () => {
@@ -186,7 +252,7 @@ function load(){
     orders.forEach(o => knownIds.add(o.id));
     if (!firstLoad && fresh.length) beep();
     firstLoad = false;
-    document.getElementById('bar').textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU') + ' · активных: ' + orders.filter(o=>['new','making','ready'].includes(o.status)).length + ' · роль: ' + (ROLE === 'admin' ? 'админ' : 'бариста');
+    document.getElementById('bar').textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU') + ' · активных: ' + orders.filter(o=>['new','making','ready'].includes(o.status)).length + ' · ' + (ROLE === 'admin' ? 'админ' : (SNAME || 'бариста'));
     render();
   }).catch(e => {
     const err = document.getElementById('err');
@@ -345,7 +411,7 @@ function startPanel(){
   setInterval(loadTopups, 25000);
   setInterval(loadThreads, 25000);
 }
-if (KEY){ hideLogin(); localStorage.setItem('bounty_staff_key', KEY); startPanel(); }
+if (KEY){ hideLogin(); startPanel(); }
 else showLogin();
 </script>
 </body>

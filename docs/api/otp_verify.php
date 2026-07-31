@@ -8,6 +8,7 @@ if (!$d) { respond(['ok' => false], 400); }
 $phone = norm_phone($d['phone'] ?? '');
 $code = preg_replace('/\D/', '', (string)($d['code'] ?? ''));
 if (!$phone || strlen($code) !== 5) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+client_guard($phone);
 
 $now = time();
 $res = store_update('otp.json', function ($data) use ($phone, $code, $now) {

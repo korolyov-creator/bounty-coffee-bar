@@ -1,9 +1,10 @@
 <?php
-// Панель персонала: список заказов (GET) и смена статуса (POST). Доступ по ключу (бариста или админ).
+// Панель персонала: список заказов (GET) и смена статуса (POST). Доступ по сессионному токену (бариста или админ).
 require __DIR__ . '/_lib.php';
 header('Content-Type: application/json; charset=utf-8');
-$role = staff_role((string)($_GET['key'] ?? ''));
-if (!$role) { http_response_code(403); echo '{"ok":false}'; exit; }
+$sess = staff_auth((string)($_GET['token'] ?? ''));
+if (!$sess) { http_response_code(403); echo '{"ok":false}'; exit; }
+$role = $sess['role'];
 
 $dir = dirname(__DIR__, 2) . '/bounty_data';
 $statusFile = $dir . '/orders_status.jsonl';
