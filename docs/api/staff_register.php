@@ -1,7 +1,8 @@
 <?php
-// Регистрация бариста по коду из SMS (инвайт создаёт админ).
-// POST {phone, code, name} → {ok, login, password, token, name}
-// Логин и пароль генерируются сервером, пароль показывается ОДИН раз (хранится только bcrypt-хэш).
+// Регистрация бариста по коду от администратора (инвайт создаёт админ).
+// POST {phone, code, name, login?, password?} → {ok, login, password, token, name, pending}
+// Бариста сам придумывает логин и пароль (мастер на barista.html);
+// если не переданы — генерируются сервером (хранится только bcrypt-хэш).
 require __DIR__ . '/_lib.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(['ok' => false], 405); }
 $d = json_body();
@@ -13,6 +14,20 @@ $phone = norm_phone($d['phone'] ?? '');
 $code = preg_replace('/\D/', '', (string)($d['code'] ?? ''));
 $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
 if (!$phone || strlen($code) !== 6 || $name === '') { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+
+$wantLogin = strtolower(trim((string)($d['login'] ?? '')));
+$password = (string)($d['password'] ?? '');
+if ($wantLogin !== '') {
+  if ($wantLogin === 'admin' || $wantLogin === 'owner' || $wantLogin === '_legacy' || norm_phone($wantLogin)
+      || !preg_match('/^[a-z0-9][a-z0-9\-]{2,19}$/', $wantLogin)) {
+    respond(['ok' => false, 'reason' => 'bad_login'], 422);
+  }
+  $acc = store_read('staff_accounts.json');
+  if (isset($acc[$wantLogin])) { respond(['ok' => false, 'reason' => 'login_taken'], 409); }
+}
+if ($password !== '' && (strlen($password) < 8 || strlen($password) > 64)) {
+  respond(['ok' => false, 'reason' => 'bad_password'], 422);
+}
 
 $res = store_update('staff_invites.json', function ($data) use ($phone, $code) {
   $e = $data[$phone] ?? null;
@@ -26,10 +41,15 @@ $res = store_update('staff_invites.json', function ($data) use ($phone, $code) {
 });
 if ($res !== 'ok') { login_rate_fail(); respond(['ok' => false, 'reason' => $res], 401); }
 
-$password = gen_password(12);
+if ($password === '') { $password = gen_password(12); }
 $base = translit_login($name);
-$created = store_update('staff_accounts.json', function ($data) use ($base, $name, $phone, $password) {
-  do { $login = $base . '-' . random_int(100, 999); } while (isset($data[$login]));
+$created = store_update('staff_accounts.json', function ($data) use ($wantLogin, $base, $name, $phone, $password) {
+  if ($wantLogin !== '') {
+    if (isset($data[$wantLogin])) { return [$data, null]; }
+    $login = $wantLogin;
+  } else {
+    do { $login = $base . '-' . random_int(100, 999); } while (isset($data[$login]));
+  }
   $data[$login] = array(
     'name' => $name, 'phone' => $phone,
     'hash' => password_hash($password, PASSWORD_DEFAULT),
@@ -37,6 +57,7 @@ $created = store_update('staff_accounts.json', function ($data) use ($base, $nam
   );
   return [$data, $login];
 });
+if (!$created) { respond(['ok' => false, 'reason' => 'login_taken'], 409); }
 
 // первая сессия после регистрации ждёт подтверждения владельцем
 $token = staff_session_create($created, 'barista', $name, false);

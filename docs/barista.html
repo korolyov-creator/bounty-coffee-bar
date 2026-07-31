@@ -77,18 +77,40 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
   </div>
   <div id="reg-form" style="display:none">
     <h1>☕ Bounty · <span>регистрация бариста</span></h1>
-    <div class="sub" style="text-align:center">6-значный код регистрации выдаёт администратор — спроси код у него</div>
-    <input type="tel" id="reg-phone" placeholder="Телефон 9XXXXXXXX" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
-    <input type="tel" id="reg-code" placeholder="Код от администратора (6 цифр)" style="margin-bottom:10px">
-    <input type="text" id="reg-name" placeholder="Твоё имя" style="letter-spacing:normal;font-size:16px">
-    <button class="gold" onclick="doRegister()" style="margin-top:10px">Зарегистрироваться</button>
+    <div class="sub" id="reg-step-ind" style="text-align:center;color:var(--gold)">Шаг 1 из 4 · Код доступа</div>
+    <div id="reg-s1">
+      <div class="sub" style="text-align:center">6-значный код регистрации выдаёт администратор — спроси код у него</div>
+      <input type="tel" id="reg-phone" placeholder="Телефон 9XXXXXXXX" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
+      <input type="tel" id="reg-code" placeholder="Код от администратора (6 цифр)">
+      <button class="gold" onclick="regNext(2)" style="margin-top:10px">Дальше →</button>
+    </div>
+    <div id="reg-s2" style="display:none">
+      <div class="sub" style="text-align:center">Твоё имя и логин, по которому будешь входить</div>
+      <input type="text" id="reg-name" placeholder="Твоё имя" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
+      <input type="text" id="reg-login" placeholder="Придумай логин (латиница/цифры, от 3 симв.)" autocomplete="username" style="letter-spacing:normal;font-size:16px">
+      <button class="gold" onclick="regNext(3)" style="margin-top:10px">Дальше →</button>
+      <button class="chip" style="margin-top:10px" onclick="regShow(1)">← Назад</button>
+    </div>
+    <div id="reg-s3" style="display:none">
+      <div class="sub" style="text-align:center">Придумай пароль — минимум 8 символов, никому его не говори</div>
+      <input type="password" id="reg-pass" placeholder="Пароль (мин. 8 символов)" autocomplete="new-password" style="margin-bottom:10px">
+      <input type="password" id="reg-pass2" placeholder="Повтори пароль" autocomplete="new-password">
+      <button class="gold" onclick="regNext(4)" style="margin-top:10px">Дальше →</button>
+      <button class="chip" style="margin-top:10px" onclick="regShow(2)">← Назад</button>
+    </div>
+    <div id="reg-s4" style="display:none">
+      <div class="sub" style="text-align:center">Проверь данные — если всё верно, подтверди</div>
+      <div class="card" id="reg-summary" style="line-height:1.9"></div>
+      <button class="gold" onclick="doRegister()" style="margin-top:10px">✓ Всё верно — зарегистрироваться</button>
+      <button class="chip" style="margin-top:10px" onclick="regShow(1)">← Исправить данные</button>
+    </div>
     <div class="err" id="reg-err"></div>
     <button class="chip" style="margin-top:14px" onclick="showLoginForm()">← У меня уже есть логин</button>
   </div>
   <div id="reg-done" style="display:none">
     <h1>✅ <span>Готово!</span></h1>
     <div class="card" style="text-align:center">
-      <div class="sub">Твои данные для входа. Сфотографируй или запиши — пароль показывается ТОЛЬКО ОДИН РАЗ:</div>
+      <div class="sub">Регистрация принята! Твои данные для входа — запомни их, больше они не покажутся:</div>
       <div style="font-size:15px;margin:10px 0">Логин</div>
       <div style="font-size:26px;font-weight:800;color:var(--gold)" id="cred-login"></div>
       <div style="font-size:15px;margin:10px 0">Пароль</div>
@@ -217,30 +239,67 @@ function logout(){
 }
 
 // === РЕГИСТРАЦИЯ БАРИСТА ===
-function showReg(){ document.getElementById('login-form').style.display='none'; document.getElementById('reg-form').style.display='block'; }
+function showReg(){ document.getElementById('login-form').style.display='none'; document.getElementById('reg-form').style.display='block'; regShow(1); }
 function showLoginForm(){ document.getElementById('reg-form').style.display='none'; document.getElementById('login-form').style.display='block'; }
+
+// пошаговый мастер регистрации: 1 код → 2 логин → 3 пароль → 4 подтверждение
+const REG_STEPS = {1:'Код доступа', 2:'Имя и логин', 3:'Пароль', 4:'Подтверждение'};
+function regErr(msg){ const e = document.getElementById('reg-err'); if (msg){ e.textContent = msg; e.style.display='block'; } else { e.style.display='none'; } }
+function regShow(n){
+  [1,2,3,4].forEach(i => document.getElementById('reg-s'+i).style.display = i === n ? 'block' : 'none');
+  document.getElementById('reg-step-ind').textContent = 'Шаг ' + n + ' из 4 · ' + REG_STEPS[n];
+  regErr('');
+}
+function regNext(n){
+  if (n === 2){
+    const phone = document.getElementById('reg-phone').value.replace(/\D/g,'');
+    const code = document.getElementById('reg-code').value.replace(/\D/g,'');
+    if (phone.length !== 9 && phone.length !== 12){ regErr('Укажи телефон: 9 цифр (9XXXXXXXX)'); return; }
+    if (code.length !== 6){ regErr('Код от администратора — 6 цифр'); return; }
+  }
+  if (n === 3){
+    const name = document.getElementById('reg-name').value.trim();
+    const login = document.getElementById('reg-login').value.trim().toLowerCase();
+    if (!name){ regErr('Напиши своё имя'); return; }
+    if (!/^[a-z0-9][a-z0-9\-]{2,19}$/.test(login)){ regErr('Логин: латиница, цифры или «-», от 3 до 20 символов, без пробелов'); return; }
+  }
+  if (n === 4){
+    const p1 = document.getElementById('reg-pass').value, p2 = document.getElementById('reg-pass2').value;
+    if (p1.length < 8){ regErr('Пароль слишком короткий — минимум 8 символов'); return; }
+    if (p1 !== p2){ regErr('Пароли не совпадают'); return; }
+    document.getElementById('reg-summary').innerHTML =
+      'Телефон: <b style="color:var(--gold)">' + esc(document.getElementById('reg-phone').value.trim()) + '</b><br>' +
+      'Имя: <b style="color:var(--gold)">' + esc(document.getElementById('reg-name').value.trim()) + '</b><br>' +
+      'Логин: <b style="color:var(--gold)">' + esc(document.getElementById('reg-login').value.trim().toLowerCase()) + '</b><br>' +
+      'Пароль: <b style="color:var(--gold)">' + '•'.repeat(p1.length) + '</b>';
+  }
+  regShow(n);
+}
 function doRegister(){
   const phone = document.getElementById('reg-phone').value.trim();
   const code = document.getElementById('reg-code').value.trim();
   const name = document.getElementById('reg-name').value.trim();
-  const err = document.getElementById('reg-err');
-  if (!phone || !code || !name){ err.textContent='Заполни все поля'; err.style.display='block'; return; }
+  const login = document.getElementById('reg-login').value.trim().toLowerCase();
+  const password = document.getElementById('reg-pass').value;
   fetch('api/staff_register.php', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({phone, code, name})})
+    body: JSON.stringify({phone, code, name, login, password})})
     .then(r=>r.json()).then(j => {
       if (j.ok){
         saveSession(j);
         document.getElementById('cred-login').textContent = j.login;
-        document.getElementById('cred-pass').textContent = j.password;
+        document.getElementById('cred-pass').textContent = password;
         document.getElementById('reg-form').style.display='none';
         document.getElementById('reg-done').style.display='block';
       } else {
-        err.textContent = {no_invite:'Для этого номера нет приглашения — обратись к администратору',
+        const backTo = {login_taken:2, bad_login:2, bad_password:3}[j.reason];
+        if (backTo) regShow(backTo);
+        regErr({no_invite:'Для этого номера нет приглашения — обратись к администратору',
           expired:'Код истёк — попроси новый у администратора', wrong_code:'Неверный код',
-          too_many_tries:'Слишком много попыток — попроси новый код', rate_limit:'Слишком много попыток — подожди час'}[j.reason] || 'Не получилось, проверь данные';
-        err.style.display='block';
+          too_many_tries:'Слишком много попыток — попроси новый код', rate_limit:'Слишком много попыток — подожди час',
+          login_taken:'Такой логин уже занят — придумай другой', bad_login:'Логин не подходит — латиница/цифры, от 3 символов',
+          bad_password:'Пароль не подходит — минимум 8 символов'}[j.reason] || 'Не получилось, проверь данные');
       }
-    }).catch(()=>{ err.textContent='Нет связи'; err.style.display='block'; });
+    }).catch(()=> regErr('Нет связи'));
 }
 function afterReg(){ waitApproval(); }
 
