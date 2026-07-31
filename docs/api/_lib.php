@@ -69,15 +69,19 @@ function audit($ev, $extra = array()) {
 // {"admin_hash":"$2y$...","legacy_barista":true,"legacy_hash":"$2y$..."}
 function auth_config() { return store_read('auth.json'); }
 
+// Владелец: вход по этому телефону + пароль администратора = роль owner (максимальные права,
+// подтверждает вход и регистрацию всего остального персонала, включая админов)
+define('OWNER_PHONE', '998998520605');
+
 define('STAFF_SESSION_TTL', 30 * 86400);
 
-// Выдать сессионный токен персонала
-function staff_session_create($login, $role, $name) {
+// Выдать сессионный токен персонала. $approved=false → сессия ждёт подтверждения владельцем
+function staff_session_create($login, $role, $name, $approved = true) {
   $token = bin2hex(random_bytes(24));
-  store_update('staff_sessions.json', function ($data) use ($token, $login, $role, $name) {
+  store_update('staff_sessions.json', function ($data) use ($token, $login, $role, $name, $approved) {
     $now = time();
     foreach ($data as $t => $s) { if (($s['exp'] ?? 0) < $now) unset($data[$t]); }
-    $data[$token] = array('login' => $login, 'role' => $role, 'name' => $name, 'ts' => $now, 'exp' => $now + STAFF_SESSION_TTL);
+    $data[$token] = array('login' => $login, 'role' => $role, 'name' => $name, 'ts' => $now, 'exp' => $now + STAFF_SESSION_TTL, 'approved' => $approved);
     return [$data, true];
   });
   return $token;
@@ -91,12 +95,14 @@ function staff_sessions_kill($login) {
 }
 
 // Проверка токена → array{login,role,name} | null. Учитывает блокировку бариста.
-function staff_auth($token) {
+// Сессии без флага approved (созданные до введения подтверждений) считаются подтверждёнными.
+function staff_auth($token, $allowPending = false) {
   $token = (string)$token;
   if (!preg_match('/^[a-f0-9]{48}$/', $token)) { return null; }
   $sessions = store_read('staff_sessions.json');
   $s = $sessions[$token] ?? null;
   if (!$s || ($s['exp'] ?? 0) < time()) { return null; }
+  if (!$allowPending && isset($s['approved']) && !$s['approved']) { return null; }
   if ($s['role'] === 'barista' && $s['login'] !== '_legacy') {
     $acc = store_read('staff_accounts.json');
     if (($acc[$s['login']]['status'] ?? '') !== 'active') { return null; }

@@ -382,13 +382,17 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <div class="l"><span>📄</span><span>Публичная оферта</span></div>
         <div class="r">›</div>
       </div>
+      <div class="row" id="owner-row" style="display:none" onclick="window.open('https://bountycoffeebar.uz/admin.html','_blank')">
+        <div class="l"><span>👑</span><span style="color:var(--gold);font-weight:700">Панель владельца</span></div>
+        <div class="r">›</div>
+      </div>
       <div class="row" onclick="logoutAccount()">
         <div class="l"><span>🚪</span><span style="color:#e88">Выйти из аккаунта</span></div>
         <div class="r">›</div>
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.6 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.7 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -1522,6 +1526,9 @@ function renderLoyalty(){
   document.getElementById('prof-stamps').textContent = c.stamps;
   document.getElementById('prof-total').textContent = c.total;
   document.getElementById('prof-free').textContent = c.free;
+  // владелец видит вход в свою панель прямо из профиля
+  document.getElementById('owner-row').style.display =
+    String(c.phone || '').replace(/\D/g, '').endsWith('998998520605'.slice(-9)) ? '' : 'none';
   renderHistory(c);
 }
 

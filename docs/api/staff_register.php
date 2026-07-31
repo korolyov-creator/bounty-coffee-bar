@@ -38,6 +38,7 @@ $created = store_update('staff_accounts.json', function ($data) use ($base, $nam
   return [$data, $login];
 });
 
-$token = staff_session_create($created, 'barista', $name);
+// первая сессия после регистрации ждёт подтверждения владельцем
+$token = staff_session_create($created, 'barista', $name, false);
 audit('staff_register', array('login' => $created, 'phone' => $phone, 'name' => $name));
-respond(['ok' => true, 'login' => $created, 'password' => $password, 'token' => $token, 'role' => 'barista', 'name' => $name]);
+respond(['ok' => true, 'login' => $created, 'password' => $password, 'token' => $token, 'role' => 'barista', 'name' => $name, 'pending' => true]);

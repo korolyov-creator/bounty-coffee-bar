@@ -73,13 +73,13 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
     <button class="gold" onclick="doLogin()" style="margin-top:10px">Войти</button>
     <div class="sub" style="text-align:center;margin-top:8px">Админ: логин оставь пустым, введи пароль администратора</div>
     <div class="err" id="login-err">Неверный логин или пароль</div>
-    <button class="chip" style="margin-top:14px" onclick="showReg()">Первый раз? Регистрация по коду из SMS</button>
+    <button class="chip" style="margin-top:14px" onclick="showReg()">Первый раз? Регистрация по коду от администратора</button>
   </div>
   <div id="reg-form" style="display:none">
     <h1>☕ Bounty · <span>регистрация бариста</span></h1>
-    <div class="sub" style="text-align:center">Код регистрации выдаёт администратор (приходит по SMS или лично)</div>
+    <div class="sub" style="text-align:center">6-значный код регистрации выдаёт администратор — спроси код у него</div>
     <input type="tel" id="reg-phone" placeholder="Телефон 9XXXXXXXX" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
-    <input type="tel" id="reg-code" placeholder="Код из SMS (6 цифр)" style="margin-bottom:10px">
+    <input type="tel" id="reg-code" placeholder="Код от администратора (6 цифр)" style="margin-bottom:10px">
     <input type="text" id="reg-name" placeholder="Твоё имя" style="letter-spacing:normal;font-size:16px">
     <button class="gold" onclick="doRegister()" style="margin-top:10px">Зарегистрироваться</button>
     <div class="err" id="reg-err"></div>
@@ -95,6 +95,12 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
       <div style="font-size:26px;font-weight:800;color:var(--gold);letter-spacing:.1em" id="cred-pass"></div>
     </div>
     <button class="gold" onclick="afterReg()">Я сохранил(а) — открыть панель</button>
+  </div>
+  <div id="pending-wait" style="display:none">
+    <h1>⏳ <span>Ждём подтверждения</span></h1>
+    <div class="card" style="text-align:center">
+      <div class="sub">Твой вход отправлен владельцу на подтверждение. Страница откроется сама, как только он подтвердит — не закрывай её.</div>
+    </div>
   </div>
 </div>
 
@@ -188,6 +194,7 @@ function doLogin(){
     .then(r=>r.json()).then(j => {
       if (j.ok){
         saveSession(j);
+        if (j.pending){ waitApproval(); return; }
         hideLogin(); startPanel();
       } else {
         const e = document.getElementById('login-err');
@@ -235,7 +242,23 @@ function doRegister(){
       }
     }).catch(()=>{ err.textContent='Нет связи'; err.style.display='block'; });
 }
-function afterReg(){ hideLogin(); startPanel(); }
+function afterReg(){ waitApproval(); }
+
+// === ПОДТВЕРЖДЕНИЕ ВХОДА ВЛАДЕЛЬЦЕМ ===
+function waitApproval(){
+  showLogin();
+  ['login-form','reg-form','reg-done'].forEach(id => document.getElementById(id).style.display='none');
+  document.getElementById('pending-wait').style.display='block';
+  const poll = () => staffReq('session_status').then(j => {
+    if (j.ok && j.approved){ document.getElementById('pending-wait').style.display='none'; document.getElementById('login-form').style.display='block'; hideLogin(); startPanel(); return; }
+    if (!j.ok){ // отклонено владельцем или сессия истекла
+      ['bounty_staff_token','bounty_staff_role','bounty_staff_name'].forEach(k=>localStorage.removeItem(k));
+      location.reload(); return;
+    }
+    setTimeout(poll, 5000);
+  }).catch(()=> setTimeout(poll, 8000));
+  poll();
+}
 
 // === ORDERS ===
 document.querySelectorAll('#filters button').forEach(b => b.onclick = () => {
@@ -256,7 +279,13 @@ function load(){
     render();
   }).catch(e => {
     const err = document.getElementById('err');
-    if (e === 'key'){ localStorage.removeItem('bounty_staff_key'); showLogin(); return; }
+    if (e === 'key'){
+      localStorage.removeItem('bounty_staff_key');
+      // возможно, сессия ещё ждёт подтверждения владельцем
+      if (KEY){ staffReq('session_status').then(j => { if (j.ok && !j.approved) waitApproval(); else showLogin(); }).catch(showLogin); }
+      else showLogin();
+      return;
+    }
     err.textContent = 'Нет связи с сервером — проверь интернет';
     err.style.display = 'block';
   });

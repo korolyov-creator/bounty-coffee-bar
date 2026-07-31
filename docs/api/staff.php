@@ -24,13 +24,19 @@ if ($action === 'login') {
   $pass = (string)($d['password'] ?? '');
   $cfg = auth_config();
 
-  // админ
-  if (($login === '' || $login === 'admin') && !empty($cfg['admin_hash']) && password_verify($pass, $cfg['admin_hash'])) {
-    $token = staff_session_create('admin', 'admin', 'Администратор');
-    audit('login_ok', array('login' => 'admin'));
-    respond(['ok' => true, 'role' => 'admin', 'token' => $token, 'name' => 'Администратор']);
+  // владелец: свой телефон + пароль администратора → максимальные права, без подтверждения
+  if (norm_phone($login) === OWNER_PHONE && !empty($cfg['admin_hash']) && password_verify($pass, $cfg['admin_hash'])) {
+    $token = staff_session_create('owner', 'owner', 'Владелец', true);
+    audit('login_ok', array('login' => 'owner'));
+    respond(['ok' => true, 'role' => 'owner', 'token' => $token, 'name' => 'Владелец']);
   }
-  // личный аккаунт бариста
+  // админ — вход требует подтверждения владельцем
+  if (($login === '' || $login === 'admin') && !empty($cfg['admin_hash']) && password_verify($pass, $cfg['admin_hash'])) {
+    $token = staff_session_create('admin', 'admin', 'Администратор', false);
+    audit('login_pending', array('login' => 'admin'));
+    respond(['ok' => true, 'role' => 'admin', 'token' => $token, 'name' => 'Администратор', 'pending' => true]);
+  }
+  // личный аккаунт бариста — вход требует подтверждения владельцем
   if ($login !== '' && $login !== 'admin') {
     $acc = store_read('staff_accounts.json');
     $a = $acc[$login] ?? null;
@@ -40,16 +46,16 @@ if ($action === 'login') {
         if (isset($data[$login])) { $data[$login]['last_login'] = date('c'); }
         return [$data, true];
       });
-      $token = staff_session_create($login, 'barista', $a['name']);
-      audit('login_ok', array('login' => $login));
-      respond(['ok' => true, 'role' => 'barista', 'token' => $token, 'name' => $a['name']]);
+      $token = staff_session_create($login, 'barista', $a['name'], false);
+      audit('login_pending', array('login' => $login));
+      respond(['ok' => true, 'role' => 'barista', 'token' => $token, 'name' => $a['name'], 'pending' => true]);
     }
   }
-  // общий код бариста (legacy, можно выключить в админке)
+  // общий код бариста (legacy, можно выключить в админке) — тоже через подтверждение
   if ($login === '' && !empty($cfg['legacy_barista']) && !empty($cfg['legacy_hash']) && password_verify($pass, $cfg['legacy_hash'])) {
-    $token = staff_session_create('_legacy', 'barista', 'Бариста (общий код)');
-    audit('login_ok', array('login' => '_legacy'));
-    respond(['ok' => true, 'role' => 'barista', 'token' => $token, 'name' => 'Бариста']);
+    $token = staff_session_create('_legacy', 'barista', 'Бариста (общий код)', false);
+    audit('login_pending', array('login' => '_legacy'));
+    respond(['ok' => true, 'role' => 'barista', 'token' => $token, 'name' => 'Бариста', 'pending' => true]);
   }
   login_rate_fail();
   audit('login_fail', array('login' => $login));
@@ -64,10 +70,17 @@ if ($action === 'logout') {
   respond(['ok' => true]);
 }
 
+// статус собственной сессии (доступен и до подтверждения владельцем)
+if ($action === 'session_status') {
+  $s = staff_auth($d['token'] ?? '', true);
+  if (!$s) { respond(['ok' => false, 'reason' => 'expired'], 403); }
+  respond(['ok' => true, 'approved' => !isset($s['approved']) || (bool)$s['approved'], 'role' => $s['role'], 'name' => $s['name']]);
+}
+
 $sess = staff_auth($d['token'] ?? '');
 if (!$sess) { respond(['ok' => false, 'reason' => 'forbidden'], 403); }
 $role = $sess['role'];
-$who = $role === 'admin' ? 'admin' : $sess['login'];
+$who = in_array($role, array('admin', 'owner'), true) ? $role : $sess['login'];
 
 if ($action === 'topups') {
   $t = store_read('topups.json');
@@ -146,7 +159,43 @@ if ($action === 'chat_send') {
   respond(['ok' => true]);
 }
 
-if ($role !== 'admin') { respond(['ok' => false, 'reason' => 'admin_only'], 403); }
+if ($role !== 'admin' && $role !== 'owner') { respond(['ok' => false, 'reason' => 'admin_only'], 403); }
+
+// === ПОДТВЕРЖДЕНИЯ ВЛАДЕЛЬЦА (только owner) ===
+
+if ($action === 'approvals_list' || $action === 'session_approve' || $action === 'session_reject') {
+  if ($role !== 'owner') { respond(['ok' => false, 'reason' => 'owner_only'], 403); }
+
+  if ($action === 'approvals_list') {
+    $sessions = store_read('staff_sessions.json');
+    $out = array();
+    $now = time();
+    foreach ($sessions as $t => $s) {
+      if (isset($s['approved']) && !$s['approved'] && ($s['exp'] ?? 0) >= $now) {
+        $out[] = array('sid' => substr($t, 0, 12), 'login' => $s['login'], 'role' => $s['role'],
+          'name' => $s['name'], 'ts' => date('c', $s['ts'] ?? $now));
+      }
+    }
+    usort($out, function ($a, $b) { return strcmp($b['ts'], $a['ts']); });
+    respond(['ok' => true, 'pending' => $out]);
+  }
+
+  $sid = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['sid'] ?? '')), 0, 12);
+  if (strlen($sid) !== 12) { respond(['ok' => false, 'reason' => 'bad_sid'], 422); }
+  $approve = $action === 'session_approve';
+  $found = store_update('staff_sessions.json', function ($data) use ($sid, $approve) {
+    foreach ($data as $t => $s) {
+      if (strpos($t, $sid) === 0 && isset($s['approved']) && !$s['approved']) {
+        if ($approve) { $data[$t]['approved'] = true; } else { unset($data[$t]); }
+        return [$data, $s];
+      }
+    }
+    return [$data, null];
+  });
+  if (!$found) { respond(['ok' => false, 'reason' => 'not_found'], 404); }
+  audit($approve ? 'session_approve' : 'session_reject', array('by' => 'owner', 'login' => $found['login'], 'role' => $found['role']));
+  respond(['ok' => true]);
+}
 
 if ($action === 'overview') {
   // клиенты: серверные аккаунты + анкеты регистрации

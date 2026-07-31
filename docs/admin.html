@@ -50,13 +50,21 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
 <body>
 
 <div id="login">
-  <h1 style="text-align:center">👑 Bounty · <span>вход администратора</span></h1>
-  <input type="password" id="login-pass" placeholder="Пароль администратора" autocomplete="current-password">
-  <button class="gold" onclick="doLogin()">Войти</button>
-  <div class="err" id="login-err">Неверный пароль</div>
+  <div id="login-form">
+    <h1 style="text-align:center">👑 Bounty · <span>вход администратора</span></h1>
+    <input type="text" id="login-login" placeholder="Владелец: свой номер телефона. Админ: пусто" autocomplete="username" style="margin-bottom:10px">
+    <input type="password" id="login-pass" placeholder="Пароль администратора" autocomplete="current-password">
+    <button class="gold" onclick="doLogin()">Войти</button>
+    <div class="sub" style="text-align:center;margin-top:8px">Владелец входит по своему номеру — без подтверждения. Вход админа подтверждает владелец.</div>
+    <div class="err" id="login-err">Неверный пароль</div>
+  </div>
+  <div id="pending-wait" style="display:none">
+    <h1 style="text-align:center">⏳ <span>Ждём подтверждения владельца</span></h1>
+    <div class="sub" style="text-align:center">Вход отправлен владельцу на подтверждение. Страница откроется сама — не закрывай её.</div>
+  </div>
 </div>
 
-<h1>👑 Bounty · <span>Администратор</span> <button class="chip" style="float:right" onclick="logout()">Выйти</button></h1>
+<h1>👑 Bounty · <span id="role-title">Администратор</span> <button class="chip" style="float:right" onclick="logout()">Выйти</button></h1>
 <div class="sub">Вся информация по кофейне: заказы, клиенты, кошельки, чаты</div>
 <div class="err" id="err"></div>
 
@@ -69,6 +77,11 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
 </div>
 
 <div class="pane sel" id="pane-summary">
+  <div class="card" id="approvals-card" style="display:none;border:1px solid var(--gold)">
+    <h2 style="margin-top:0">🔐 Подтверждения входа <span class="badge" id="approvals-n" style="background:#e11d48;color:#fff;border-radius:99px;font-size:11px;font-weight:800;padding:1px 7px"></span></h2>
+    <div class="sub">Персонал (включая админов) не попадёт в панель, пока ты не подтвердишь вход</div>
+    <div id="approvals-list"></div>
+  </div>
   <div class="grid" id="stats"></div>
   <div class="card"><h2 style="margin-top:0">По точкам · сегодня</h2><div id="bypoint"></div></div>
   <div class="card">
@@ -155,6 +168,7 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
 
 <script>
 let KEY = localStorage.getItem('bounty_admin_token') || '';
+let ROLE = localStorage.getItem('bounty_admin_role') || 'admin';
 localStorage.removeItem('bounty_admin_key'); // старые статические ключи отозваны
 let DATA = {clients:[], orders:[], wallets:[]};
 
@@ -167,11 +181,14 @@ function staffReq(action, extra){
 
 function doLogin(){
   fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({action:'login', password: document.getElementById('login-pass').value})})
+    body: JSON.stringify({action:'login', login: document.getElementById('login-login').value.trim(),
+      password: document.getElementById('login-pass').value})})
     .then(r=>r.json()).then(j => {
-      if (j.ok && j.role === 'admin'){
-        KEY = j.token;
+      if (j.ok && (j.role === 'admin' || j.role === 'owner')){
+        KEY = j.token; ROLE = j.role;
         localStorage.setItem('bounty_admin_token', KEY);
+        localStorage.setItem('bounty_admin_role', ROLE);
+        if (j.pending){ waitApproval(); return; }
         document.getElementById('login').style.display = 'none';
         start();
       } else {
@@ -180,6 +197,24 @@ function doLogin(){
         document.getElementById('login-err').style.display = 'block';
       }
     }).catch(()=>{ document.getElementById('login-err').textContent='Нет связи'; document.getElementById('login-err').style.display='block'; });
+}
+
+// ожидание подтверждения входа владельцем
+function waitApproval(){
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('pending-wait').style.display = 'block';
+  const poll = () => staffReq('session_status').then(j => {
+    if (j.ok && j.approved){ location.reload(); return; }
+    if (!j.ok){ clearSession(); return; }
+    setTimeout(poll, 5000);
+  }).catch(()=> setTimeout(poll, 8000));
+  poll();
+}
+function clearSession(){
+  localStorage.removeItem('bounty_admin_token');
+  localStorage.removeItem('bounty_admin_role');
+  location.reload();
 }
 document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 function logout(){
@@ -200,7 +235,10 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
 function load(){
   staffReq('overview').then(j => {
     if (!j.ok){
-      if (j.reason === 'forbidden' || j.reason === 'admin_only'){ localStorage.removeItem('bounty_admin_key'); location.reload(); }
+      if (j.reason === 'forbidden' || j.reason === 'admin_only'){
+        // токен истёк, отклонён или ждёт подтверждения владельцем
+        staffReq('session_status').then(s => { if (s.ok && !s.approved) waitApproval(); else clearSession(); }).catch(()=>{});
+      }
       return;
     }
     DATA = j;
@@ -408,6 +446,29 @@ function chatReply(){
 }
 document.getElementById('chat-inp').addEventListener('keydown', e => { if (e.key === 'Enter') chatReply(); });
 
+// === ПОДТВЕРЖДЕНИЯ ВХОДА (только владелец) ===
+function loadApprovals(){
+  staffReq('approvals_list').then(j => {
+    if (!j.ok) return;
+    const card = document.getElementById('approvals-card');
+    const list = j.pending || [];
+    card.style.display = 'block';
+    document.getElementById('approvals-n').textContent = list.length || '';
+    document.getElementById('approvals-n').style.display = list.length ? '' : 'none';
+    document.getElementById('approvals-list').innerHTML = list.length ? list.map(p =>
+      '<div class="topup" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(212,175,55,.12)">' +
+      '<div><b>' + esc(p.name) + '</b> · ' + (p.role === 'admin' ? 'админ' : 'бариста') + ' (' + esc(p.login) + ')' +
+      '<div class="sub" style="margin:0">' + new Date(p.ts).toLocaleString('ru-RU') + '</div></div>' +
+      '<div style="display:flex;gap:6px">' +
+      '<button class="gold" onclick="approveSession(\'' + p.sid + '\',1)">✓ Впустить</button>' +
+      '<button class="chip" onclick="approveSession(\'' + p.sid + '\',0)">✕ Отклонить</button></div></div>').join('')
+      : '<div class="sub" style="margin:0">Новых запросов нет</div>';
+  }).catch(()=>{});
+}
+function approveSession(sid, ok){
+  staffReq(ok ? 'session_approve' : 'session_reject', {sid}).then(()=>loadApprovals());
+}
+
 function start(){
   document.getElementById('csv-link').href = 'api/clients.php?token=' + encodeURIComponent(KEY);
   const d = new Date();
@@ -416,6 +477,11 @@ function start(){
   load(); loadStaff();
   setInterval(load, 30000);
   setInterval(loadStaff, 60000);
+  if (ROLE === 'owner'){
+    document.getElementById('role-title').textContent = 'Владелец';
+    loadApprovals();
+    setInterval(loadApprovals, 15000);
+  }
 }
 if (KEY){ document.getElementById('login').style.display = 'none'; start(); }
 </script>
