@@ -105,7 +105,9 @@ function staff_auth($token, $allowPending = false) {
   if (!$allowPending && isset($s['approved']) && !$s['approved']) { return null; }
   if ($s['role'] === 'barista' && $s['login'] !== '_legacy') {
     $acc = store_read('staff_accounts.json');
-    if (($acc[$s['login']]['status'] ?? '') !== 'active') { return null; }
+    $st = $acc[$s['login']]['status'] ?? '';
+    // pending — зарегистрирован без кода, ждёт «приёма на работу» владельцем
+    if ($st !== 'active' && !($allowPending && $st === 'pending')) { return null; }
   }
   if ($s['role'] === 'barista' && $s['login'] === '_legacy') {
     $cfg = auth_config();

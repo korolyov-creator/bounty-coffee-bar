@@ -73,15 +73,17 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
     <button class="gold" onclick="doLogin()" style="margin-top:10px">Войти</button>
     <div class="sub" style="text-align:center;margin-top:8px">Админ: логин оставь пустым, введи пароль администратора</div>
     <div class="err" id="login-err">Неверный логин или пароль</div>
-    <button class="chip" style="margin-top:14px" onclick="showReg()">Первый раз? Регистрация по коду от администратора</button>
+    <button class="chip" style="margin-top:14px" onclick="showReg()">Первый раз? Зарегистрироваться</button>
   </div>
   <div id="reg-form" style="display:none">
     <h1>☕ Bounty · <span>регистрация бариста</span></h1>
-    <div class="sub" id="reg-step-ind" style="text-align:center;color:var(--gold)">Шаг 1 из 4 · Код доступа</div>
+    <div class="sub" id="reg-step-ind" style="text-align:center;color:var(--gold)">Шаг 1 из 4 · Телефон</div>
     <div id="reg-s1">
-      <div class="sub" style="text-align:center">6-значный код регистрации выдаёт администратор — спроси код у него</div>
+      <div class="sub" id="reg-s1-hint" style="text-align:center">Укажи свой номер телефона</div>
       <input type="tel" id="reg-phone" placeholder="Телефон 9XXXXXXXX" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
-      <input type="tel" id="reg-code" placeholder="Код от администратора (6 цифр)">
+      <div id="reg-code-wrap" style="display:none">
+        <input type="tel" id="reg-code" placeholder="Код от администратора (6 цифр)">
+      </div>
       <button class="gold" onclick="regNext(2)" style="margin-top:10px">Дальше →</button>
     </div>
     <div id="reg-s2" style="display:none">
@@ -242,8 +244,9 @@ function logout(){
 function showReg(){ document.getElementById('login-form').style.display='none'; document.getElementById('reg-form').style.display='block'; regShow(1); }
 function showLoginForm(){ document.getElementById('reg-form').style.display='none'; document.getElementById('login-form').style.display='block'; }
 
-// пошаговый мастер регистрации: 1 код → 2 логин → 3 пароль → 4 подтверждение
-const REG_STEPS = {1:'Код доступа', 2:'Имя и логин', 3:'Пароль', 4:'Подтверждение'};
+// пошаговый мастер регистрации: 1 телефон (+код, если есть) → 2 логин → 3 пароль → 4 подтверждение
+const REG_STEPS = {1:'Телефон', 2:'Имя и логин', 3:'Пароль', 4:'Подтверждение'};
+let regCheckedPhone = null; // телефон, для которого уже спросили сервер про код
 function regErr(msg){ const e = document.getElementById('reg-err'); if (msg){ e.textContent = msg; e.style.display='block'; } else { e.style.display='none'; } }
 function regShow(n){
   [1,2,3,4].forEach(i => document.getElementById('reg-s'+i).style.display = i === n ? 'block' : 'none');
@@ -253,9 +256,31 @@ function regShow(n){
 function regNext(n){
   if (n === 2){
     const phone = document.getElementById('reg-phone').value.replace(/\D/g,'');
-    const code = document.getElementById('reg-code').value.replace(/\D/g,'');
     if (phone.length !== 9 && phone.length !== 12){ regErr('Укажи телефон: 9 цифр (9XXXXXXXX)'); return; }
-    if (code.length !== 6){ regErr('Код от администратора — 6 цифр'); return; }
+    if (regCheckedPhone !== phone){
+      // спрашиваем сервер, создал ли администратор код для этого номера
+      regErr('');
+      fetch('api/staff_register.php', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({check:1, phone})})
+        .then(r=>r.json()).then(j => {
+          if (!j.ok){ regErr('Не получилось проверить номер, попробуй ещё раз'); return; }
+          regCheckedPhone = phone;
+          const wrap = document.getElementById('reg-code-wrap');
+          if (j.invite){
+            wrap.style.display = 'block';
+            document.getElementById('reg-s1-hint').textContent = 'Для твоего номера есть код от администратора — введи его';
+          } else {
+            wrap.style.display = 'none';
+            document.getElementById('reg-code').value = '';
+            regShow(2);
+          }
+        }).catch(()=> regErr('Нет связи'));
+      return;
+    }
+    if (document.getElementById('reg-code-wrap').style.display !== 'none'){
+      const code = document.getElementById('reg-code').value.replace(/\D/g,'');
+      if (code.length !== 6){ regErr('Код от администратора — 6 цифр'); return; }
+    }
   }
   if (n === 3){
     const name = document.getElementById('reg-name').value.trim();
@@ -267,11 +292,13 @@ function regNext(n){
     const p1 = document.getElementById('reg-pass').value, p2 = document.getElementById('reg-pass2').value;
     if (p1.length < 8){ regErr('Пароль слишком короткий — минимум 8 символов'); return; }
     if (p1 !== p2){ regErr('Пароли не совпадают'); return; }
+    const noCode = document.getElementById('reg-code-wrap').style.display === 'none';
     document.getElementById('reg-summary').innerHTML =
       'Телефон: <b style="color:var(--gold)">' + esc(document.getElementById('reg-phone').value.trim()) + '</b><br>' +
       'Имя: <b style="color:var(--gold)">' + esc(document.getElementById('reg-name').value.trim()) + '</b><br>' +
       'Логин: <b style="color:var(--gold)">' + esc(document.getElementById('reg-login').value.trim().toLowerCase()) + '</b><br>' +
-      'Пароль: <b style="color:var(--gold)">' + '•'.repeat(p1.length) + '</b>';
+      'Пароль: <b style="color:var(--gold)">' + '•'.repeat(p1.length) + '</b>' +
+      (noCode ? '<br><span style="color:var(--muted);font-size:13px">Код администратора не нужен — после регистрации владелец подтвердит приём на работу</span>' : '');
   }
   regShow(n);
 }

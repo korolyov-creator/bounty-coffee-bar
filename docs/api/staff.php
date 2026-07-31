@@ -41,7 +41,9 @@ if ($action === 'login') {
     $acc = store_read('staff_accounts.json');
     $a = $acc[$login] ?? null;
     if ($a && password_verify($pass, $a['hash'])) {
-      if (($a['status'] ?? '') !== 'active') { audit('login_blocked', array('login' => $login)); respond(['ok' => false, 'reason' => 'blocked'], 403); }
+      $st = $a['status'] ?? '';
+      // pending — регистрация без кода, ждёт «приёма на работу»: пускаем в pending-сессию
+      if ($st !== 'active' && $st !== 'pending') { audit('login_blocked', array('login' => $login)); respond(['ok' => false, 'reason' => 'blocked'], 403); }
       store_update('staff_accounts.json', function ($data) use ($login) {
         if (isset($data[$login])) { $data[$login]['last_login'] = date('c'); }
         return [$data, true];
@@ -163,21 +165,57 @@ if ($role !== 'admin' && $role !== 'owner') { respond(['ok' => false, 'reason' =
 
 // === ПОДТВЕРЖДЕНИЯ ВЛАДЕЛЬЦА (только owner) ===
 
-if ($action === 'approvals_list' || $action === 'session_approve' || $action === 'session_reject') {
+if ($action === 'approvals_list' || $action === 'session_approve' || $action === 'session_reject'
+    || $action === 'staff_approve' || $action === 'staff_reject_reg') {
   if ($role !== 'owner') { respond(['ok' => false, 'reason' => 'owner_only'], 403); }
 
   if ($action === 'approvals_list') {
     $sessions = store_read('staff_sessions.json');
+    $accounts = store_read('staff_accounts.json');
+    // регистрации без кода админа — ждут «приёма на работу»
+    $regs = array();
+    foreach ($accounts as $lg => $a) {
+      if (($a['status'] ?? '') === 'pending') {
+        $regs[] = array('login' => $lg, 'name' => $a['name'] ?? '', 'phone' => $a['phone'] ?? '', 'ts' => $a['created'] ?? '');
+      }
+    }
+    usort($regs, function ($a, $b) { return strcmp($b['ts'], $a['ts']); });
     $out = array();
     $now = time();
     foreach ($sessions as $t => $s) {
+      // сессии pending-аккаунтов покрыты карточкой регистрации — приём на работу подтвердит их разом
+      if (($accounts[$s['login']]['status'] ?? '') === 'pending') { continue; }
       if (isset($s['approved']) && !$s['approved'] && ($s['exp'] ?? 0) >= $now) {
         $out[] = array('sid' => substr($t, 0, 12), 'login' => $s['login'], 'role' => $s['role'],
           'name' => $s['name'], 'ts' => date('c', $s['ts'] ?? $now));
       }
     }
     usort($out, function ($a, $b) { return strcmp($b['ts'], $a['ts']); });
-    respond(['ok' => true, 'pending' => $out]);
+    respond(['ok' => true, 'pending' => $out, 'registrations' => $regs]);
+  }
+
+  if ($action === 'staff_approve' || $action === 'staff_reject_reg') {
+    $login = strtolower(trim((string)($d['login'] ?? '')));
+    $hire = $action === 'staff_approve';
+    $found = store_update('staff_accounts.json', function ($data) use ($login, $hire) {
+      if (!isset($data[$login]) || ($data[$login]['status'] ?? '') !== 'pending') { return [$data, null]; }
+      $acc = $data[$login];
+      if ($hire) { $data[$login]['status'] = 'active'; } else { unset($data[$login]); }
+      return [$data, $acc];
+    });
+    if (!$found) { respond(['ok' => false, 'reason' => 'not_found'], 404); }
+    if ($hire) {
+      store_update('staff_sessions.json', function ($data) use ($login) {
+        foreach ($data as $t => $s) {
+          if (($s['login'] ?? '') === $login) { $data[$t]['approved'] = true; }
+        }
+        return [$data, true];
+      });
+    } else {
+      staff_sessions_kill($login);
+    }
+    audit($hire ? 'staff_approve' : 'staff_reject_reg', array('by' => 'owner', 'login' => $login));
+    respond(['ok' => true]);
   }
 
   $sid = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['sid'] ?? '')), 0, 12);

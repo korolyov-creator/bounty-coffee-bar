@@ -114,7 +114,7 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
 <div class="pane" id="pane-staff">
   <div class="card">
     <h2 style="margin-top:0">➕ Пригласить бариста</h2>
-    <div class="sub">Бариста получит 6-значный код (по SMS, а пока SMS не подключено — код покажется здесь, передай лично). По коду бариста регистрируется на barista.html и получает личный логин и пароль.</div>
+    <div class="sub">Код необязателен: бариста может сам зарегистрироваться на barista.html — тогда владелец подтверждает приём на работу в «Подтверждениях». С кодом регистрация проходит сразу: создай 6-значный код и передай бариста лично (SMS пока не подключено).</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <input type="tel" id="inv-phone" placeholder="Телефон 9XXXXXXXX" style="flex:2;min-width:140px">
       <input type="text" id="inv-name" placeholder="Имя (необязательно)" style="flex:2;min-width:120px">
@@ -452,21 +452,35 @@ function loadApprovals(){
     if (!j.ok) return;
     const card = document.getElementById('approvals-card');
     const list = j.pending || [];
+    const regs = j.registrations || [];
     card.style.display = 'block';
-    document.getElementById('approvals-n').textContent = list.length || '';
-    document.getElementById('approvals-n').style.display = list.length ? '' : 'none';
-    document.getElementById('approvals-list').innerHTML = list.length ? list.map(p =>
+    const n = list.length + regs.length;
+    document.getElementById('approvals-n').textContent = n || '';
+    document.getElementById('approvals-n').style.display = n ? '' : 'none';
+    const regHtml = regs.map(p =>
+      '<div class="topup" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(212,175,55,.12)">' +
+      '<div><b>' + esc(p.name) + '</b> · новый бариста (' + esc(p.login) + ')' +
+      '<div class="sub" style="margin:0">+' + esc(p.phone) + (p.ts ? ' · ' + new Date(p.ts).toLocaleString('ru-RU') : '') + '</div></div>' +
+      '<div style="display:flex;gap:6px">' +
+      '<button class="gold" onclick="approveReg(\'' + p.login + '\',1)">✓ Принять на работу</button>' +
+      '<button class="chip" onclick="approveReg(\'' + p.login + '\',0)">✕ Отклонить</button></div></div>').join('');
+    const sesHtml = list.map(p =>
       '<div class="topup" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(212,175,55,.12)">' +
       '<div><b>' + esc(p.name) + '</b> · ' + (p.role === 'admin' ? 'админ' : 'бариста') + ' (' + esc(p.login) + ')' +
       '<div class="sub" style="margin:0">' + new Date(p.ts).toLocaleString('ru-RU') + '</div></div>' +
       '<div style="display:flex;gap:6px">' +
       '<button class="gold" onclick="approveSession(\'' + p.sid + '\',1)">✓ Впустить</button>' +
-      '<button class="chip" onclick="approveSession(\'' + p.sid + '\',0)">✕ Отклонить</button></div></div>').join('')
-      : '<div class="sub" style="margin:0">Новых запросов нет</div>';
+      '<button class="chip" onclick="approveSession(\'' + p.sid + '\',0)">✕ Отклонить</button></div></div>').join('');
+    document.getElementById('approvals-list').innerHTML = (regHtml + sesHtml) ||
+      '<div class="sub" style="margin:0">Новых запросов нет</div>';
   }).catch(()=>{});
 }
 function approveSession(sid, ok){
   staffReq(ok ? 'session_approve' : 'session_reject', {sid}).then(()=>loadApprovals());
+}
+function approveReg(login, ok){
+  if (!ok && !confirm('Отклонить регистрацию ' + login + '? Аккаунт будет удалён.')) return;
+  staffReq(ok ? 'staff_approve' : 'staff_reject_reg', {login}).then(()=>loadApprovals());
 }
 
 function start(){

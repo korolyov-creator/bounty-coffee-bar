@@ -11,9 +11,19 @@ usleep(300000);
 if (!login_rate_check()) { respond(['ok' => false, 'reason' => 'rate_limit'], 429); }
 
 $phone = norm_phone($d['phone'] ?? '');
+
+// проверка: есть ли для номера код от администратора (шаг 1 мастера)
+if (!empty($d['check'])) {
+  if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
+  $inv = store_read('staff_invites.json');
+  respond(['ok' => true, 'invite' => isset($inv[$phone]) && ($inv[$phone]['exp'] ?? 0) >= time()]);
+}
+
 $code = preg_replace('/\D/', '', (string)($d['code'] ?? ''));
 $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
-if (!$phone || strlen($code) !== 6 || $name === '') { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+// код НЕобязателен: без кода аккаунт создаётся со статусом pending —
+// владелец принимает на работу в админке («Подтверждения»)
+if (!$phone || $name === '' || ($code !== '' && strlen($code) !== 6)) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
 
 $wantLogin = strtolower(trim((string)($d['login'] ?? '')));
 $password = (string)($d['password'] ?? '');
@@ -29,21 +39,24 @@ if ($password !== '' && (strlen($password) < 8 || strlen($password) > 64)) {
   respond(['ok' => false, 'reason' => 'bad_password'], 422);
 }
 
-$res = store_update('staff_invites.json', function ($data) use ($phone, $code) {
-  $e = $data[$phone] ?? null;
-  if (!$e || empty($e['h'])) { return [$data, 'no_invite']; }
-  if (time() > ($e['exp'] ?? 0)) { unset($data[$phone]); return [$data, 'expired']; }
-  $e['tries'] = ($e['tries'] ?? 0) + 1;
-  if ($e['tries'] > 5) { unset($data[$phone]); return [$data, 'too_many_tries']; }
-  if (!hash_equals($e['h'], hash('sha256', $phone . ':' . $code))) { $data[$phone] = $e; return [$data, 'wrong_code']; }
-  unset($data[$phone]);
-  return [$data, 'ok'];
-});
-if ($res !== 'ok') { login_rate_fail(); respond(['ok' => false, 'reason' => $res], 401); }
+if ($code !== '') {
+  $res = store_update('staff_invites.json', function ($data) use ($phone, $code) {
+    $e = $data[$phone] ?? null;
+    if (!$e || empty($e['h'])) { return [$data, 'no_invite']; }
+    if (time() > ($e['exp'] ?? 0)) { unset($data[$phone]); return [$data, 'expired']; }
+    $e['tries'] = ($e['tries'] ?? 0) + 1;
+    if ($e['tries'] > 5) { unset($data[$phone]); return [$data, 'too_many_tries']; }
+    if (!hash_equals($e['h'], hash('sha256', $phone . ':' . $code))) { $data[$phone] = $e; return [$data, 'wrong_code']; }
+    unset($data[$phone]);
+    return [$data, 'ok'];
+  });
+  if ($res !== 'ok') { login_rate_fail(); respond(['ok' => false, 'reason' => $res], 401); }
+}
+$status = $code !== '' ? 'active' : 'pending';
 
 if ($password === '') { $password = gen_password(12); }
 $base = translit_login($name);
-$created = store_update('staff_accounts.json', function ($data) use ($wantLogin, $base, $name, $phone, $password) {
+$created = store_update('staff_accounts.json', function ($data) use ($wantLogin, $base, $name, $phone, $password, $status) {
   if ($wantLogin !== '') {
     if (isset($data[$wantLogin])) { return [$data, null]; }
     $login = $wantLogin;
@@ -53,7 +66,7 @@ $created = store_update('staff_accounts.json', function ($data) use ($wantLogin,
   $data[$login] = array(
     'name' => $name, 'phone' => $phone,
     'hash' => password_hash($password, PASSWORD_DEFAULT),
-    'status' => 'active', 'created' => date('c'), 'last_login' => '',
+    'status' => $status, 'created' => date('c'), 'last_login' => '',
   );
   return [$data, $login];
 });
@@ -61,5 +74,5 @@ if (!$created) { respond(['ok' => false, 'reason' => 'login_taken'], 409); }
 
 // первая сессия после регистрации ждёт подтверждения владельцем
 $token = staff_session_create($created, 'barista', $name, false);
-audit('staff_register', array('login' => $created, 'phone' => $phone, 'name' => $name));
-respond(['ok' => true, 'login' => $created, 'password' => $password, 'token' => $token, 'role' => 'barista', 'name' => $name, 'pending' => true]);
+audit('staff_register', array('login' => $created, 'phone' => $phone, 'name' => $name, 'status' => $status));
+respond(['ok' => true, 'login' => $created, 'password' => $password, 'token' => $token, 'role' => 'barista', 'name' => $name, 'pending' => true, 'hired' => $status === 'active']);
