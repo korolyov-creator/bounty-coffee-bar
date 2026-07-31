@@ -387,7 +387,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.4 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.5 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -409,6 +409,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <h1>Корзина<span class="script">самовывоз без очереди</span></h1>
     </div>
     <div id="cart-items"></div>
+    <div id="cart-upsell"></div>
     <div class="card" id="cart-checkout" style="margin-top:14px">
       <h3>★ Какая точка готовит?</h3>
       <div class="p-opts" id="co-points"></div>
@@ -869,7 +870,7 @@ function renderCart(){
   const items = document.getElementById('cart-items');
   const co = document.getElementById('cart-checkout');
   const empty = document.getElementById('cart-empty');
-  if (!c.length){ items.innerHTML=''; co.style.display='none'; empty.style.display='block'; return; }
+  if (!c.length){ items.innerHTML=''; document.getElementById('cart-upsell').innerHTML=''; co.style.display='none'; empty.style.display='block'; return; }
   empty.style.display='none'; co.style.display='block';
   items.innerHTML = c.map((i,idx) => {
     const sub = [i.size, ...(i.addons.length ? ['+ '+i.addons.join(', ')] : []), i.comment ? '💬 '+i.comment : ''].filter(Boolean).join(' · ');
@@ -885,7 +886,48 @@ function renderCart(){
   document.getElementById('co-times').innerHTML = PICKUP_TIMES.map((t,k) =>
     `<button class="p-opt${k===coTime?' sel':''}" data-k="${k}" onclick="coSelTime(${k})">${t}</button>`).join('');
   document.getElementById('co-total').textContent = fmtSum(cartTotal(c));
+  renderUpsell(c);
   renderPayOptions();
+}
+
+// === UPSELL «К заказу» ===
+const UPSELL_FOOD = ['Овсяное печенье','Брауни','Кофейные орешки','Десерт дня'];
+const UPSELL_DRINK = ['Капучино','Американо','Раф Баунти'];
+function menuFind(name){
+  for (const k of Object.keys(MENU)){
+    const idx = MENU[k].findIndex(m => m.n === name);
+    if (idx >= 0) return {cat:k, idx, m:MENU[k][idx]};
+  }
+  return null;
+}
+function renderUpsell(c){
+  const el = document.getElementById('cart-upsell');
+  if (!el) return;
+  const inCart = new Set(c.map(i => i.n));
+  const cats = c.map(i => (menuFind(i.n)||{}).cat);
+  const hasFood = cats.includes('Выпечка') || cats.includes('Комбо');
+  const hasDrink = cats.some(k => k && k !== 'Выпечка' && k !== 'Комбо' && k !== 'Добавки');
+  let names;
+  if (!hasFood) names = UPSELL_FOOD;
+  else if (!hasDrink) names = UPSELL_DRINK;
+  else { el.innerHTML = ''; return; }
+  const sugg = names.map(menuFind).filter(s => s && !inCart.has(s.m.n)).slice(0,3);
+  if (!sugg.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="card" style="margin-top:14px;padding:14px 16px">
+    <h3 style="margin-bottom:10px">${hasFood ? '☕ Добавить напиток?' : '🥐 К кофе отлично подойдёт'}</h3>
+    <div class="p-opts">` + sugg.map(s =>
+      `<button class="p-opt" onclick="addUpsell('${s.cat}',${s.idx})">${s.m.ic} ${s.m.n}<br><small style="color:var(--gold)">+ ${fmtSum(parseP(s.m.p)[0])}</small></button>`
+    ).join('') + `</div></div>`;
+}
+function addUpsell(cat, idx){
+  const m = MENU[cat][idx];
+  const prices = parseP(m.p);
+  const size = prices.length > 1 ? sizeLabels(m.d, prices.length)[0] : '';
+  const c = getCart();
+  const ex = c.find(i => i.n === m.n && i.size === size && !(i.addons||[]).length && !i.comment);
+  if (ex) ex.qty = Math.min(9, ex.qty + 1); else c.push({n:m.n, ic:m.ic, size, qty:1, addons:[], comment:'', unit:prices[0]});
+  saveCart(c);
+  if (navigator.vibrate) navigator.vibrate(10);
 }
 
 // === PAYMENT METHOD (checkout) ===

@@ -1,5 +1,5 @@
-// Bounty PWA · Service Worker v12
-const CACHE = 'bounty-app-v12';
+// Bounty PWA · Service Worker v13
+const CACHE = 'bounty-app-v13';
 const ASSETS = [
   './',
   './index.html',
