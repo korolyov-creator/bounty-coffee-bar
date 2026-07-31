@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.7 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.7.1 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -1119,7 +1119,7 @@ function repeatLast(){
 
 function pollOrders(){
   const orders = getMyOrders();
-  const active = orders.filter(o => o.status === 'new' || o.status === 'ready');
+  const active = orders.filter(o => o.status === 'new' || o.status === 'making' || o.status === 'ready');
   if (!active.length) return;
   fetch('../api/order_status.php?ids=' + active.map(o=>o.id).join(','))
     .then(r=>r.json())
