@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Bounty · Заказы</title>
+<title>Bounty · Бариста</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/app/icons/favicon-32.png">
 <style>
 :root{--navy:#0F1F3A;--navy-deep:#0A1628;--gold:#D4AF37;--paper:#F2EAD7;--muted:#8B94A8}
@@ -12,34 +12,90 @@
 body{background:var(--navy-deep);color:var(--paper);font:15px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif;padding:16px;padding-bottom:60px}
 h1{font-size:20px;margin-bottom:4px}
 h1 span{color:var(--gold)}
+h2{font-size:15px;color:var(--gold);margin:18px 0 8px}
 .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
 .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.filters button{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:8px 15px;font-size:13px;color:var(--paper);background:transparent;cursor:pointer}
+.filters button,.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:8px 15px;font-size:13px;color:var(--paper);background:transparent;cursor:pointer}
 .filters button.sel{background:var(--gold);color:var(--navy);font-weight:700}
 .order{background:rgba(242,234,215,.05);border:1px solid rgba(212,175,55,.2);border-radius:14px;padding:14px;margin-bottom:12px}
+.order.st-making{border-color:#f0b866}
 .order.st-ready{border-color:#4ade80}
 .order.st-done,.order.st-cancel{opacity:.45}
 .o-head{display:flex;justify-content:space-between;align-items:baseline}
 .o-num{font-size:19px;font-weight:800;color:var(--gold)}
 .o-total{font-weight:700}
+.o-pay{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800;margin:4px 0}
+.o-pay.paid{background:#14532d;color:#4ade80}
+.o-pay.unpaid{background:#3b2f0e;color:#f0b866}
 .o-meta{color:var(--muted);font-size:13px;margin:2px 0 8px}
+.o-meta a{color:var(--gold);text-decoration:none;font-weight:700}
 .o-items{font-size:14px;margin-bottom:4px}
 .o-items .ai{color:var(--gold);font-size:13px}
 .o-items .cm{color:#f0b866;font-size:13px}
-.o-btns{display:flex;gap:8px;margin-top:10px}
-.o-btns button{flex:1;border:none;border-radius:10px;padding:11px 0;font-size:14px;font-weight:700;cursor:pointer}
+.o-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.o-btns button{flex:1;border:none;border-radius:10px;padding:11px 0;font-size:14px;font-weight:700;cursor:pointer;min-width:90px}
+.b-make{background:#f0b866;color:#0A1628}
 .b-ready{background:#4ade80;color:#0A1628}
 .b-done{background:var(--gold);color:#0A1628}
 .b-cancel{background:transparent;border:1px solid rgba(242,234,215,.3)!important;color:var(--muted);flex:0 0 90px!important}
-.empty{text-align:center;color:var(--muted);padding:50px 0}
+.b-chat{background:rgba(212,175,55,.18);color:var(--gold);flex:0 0 46px!important}
+.empty{text-align:center;color:var(--muted);padding:30px 0}
 .err{background:#7f1d1d;border-radius:10px;padding:12px;text-align:center;margin-bottom:12px;display:none}
-.bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);padding:8px;text-align:center;font-size:12px;color:var(--muted)}
+.bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);padding:8px;text-align:center;font-size:12px;color:var(--muted);z-index:5}
+.card{background:rgba(242,234,215,.05);border:1px solid rgba(212,175,55,.2);border-radius:14px;padding:14px;margin-bottom:12px}
+input,select{background:rgba(242,234,215,.07);border:1px solid rgba(212,175,55,.3);border-radius:10px;color:var(--paper);font-size:15px;padding:11px 13px;outline:none;font-family:inherit}
+button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:10px;padding:11px 16px;font-weight:800;font-size:14px;cursor:pointer}
+/* login */
+#login{position:fixed;inset:0;background:var(--navy-deep);z-index:100;display:flex;flex-direction:column;justify-content:center;padding:30px;gap:12px}
+#login h1{text-align:center;margin-bottom:8px}
+#login input{text-align:center;font-size:20px;letter-spacing:.2em}
+/* chat overlay */
+#chat-ov{position:fixed;inset:0;background:rgba(10,20,40,.85);z-index:50;display:none;align-items:flex-end}
+#chat-ov.show{display:flex}
+#chat-box{background:var(--navy);width:100%;max-height:80vh;border-radius:18px 18px 0 0;padding:16px;display:flex;flex-direction:column}
+#chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0;min-height:120px;max-height:50vh}
+.msg{max-width:82%;padding:8px 12px;border-radius:12px;font-size:14px}
+.msg.staff{align-self:flex-end;background:var(--gold);color:var(--navy)}
+.msg.client{align-self:flex-start;background:rgba(242,234,215,.1)}
+.msg small{display:block;font-size:10px;opacity:.6;margin-top:2px}
+.badge{background:#e11d48;color:#fff;border-radius:99px;font-size:11px;font-weight:800;padding:1px 7px;margin-left:6px}
+.topup{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(212,175,55,.12);flex-wrap:wrap}
+.topup:last-child{border-bottom:none}
 </style>
 </head>
 <body>
-<h1>☕ Bounty · <span>Предзаказы</span></h1>
+
+<div id="login">
+  <h1>☕ Bounty · <span>вход для персонала</span></h1>
+  <input type="password" id="login-pass" placeholder="Пароль" autocomplete="current-password">
+  <button class="gold" onclick="doLogin()">Войти</button>
+  <div class="sub" style="text-align:center">Бариста — код бариста. Админ — пароль администратора.</div>
+  <div class="err" id="login-err">Неверный пароль</div>
+</div>
+
+<h1>☕ Bounty · <span>Панель бариста</span> <button class="chip" style="float:right;font-size:12px" onclick="logout()">Выйти</button></h1>
 <div class="sub">Обновляется каждые 20 сек · новые сверху</div>
 <div class="err" id="err">Нет связи с сервером — проверь интернет</div>
+
+<div class="card" id="topups-card" style="display:none">
+  <h2 style="margin-top:0">👛 Пополнение кошельков <span class="badge" id="topups-n"></span></h2>
+  <div id="topups"></div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">👛 Зачислить клиенту (деньги приняты на кассе)</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <input type="tel" id="tu-phone" placeholder="Телефон 9XXXXXXXX" style="flex:2;min-width:150px">
+    <input type="tel" id="tu-amount" placeholder="Сумма" style="flex:1;min-width:90px">
+    <button class="gold" onclick="topupDirect()">Зачислить</button>
+  </div>
+</div>
+
+<div class="card" id="chats-card" style="display:none">
+  <h2 style="margin-top:0">💬 Сообщения клиентов <span class="badge" id="chats-n"></span></h2>
+  <div id="chats"></div>
+</div>
+
 <div class="filters" id="filters">
   <button class="sel" data-p="">Все точки</button>
   <button data-p="hadra">Хадра · Ц-14</button>
@@ -47,29 +103,82 @@ h1 span{color:var(--gold)}
 </div>
 <div id="list"><div class="empty">Загружаем…</div></div>
 <div class="bar" id="bar">—</div>
-<script>
-const KEY = new URLSearchParams(location.search).get('key') || '';
-const API = 'api/orders.php?key=' + encodeURIComponent(KEY);
-let filterPoint = '', orders = [], knownIds = new Set(), firstLoad = true;
 
+<div id="chat-ov" onclick="if(event.target===this)closeChat()">
+  <div id="chat-box">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b id="chat-title">💬 Чат</b>
+      <span style="display:flex;gap:8px">
+        <a class="chip" id="chat-call" href="#" style="text-decoration:none">📞 Позвонить</a>
+        <button class="chip" onclick="closeChat()">✕</button>
+      </span>
+    </div>
+    <div id="chat-msgs"></div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="chat-inp" placeholder="Ответ клиенту…" style="flex:1" maxlength="500">
+      <button class="gold" onclick="chatReply()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let KEY = localStorage.getItem('bounty_staff_key') || new URLSearchParams(location.search).get('key') || '';
+let ROLE = localStorage.getItem('bounty_staff_role') || '';
+const api = () => 'api/orders.php?key=' + encodeURIComponent(KEY);
+let filterPoint = '', orders = [], knownIds = new Set(), firstLoad = true;
+let lastChatTs = localStorage.getItem('bounty_staff_chat_seen') || '';
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmt(n){ return (+n).toLocaleString('ru-RU').replace(/,/g,' '); }
+function beep(freq){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq || 880; g.gain.value = .3;
+    o.start(); o.stop(ctx.currentTime + .35);
+  }catch(e){}
+}
+function staffReq(action, extra){
+  return fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(Object.assign({key:KEY, action}, extra||{}))}).then(r=>r.json());
+}
+
+// === LOGIN ===
+function showLogin(){ document.getElementById('login').style.display = 'flex'; }
+function hideLogin(){ document.getElementById('login').style.display = 'none'; }
+function doLogin(){
+  const pass = document.getElementById('login-pass').value;
+  fetch('api/staff.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'login', password:pass})})
+    .then(r=>r.json()).then(j => {
+      if (j.ok){
+        KEY = j.key; ROLE = j.role;
+        localStorage.setItem('bounty_staff_key', KEY);
+        localStorage.setItem('bounty_staff_role', ROLE);
+        hideLogin(); startPanel();
+        if (j.role === 'admin' && !location.pathname.includes('admin')){ /* админ может работать и тут */ }
+      } else {
+        document.getElementById('login-err').style.display = 'block';
+      }
+    }).catch(()=>{ document.getElementById('login-err').textContent='Нет связи'; document.getElementById('login-err').style.display='block'; });
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+function logout(){
+  if (!confirm('Выйти из панели?')) return;
+  localStorage.removeItem('bounty_staff_key');
+  localStorage.removeItem('bounty_staff_role');
+  location.reload();
+}
+
+// === ORDERS ===
 document.querySelectorAll('#filters button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#filters button').forEach(x=>x.classList.remove('sel'));
   b.classList.add('sel'); filterPoint = b.dataset.p; render();
 });
 
-function fmt(n){ return n.toLocaleString('ru-RU').replace(/,/g,' '); }
-function beep(){
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 880; g.gain.value = .3;
-    o.start(); o.stop(ctx.currentTime + .35);
-  }catch(e){}
-}
-
 function load(){
-  fetch(API).then(r => { if(!r.ok) throw (r.status === 403 ? 'key' : 'net'); return r.json(); }).then(res => {
+  fetch(api()).then(r => { if(!r.ok) throw (r.status === 403 ? 'key' : 'net'); return r.json(); }).then(res => {
     if (!res.ok) throw 'net';
     document.getElementById('err').style.display = 'none';
     orders = res.orders.sort((a,b) => b.ts.localeCompare(a.ts));
@@ -77,15 +186,13 @@ function load(){
     orders.forEach(o => knownIds.add(o.id));
     if (!firstLoad && fresh.length) beep();
     firstLoad = false;
-    document.getElementById('bar').textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU') + ' · активных: ' + orders.filter(o=>o.status==='new'||o.status==='ready').length;
+    document.getElementById('bar').textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU') + ' · активных: ' + orders.filter(o=>['new','making','ready'].includes(o.status)).length + ' · роль: ' + (ROLE === 'admin' ? 'админ' : 'бариста');
     render();
   }).catch(e => {
     const err = document.getElementById('err');
-    err.textContent = e === 'key'
-      ? 'Неверный ключ доступа — проверь ссылку у владельца'
-      : 'Нет связи с сервером — проверь интернет';
+    if (e === 'key'){ localStorage.removeItem('bounty_staff_key'); showLogin(); return; }
+    err.textContent = 'Нет связи с сервером — проверь интернет';
     err.style.display = 'block';
-    if (e === 'key') document.getElementById('list').innerHTML = '';
   });
 }
 
@@ -93,22 +200,31 @@ function render(){
   const list = document.getElementById('list');
   const show = orders.filter(o => !filterPoint || o.point === filterPoint);
   if (!show.length){ list.innerHTML = '<div class="empty">Заказов пока нет ☕</div>'; return; }
-  const stName = {new:'🕐 НОВЫЙ', ready:'✅ ГОТОВ', done:'Выдан', cancel:'Отменён'};
+  const stName = {new:'🕐 НОВЫЙ', making:'👨‍🍳 В РАБОТЕ', ready:'✅ ГОТОВ', done:'Выдан', cancel:'Отменён'};
   list.innerHTML = show.map(o => {
     const d = new Date(o.ts);
     const items = o.items.map(i =>
-      '<div>' + i.qty + '× <b>' + i.n + '</b>' + (i.size ? ' (' + i.size + ')' : '') +
-      (i.addons && i.addons.length ? '<div class="ai">＋ ' + i.addons.join(', ') + '</div>' : '') +
-      (i.comment ? '<div class="cm">💬 ' + i.comment + '</div>' : '') + '</div>').join('');
+      '<div>' + i.qty + '× <b>' + esc(i.n) + '</b>' + (i.size ? ' (' + esc(i.size) + ')' : '') +
+      (i.addons && i.addons.length ? '<div class="ai">＋ ' + esc(i.addons.join(', ')) + '</div>' : '') +
+      (i.comment ? '<div class="cm">💬 ' + esc(i.comment) + '</div>' : '') + '</div>').join('');
+    const chatBtn = o.phone ? '<button class="b-chat" onclick="openChat(\'' + esc(o.phone) + '\',\'' + esc(o.name||'') + '\')">💬</button>' : '';
     const btns = o.status === 'new'
-      ? '<button class="b-ready" onclick="setSt(\'' + o.id + '\',\'ready\')">Готов ✓</button><button class="b-cancel" onclick="setSt(\'' + o.id + '\',\'cancel\')">Отмена</button>'
+      ? '<button class="b-make" onclick="setSt(\'' + o.id + '\',\'making\')">👨‍🍳 В работу</button><button class="b-ready" onclick="setSt(\'' + o.id + '\',\'ready\')">Готов ✓</button>' + chatBtn + '<button class="b-cancel" onclick="setSt(\'' + o.id + '\',\'cancel\')">Отмена</button>'
+      : o.status === 'making'
+      ? '<button class="b-ready" onclick="setSt(\'' + o.id + '\',\'ready\')">Готов ✓</button>' + chatBtn + '<button class="b-cancel" onclick="setSt(\'' + o.id + '\',\'cancel\')">Отмена</button>'
       : o.status === 'ready'
-      ? '<button class="b-done" onclick="setSt(\'' + o.id + '\',\'done\')">Выдан клиенту ✓</button>'
+      ? '<button class="b-done" onclick="setSt(\'' + o.id + '\',\'done\')">Выдан клиенту ✓</button>' + chatBtn
       : '';
+    const payBadge = o.paid
+      ? '<span class="o-pay paid">💳 ОПЛАЧЕН · кошелёк</span>'
+      : '<span class="o-pay unpaid">💵 оплата при получении' + (o.total ? ' · ' + fmt(o.total) + ' сум' : '') + '</span>';
+    const phoneLink = o.phone ? ' · <a href="tel:+' + esc(String(o.phone).replace(/\D/g,'')) + '">📞 ' + esc(o.phone) + '</a>' : '';
+    const cancelBy = o.status === 'cancel' && o.status_by === 'client' ? ' · отменил клиент' : '';
     return '<div class="order st-' + o.status + '">' +
-      '<div class="o-head"><span class="o-num">№' + o.num + ' · ' + stName[o.status] + '</span><span class="o-total">' + fmt(o.total) + ' сум</span></div>' +
-      '<div class="o-meta">' + o.point_name + ' · ' + o.pickup + ' · ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) +
-      (o.name ? ' · ' + o.name : '') + (o.phone ? ' · ' + o.phone : '') + '</div>' +
+      '<div class="o-head"><span class="o-num">№' + o.num + ' · ' + stName[o.status] + cancelBy + '</span><span class="o-total">' + fmt(o.total) + ' сум</span></div>' +
+      '<div>' + payBadge + '</div>' +
+      '<div class="o-meta">' + esc(o.point_name) + ' · ' + esc(o.pickup||'') + ' · ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) +
+      (o.name ? ' · <b style="color:var(--paper)">' + esc(o.name) + '</b>' : '') + phoneLink + '</div>' +
       '<div class="o-items">' + items + '</div>' +
       (btns ? '<div class="o-btns">' + btns + '</div>' : '') +
       '</div>';
@@ -116,15 +232,121 @@ function render(){
 }
 
 function setSt(id, status){
-  if (status === 'cancel' && !confirm('Отменить заказ?')) return;
-  fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, status})})
+  if (status === 'cancel' && !confirm('Отменить заказ?' + ((orders.find(o=>o.id===id)||{}).paid ? '\nДеньги вернутся на кошелёк клиента.' : ''))) return;
+  fetch(api(), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, status})})
     .then(r=>r.json()).then(res => {
-      if (res.ok){ const o = orders.find(x=>x.id===id); if (o) o.status = status; render(); }
+      if (res.ok){
+        const o = orders.find(x=>x.id===id);
+        if (o) o.status = status;
+        render();
+        if (res.refunded) alert('Заказ был оплачен с кошелька — деньги вернулись клиенту ✓');
+      }
     }).catch(()=>alert('Не удалось — попробуй ещё раз'));
 }
 
-load();
-setInterval(load, 20000);
+// === TOPUPS ===
+function loadTopups(){
+  staffReq('topups').then(j => {
+    if (!j.ok) return;
+    const card = document.getElementById('topups-card');
+    if (!j.topups.length){ card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    document.getElementById('topups-n').textContent = j.topups.length;
+    const mName = {cash:'на кассе', click:'Click', payme:'Payme', uzum:'Uzum'};
+    document.getElementById('topups').innerHTML = j.topups.map(t =>
+      '<div class="topup"><div><b style="color:var(--gold);font-size:17px">Код ' + t.code + '</b> · ' + fmt(t.amount) + ' сум · ' + (mName[t.method]||t.method) +
+      '<br><small style="color:var(--muted)">' + esc(t.name||'') + ' · +' + t.phone + '</small></div>' +
+      '<span style="display:flex;gap:6px"><button class="gold" onclick="topupDo(\'' + t.tid + '\',1)">Зачислить ✓</button>' +
+      '<button class="chip" onclick="topupDo(\'' + t.tid + '\',0)">✕</button></span></div>').join('');
+  }).catch(()=>{});
+}
+function topupDo(tid, ok){
+  if (ok && !confirm('Деньги получены? Зачислить на кошелёк клиента?')) return;
+  if (!ok && !confirm('Отклонить заявку?')) return;
+  staffReq(ok ? 'topup_confirm' : 'topup_cancel', {tid}).then(j => {
+    if (j.ok){ beep(1200); loadTopups(); } else alert('Не получилось (' + (j.reason||'') + ')');
+  }).catch(()=>alert('Нет связи'));
+}
+function topupDirect(){
+  const phone = document.getElementById('tu-phone').value.trim();
+  const amount = parseInt(document.getElementById('tu-amount').value.replace(/\D/g,''),10);
+  if (!phone || !amount){ alert('Укажи телефон и сумму'); return; }
+  if (!confirm('Зачислить ' + fmt(amount) + ' сум клиенту ' + phone + '?')) return;
+  staffReq('topup_direct', {phone, amount}).then(j => {
+    if (j.ok){ alert('Зачислено ✓ Баланс клиента: ' + fmt(j.balance) + ' сум'); document.getElementById('tu-amount').value=''; }
+    else alert('Не получилось — проверь номер (формат 9XXXXXXXX)');
+  }).catch(()=>alert('Нет связи'));
+}
+
+// === CHAT ===
+let chatPhone = '', chatTimer = null;
+function loadThreads(){
+  staffReq('chat_threads').then(j => {
+    if (!j.ok) return;
+    const card = document.getElementById('chats-card');
+    const unreadThreads = j.threads.filter(t => t.unread > 0);
+    let newest = '';
+    j.threads.forEach(t => { if (t.last && t.last.from === 'client' && t.last.ts > newest) newest = t.last.ts; });
+    if (newest && newest > lastChatTs){
+      if (lastChatTs) beep(660);
+      lastChatTs = newest;
+      localStorage.setItem('bounty_staff_chat_seen', newest);
+    }
+    if (!j.threads.length){ card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    document.getElementById('chats-n').textContent = unreadThreads.length || '';
+    document.getElementById('chats').innerHTML = j.threads.slice(0, 8).map(t =>
+      '<div class="topup" style="cursor:pointer" onclick="openChat(\'' + t.phone + '\',\'' + esc(t.name||'') + '\')">' +
+      '<div><b>' + esc(t.name || ('+' + t.phone)) + '</b>' + (t.unread ? '<span class="badge">' + t.unread + '</span>' : '') +
+      '<br><small style="color:var(--muted)">' + esc((t.last.from === 'client' ? '' : '☕ ') + t.last.text).slice(0, 60) + '</small></div>' +
+      '<span style="color:var(--gold)">›</span></div>').join('');
+  }).catch(()=>{});
+}
+function openChat(phone, name){
+  chatPhone = String(phone).replace(/\D/g,'');
+  document.getElementById('chat-title').textContent = '💬 ' + (name || '+' + chatPhone);
+  document.getElementById('chat-call').href = 'tel:+' + chatPhone;
+  document.getElementById('chat-ov').classList.add('show');
+  chatLoad();
+  clearInterval(chatTimer);
+  chatTimer = setInterval(chatLoad, 10000);
+}
+function closeChat(){
+  document.getElementById('chat-ov').classList.remove('show');
+  clearInterval(chatTimer);
+  chatPhone = '';
+  loadThreads();
+}
+function chatLoad(){
+  if (!chatPhone) return;
+  staffReq('chat_get', {phone: chatPhone}).then(j => {
+    if (!j.ok) return;
+    const el = document.getElementById('chat-msgs');
+    el.innerHTML = (j.msgs||[]).map(m =>
+      '<div class="msg ' + (m.from === 'staff' ? 'staff' : 'client') + '">' + esc(m.text) +
+      '<small>' + (m.from === 'staff' ? 'ты' : esc(m.name || 'клиент')) + ' · ' + new Date(m.ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) + '</small></div>').join('')
+      || '<div class="empty">Сообщений пока нет</div>';
+    el.scrollTop = el.scrollHeight;
+  }).catch(()=>{});
+}
+function chatReply(){
+  const inp = document.getElementById('chat-inp');
+  const text = inp.value.trim();
+  if (!text || !chatPhone) return;
+  inp.value = '';
+  staffReq('chat_send', {phone: chatPhone, text}).then(j => { if (j.ok) chatLoad(); }).catch(()=>alert('Нет связи'));
+}
+document.getElementById('chat-inp').addEventListener('keydown', e => { if (e.key === 'Enter') chatReply(); });
+
+// === START ===
+function startPanel(){
+  load(); loadTopups(); loadThreads();
+  setInterval(load, 20000);
+  setInterval(loadTopups, 25000);
+  setInterval(loadThreads, 25000);
+}
+if (KEY){ hideLogin(); localStorage.setItem('bounty_staff_key', KEY); startPanel(); }
+else showLogin();
 </script>
 </body>
 </html>

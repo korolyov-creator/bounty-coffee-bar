@@ -1,4 +1,5 @@
 <?php
+require __DIR__ . '/_lib.php';
 header('Content-Type: application/json; charset=utf-8');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo '{"ok":false}'; exit; }
 $raw = file_get_contents('php://input', false, null, 0, 16384);
@@ -34,6 +35,11 @@ if (!$items || $total <= 0) { http_response_code(422); echo '{"ok":false,"error"
 $dir = dirname(__DIR__, 2) . '/bounty_data';
 if (!is_dir($dir)) { mkdir($dir, 0700, true); }
 
+// Способ оплаты: pickup (при получении) | wallet (списание с кошелька при оформлении)
+$pay = (string)($d['pay'] ?? 'pickup');
+if (!in_array($pay, array('pickup', 'wallet'), true)) { $pay = 'pickup'; }
+$paid = false;
+
 // дневной номер заказа: счётчик под flock
 $day = date('Y-m-d');
 $cf = fopen($dir . '/order_counter.txt', 'c+');
@@ -45,6 +51,21 @@ ftruncate($cf, 0); rewind($cf); fwrite($cf, $day . ':' . $num);
 flock($cf, LOCK_UN); fclose($cf);
 
 $id = bin2hex(random_bytes(8));
+
+if ($pay === 'wallet') {
+  list($wphone, $wid) = wallet_auth($d);
+  $res = store_update('wallets.json', function ($data) use ($wphone, $wid, $total, $id, $num, $d) {
+    $w = wallet_entry($data, $wphone, $wid, mb_substr(trim((string)($d['name'] ?? '')), 0, 50));
+    if ((int)$w['balance'] < $total) { return [$data, array('err' => 'insufficient', 'balance' => (int)$w['balance'])]; }
+    $w['balance'] = (int)$w['balance'] - $total;
+    wallet_push_tx($w, array('t' => 'pay', 'a' => -$total, 'ts' => date('c'), 'o' => $num, 'oid' => $id));
+    $data[$wphone] = $w;
+    return [$data, array('balance' => (int)$w['balance'])];
+  });
+  if (isset($res['err'])) { echo json_encode(array('ok' => false, 'error' => 'insufficient', 'balance' => $res['balance'])); exit; }
+  $paid = true;
+}
+
 $rec = array(
   'id'         => $id,
   'num'        => $num,
@@ -57,8 +78,13 @@ $rec = array(
   'phone'      => preg_replace('/[^\d+]/', '', (string)($d['phone'] ?? '')),
   'items'      => $items,
   'total'      => $total,
+  'pay'        => $pay,
+  'paid'       => $paid,
   'ip'         => $_SERVER['REMOTE_ADDR'] ?? ''
 );
 $ok = file_put_contents($dir . '/orders.jsonl', json_encode($rec, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
-if ($ok === false) { http_response_code(500); echo '{"ok":false,"error":"store"}'; exit; }
-echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num));
+if ($ok === false) {
+  if ($paid) { wallet_refund_order(norm_phone($rec['phone']), $total, $id, $num, 'store_fail'); }
+  http_response_code(500); echo '{"ok":false,"error":"store"}'; exit;
+}
+echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid));

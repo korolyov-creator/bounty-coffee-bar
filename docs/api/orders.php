@@ -1,9 +1,9 @@
 <?php
-// Панель бариста: список заказов (GET) и смена статуса (POST). Доступ по ключу.
+// Панель персонала: список заказов (GET) и смена статуса (POST). Доступ по ключу (бариста или админ).
+require __DIR__ . '/_lib.php';
 header('Content-Type: application/json; charset=utf-8');
-$KEY = 'd1015884097fe84349700f90e7d38d0a';
-$key = (string)($_GET['key'] ?? '');
-if (!hash_equals($KEY, $key)) { http_response_code(403); echo '{"ok":false}'; exit; }
+$role = staff_role((string)($_GET['key'] ?? ''));
+if (!$role) { http_response_code(403); echo '{"ok":false}'; exit; }
 
 $dir = dirname(__DIR__, 2) . '/bounty_data';
 $statusFile = $dir . '/orders_status.jsonl';
@@ -12,13 +12,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $d = json_decode(file_get_contents('php://input', false, null, 0, 1024), true);
   $id = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['id'] ?? '')), 0, 16);
   $status = (string)($d['status'] ?? '');
-  if (!$id || !in_array($status, array('new', 'ready', 'done', 'cancel'), true)) {
+  if (!$id || !in_array($status, array('new', 'making', 'ready', 'done', 'cancel'), true)) {
     http_response_code(422); echo '{"ok":false}'; exit;
   }
-  if (!is_dir($dir)) { mkdir($dir, 0700, true); }
-  $rec = array('id' => $id, 'status' => $status, 'ts' => date('c'));
-  file_put_contents($statusFile, json_encode($rec) . "\n", FILE_APPEND | LOCK_EX);
-  echo '{"ok":true}'; exit;
+  order_set_status($id, $status, $role);
+  $refunded = false;
+  if ($status === 'cancel') {
+    $order = order_find($id);
+    if ($order && !empty($order['paid']) && ($order['pay'] ?? '') === 'wallet') {
+      $p = norm_phone($order['phone'] ?? '');
+      if ($p) { $refunded = (bool)wallet_refund_order($p, (int)$order['total'], $id, $order['num'] ?? 0, $role); }
+    }
+  }
+  echo json_encode(array('ok' => true, 'refunded' => $refunded)); exit;
 }
 
 // GET: заказы за последние 24 часа + актуальные статусы
@@ -40,6 +46,7 @@ if (is_file($statusFile)) {
     $r = json_decode($line, true);
     if (is_array($r) && isset($r['id']) && isset($orders[$r['id']])) {
       $orders[$r['id']]['status'] = $r['status'];
+      if (!empty($r['by'])) { $orders[$r['id']]['status_by'] = $r['by']; }
     }
   }
 }

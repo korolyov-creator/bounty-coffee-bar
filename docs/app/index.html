@@ -202,6 +202,16 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="sub" style="margin-top:10px;opacity:.85" id="home-loyalty-sub">Покажи карту бариста при покупке ☕</div>
     </div>
 
+    <!-- Кошелёк -->
+    <div class="card dark" onclick="go('wallet')" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 18px">
+      <div style="font-size:28px">👛</div>
+      <div style="flex:1">
+        <h3 style="margin-bottom:2px">Кошелёк</h3>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold)" id="home-wallet">0 сум</div>
+      </div>
+      <div style="color:var(--gold);font-size:13px;font-weight:700">Пополнить ›</div>
+    </div>
+
     <!-- Текущая акция -->
     <div class="card dark" style="background-image:linear-gradient(135deg,rgba(15,31,58,.85),rgba(201,161,74,.15)),url('../assets/img/post-2.jpg');background-size:cover;background-position:center 30%">
       <h3>★ Акция дня</h3>
@@ -339,8 +349,16 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
 
     <div class="menu-list-rows">
+      <div class="row" onclick="go('wallet')">
+        <div class="l"><span>👛</span><span>Кошелёк · <b style="color:var(--gold)" id="prof-wallet">0 сум</b></span></div>
+        <div class="r">›</div>
+      </div>
       <div class="row" onclick="go('myorders')">
         <div class="l"><span>🧾</span><span>Мои заказы</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row" onclick="go('chat')">
+        <div class="l"><span>💬</span><span>Чат с бариста <b style="color:#e88" id="prof-chat-badge"></b></span></div>
         <div class="r">›</div>
       </div>
       <div class="row" onclick="go('history')">
@@ -369,7 +387,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.3 · 2026<br>Предзаказ работает · оплата при получении · скоро — кошелёк</div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.4 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
   <!-- ============ HISTORY ============ -->
@@ -395,9 +414,11 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="p-opts" id="co-points"></div>
       <h3 style="margin-top:16px">★ Когда?</h3>
       <div class="p-opts" id="co-times"></div>
+      <h3 style="margin-top:16px">★ Оплата</h3>
+      <div class="p-opts" id="co-pays"></div>
+      <div class="tip" id="co-pay-hint" style="text-align:left;margin-top:8px"></div>
       <div style="margin-top:14px;font-size:15px;display:flex;justify-content:space-between"><span>Итого</span><strong style="color:var(--gold)" id="co-total">0 сум</strong></div>
       <button class="btn-big" style="margin-top:14px" id="co-submit" onclick="submitOrder()">Оформить заказ ✓</button>
-      <div class="tip" style="margin-top:10px">Оплата при получении — наличными или картой.<br>Скоро: оплата с кошелька в приложении.</div>
     </div>
     <div id="cart-empty" style="display:none;margin-top:20px;text-align:center">
       <div class="tip">Корзина пуста — выбери что-нибудь в меню ☕</div>
@@ -424,8 +445,58 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="eyebrow">🧾 МОИ ЗАКАЗЫ</div>
       <h1>Предзаказы<span class="script">статус в реальном времени</span></h1>
     </div>
+    <div class="point-chip" onclick="go('chat')">💬 <b>Чат с бариста</b> — вопрос по заказу<span class="chg" id="myord-chat-badge">открыть</span></div>
     <div class="menu-list-rows" id="myorders-list"></div>
-    <div class="tip" style="margin-top:14px">Заказ готовит точка, которую ты выбрал.<br>Оплата и отметка лояльности — при получении.</div>
+    <div class="tip" style="margin-top:14px">Отменить заказ можно, пока бариста не взял его в работу.<br>Отметка лояльности — при получении.</div>
+  </main>
+
+  <!-- ============ WALLET ============ -->
+  <main class="screen" id="scr-wallet">
+    <div class="scr-head">
+      <div class="eyebrow">👛 КОШЕЛЁК</div>
+      <h1>Твой баланс<span class="script">плати в одно касание</span></h1>
+    </div>
+    <div class="card gold">
+      <h3>★ ДОСТУПНО</h3>
+      <div class="big" id="w-balance">0 сум</div>
+      <div class="sub" style="margin-top:8px;opacity:.85">Оплачивай заказы с кошелька — без наличных и терминала</div>
+    </div>
+
+    <div class="card">
+      <h3>★ ПОПОЛНИТЬ</h3>
+      <div class="p-opts" id="w-amounts"></div>
+      <input type="tel" id="w-custom" placeholder="Или своя сумма, сум" inputmode="numeric" style="width:100%;margin-top:10px;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:11px 13px;color:var(--paper);font-size:15px">
+      <h3 style="margin-top:14px">★ СПОСОБ</h3>
+      <div class="p-opts" id="w-methods"></div>
+      <button class="btn-big" style="margin-top:14px" id="w-topup-btn" onclick="walletTopup()">Пополнить кошелёк</button>
+      <div class="tip" id="w-topup-hint" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" id="w-pending-card" style="display:none;border-color:var(--gold)">
+      <h3>★ ЗАЯВКА НА ПОПОЛНЕНИЕ</h3>
+      <div id="w-pending-text" style="font-size:14px;line-height:1.6"></div>
+    </div>
+
+    <div class="card">
+      <h3>★ ИСТОРИЯ</h3>
+      <div class="menu-list-rows" id="w-tx" style="background:transparent;border:none"></div>
+    </div>
+  </main>
+
+  <!-- ============ CHAT ============ -->
+  <main class="screen" id="scr-chat">
+    <div class="scr-head">
+      <div class="eyebrow">💬 ЧАТ С БАРИСТА</div>
+      <h1>Мы на связи<span class="script">ответим быстро</span></h1>
+    </div>
+    <div id="chat-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div class="tip">Напиши нам — бариста ответит прямо здесь</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="chat-input" placeholder="Сообщение бариста…" maxlength="500" style="flex:1;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:12px 13px;color:var(--paper);font-size:15px">
+      <button class="btn-big" style="width:auto;padding:12px 18px" onclick="chatSend()">➤</button>
+    </div>
+    <div class="tip" style="margin-top:10px">Чат виден бариста всех точек Bounty</div>
   </main>
 
   <!-- PRODUCT CARD OVERLAY -->
@@ -438,6 +509,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   .p-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
   .p-opt{border:1px solid rgba(212,175,55,.35);border-radius:12px;padding:9px 13px;font-size:13px;color:var(--paper);background:transparent;cursor:pointer}
   .p-opt.sel{background:var(--gold);color:var(--navy,#0F1F3A);font-weight:700;border-color:var(--gold)}
+  .p-opt.dim{opacity:.4}
   .p-add{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;font-size:14px;border-bottom:1px solid rgba(242,234,215,.08)}
   .p-add:last-child{border-bottom:none}
   .stepper{display:flex;align-items:center;gap:14px;margin:12px 0}
@@ -540,7 +612,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
 <script>
 // === ROUTER ===
-const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile'};
+const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile', wallet:'profile', chat:'profile'};
 function go(scr){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('scr-'+scr).classList.add('active');
@@ -548,8 +620,10 @@ function go(scr){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.scr===tab));
   window.scrollTo(0,0);
   document.querySelector('.screen.active').scrollTop = 0;
-  if (scr === 'cart') renderCart();
+  if (scr === 'cart'){ renderCart(); refreshWallet(); }
   if (scr === 'myorders'){ renderMyOrders(); pollOrders(); }
+  if (scr === 'wallet') refreshWallet();
+  if (scr === 'chat'){ chatPoll(true); }
   if (scr === 'order') renderPointChip();
   if ((scr === 'order' || scr === 'cart') && !pointChosen) openPointPicker();
   renderCartBar();
@@ -811,6 +885,46 @@ function renderCart(){
   document.getElementById('co-times').innerHTML = PICKUP_TIMES.map((t,k) =>
     `<button class="p-opt${k===coTime?' sel':''}" data-k="${k}" onclick="coSelTime(${k})">${t}</button>`).join('');
   document.getElementById('co-total').textContent = fmtSum(cartTotal(c));
+  renderPayOptions();
+}
+
+// === PAYMENT METHOD (checkout) ===
+let coPay = 'pickup';
+function renderPayOptions(){
+  const el = document.getElementById('co-pays');
+  if (!el || !document.getElementById('scr-cart').classList.contains('active')) return;
+  const total = cartTotal();
+  if (coPay === 'wallet' && wallet.balance < total) coPay = 'pickup';
+  const m = wallet.methods || {};
+  const opts = [
+    {id:'pickup', label:'💵 При получении', ok:true},
+    {id:'wallet', label:'👛 Кошелёк · ' + fmtSum(wallet.balance), ok: wallet.balance >= total},
+    {id:'click',  label:'Click',  ok:!!m.click},
+    {id:'payme',  label:'Payme',  ok:!!m.payme},
+    {id:'uzum',   label:'Uzum',   ok:!!m.uzum}
+  ];
+  el.innerHTML = opts.map(o =>
+    `<button class="p-opt${coPay===o.id?' sel':''}${o.ok?'':' dim'}" onclick="coSelPay('${o.id}')">${o.label}</button>`).join('');
+  document.getElementById('co-pay-hint').textContent =
+    coPay === 'wallet' ? 'Спишем ' + fmtSum(total) + ' с кошелька при оформлении. Отменишь до начала приготовления — деньги вернутся.'
+    : 'Наличными или картой на кассе при получении. Онлайн-оплата — через кошелёк.';
+}
+function coSelPay(id){
+  const total = cartTotal();
+  if (id === 'wallet' && wallet.balance < total){
+    if (confirm('На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(total) + '.\n\nПополнить кошелёк?')) go('wallet');
+    return;
+  }
+  if (id === 'click' || id === 'payme' || id === 'uzum'){
+    const nm = {click:'Click', payme:'Payme', uzum:'Uzum'}[id];
+    alert((wallet.methods||{})[id]
+      ? 'Оплата заказа через ' + nm + ' идёт через кошелёк:\n1) пополни кошелёк через ' + nm + '\n2) оплати заказ с кошелька'
+      : nm + ' подключается — совсем скоро.\nПока доступны: кошелёк и оплата при получении.');
+    return;
+  }
+  coPay = id;
+  renderPayOptions();
+  if (navigator.vibrate) navigator.vibrate(10);
 }
 
 // === SUBMIT ORDER ===
@@ -824,27 +938,40 @@ function submitOrder(){
   const btn = document.getElementById('co-submit');
   orderSending = true; btn.textContent = 'Отправляем…'; btn.disabled = true;
   const point = POINTS.find(p=>p.id===coPoint);
+  if (coPay === 'wallet' && !client){ alert('Для оплаты с кошелька нужен аккаунт'); orderSending = false; btn.textContent = 'Оформить заказ ✓'; btn.disabled = false; return; }
   const payload = {
     client_id: client ? client.id : '', name: client ? client.name : '', phone: client ? client.phone : '',
     point: coPoint, point_name: point.name, pickup: PICKUP_TIMES[coTime],
     items: c.map(i=>({n:i.n, size:i.size, qty:i.qty, addons:i.addons, comment:i.comment, unit:i.unit})),
-    total: cartTotal(c)
+    total: cartTotal(c),
+    pay: coPay
   };
   fetch('../api/order.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
     .then(r => r.json())
     .then(res => {
-      if (!res || !res.ok) throw new Error(res && res.error || 'fail');
+      if (!res || !res.ok){
+        if (res && res.error === 'insufficient'){
+          wallet.balance = res.balance || 0;
+          renderPayOptions();
+          if (confirm('На кошельке не хватает средств (' + fmtSum(wallet.balance) + ').\n\nПополнить кошелёк?')) go('wallet');
+          return;
+        }
+        throw new Error(res && res.error || 'fail');
+      }
       const orders = getMyOrders();
-      orders.push({id:res.id, num:res.num, ts:new Date().toISOString(), point:point.name, pickup:PICKUP_TIMES[coTime], total:payload.total, items:payload.items, status:'new'});
+      orders.push({id:res.id, num:res.num, ts:new Date().toISOString(), point:point.name, pickup:PICKUP_TIMES[coTime], total:payload.total, items:payload.items, status:'new', pay:coPay, paid:!!res.paid});
       localStorage.setItem('bounty_orders', JSON.stringify(orders.slice(-20)));
       localStorage.removeItem('bounty_cart');
       renderCartBar();
       renderUsual();
+      if (res.paid) refreshWallet();
       document.getElementById('ok-num').textContent = '№' + res.num;
       document.getElementById('ok-details').innerHTML =
         '<strong>' + point.name + '</strong><br>' + PICKUP_TIMES[coTime] + '<br>' +
         payload.items.map(i=>i.qty+'× '+i.n+(i.size?' ('+i.size+')':'')).join('<br>') +
-        '<br><strong style="color:var(--gold)">' + fmtSum(payload.total) + '</strong>';
+        '<br><strong style="color:var(--gold)">' + fmtSum(payload.total) + '</strong>' +
+        '<br>' + (res.paid ? '💳 Оплачено с кошелька ✓' : '💵 Оплата при получении');
+      coPay = 'pickup';
       pointChosen = false; // следующий заказ снова начнётся с выбора точки
       go('orderok');
       if (navigator.vibrate) navigator.vibrate([30,60,30]);
@@ -857,7 +984,7 @@ function submitOrder(){
 
 // === MY ORDERS ===
 function getMyOrders(){ try { return JSON.parse(localStorage.getItem('bounty_orders')) || []; } catch(e){ return []; } }
-const ORDER_STATUS = {new:['🕐','Принят, готовим'], ready:['✅','Готов — забирай!'], done:['☕','Выдан'], cancel:['✖','Отменён']};
+const ORDER_STATUS = {new:['🕐','Принят'], making:['👨‍🍳','Готовим — уже в работе'], ready:['✅','Готов — забирай!'], done:['☕','Выдан'], cancel:['✖','Отменён']};
 function renderMyOrders(){
   const list = document.getElementById('myorders-list');
   const orders = getMyOrders().slice().reverse();
@@ -869,12 +996,46 @@ function renderMyOrders(){
     const st = ORDER_STATUS[o.status] || ORDER_STATUS.new;
     const d = new Date(o.ts);
     const ds = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    const payTag = o.paid ? ' · 💳 оплачено' : (o.status !== 'cancel' && o.status !== 'done' ? ' · 💵 при получении' : '');
+    const cancelBtn = o.status === 'new'
+      ? `<button class="p-opt" style="color:#e88;margin-top:8px" onclick="cancelOrder('${o.id}')">✖ Отменить заказ</button>` : '';
     return `<div class="cart-item">
       <div class="t"><span>${st[0]} Заказ №${o.num}</span><span style="color:var(--gold)">${fmtSum(o.total)}</span></div>
-      <div class="s">${st[1]}${o.credited ? ' · отметка ✓' : ''} · ${o.point} · ${ds}</div>
+      <div class="s">${st[1]}${o.credited ? ' · отметка ✓' : ''}${payTag} · ${o.point} · ${ds}</div>
       <div class="s">${o.items.map(i=>i.qty+'× '+i.n).join(', ')}</div>
+      ${cancelBtn}
     </div>`;
   }).join('');
+}
+
+// === CANCEL ORDER (клиент, пока бариста не взял в работу) ===
+function cancelOrder(id){
+  const o = getMyOrders().find(x => x.id === id);
+  if (!o) return;
+  const back = o.paid ? '\nДеньги вернутся на кошелёк.' : '';
+  if (!confirm('Отменить заказ №' + o.num + '?' + back)) return;
+  const c = getClient();
+  fetch('../api/order_cancel.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id, phone: c ? c.phone : '', client_id: c ? c.id : ''})})
+    .then(r => r.json())
+    .then(res => {
+      if (res.ok){
+        const orders = getMyOrders();
+        const ord = orders.find(x => x.id === id);
+        if (ord) ord.status = 'cancel';
+        localStorage.setItem('bounty_orders', JSON.stringify(orders));
+        renderMyOrders();
+        if (res.refunded) refreshWallet();
+        alert(res.refunded ? 'Заказ отменён ✓\nДеньги вернулись на кошелёк.' : 'Заказ отменён ✓');
+        if (navigator.vibrate) navigator.vibrate(30);
+      } else if (res.reason === 'too_late'){
+        alert('Уже не отменить — бариста взял заказ в работу ☕');
+        pollOrders();
+      } else {
+        alert('Не получилось отменить — попробуй ещё раз');
+      }
+    })
+    .catch(() => alert('Нет связи — попробуй ещё раз'));
 }
 // === «Твой обычный»: последний реальный заказ, повтор в один клик ===
 function renderUsual(){
@@ -938,6 +1099,123 @@ setInterval(pollOrders, 25000);
   });
   renderMenu(Object.keys(MENU)[0]);
 })();
+
+// === WALLET (кошелёк) ===
+let wallet = {balance:0, tx:[], methods:{}};
+let wAmount = 50000, wMethod = 'cash';
+const W_AMOUNTS = [30000, 50000, 100000, 200000];
+function clientReq(url, extra){
+  const c = getClient();
+  if (!c) return Promise.reject('no_client');
+  return fetch(url, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(Object.assign({phone:c.phone, client_id:c.id, name:c.name}, extra))}).then(r => r.json());
+}
+function refreshWallet(){
+  clientReq('../api/wallet.php', {action:'get'}).then(j => {
+    if (!j.ok) return;
+    wallet.balance = j.balance; wallet.tx = j.tx || []; wallet.methods = j.methods || {};
+    renderWalletUI();
+  }).catch(()=>{});
+}
+function renderWalletUI(){
+  const f = fmtSum(wallet.balance);
+  document.getElementById('home-wallet').textContent = f;
+  document.getElementById('prof-wallet').textContent = f;
+  document.getElementById('w-balance').textContent = f;
+  document.getElementById('w-amounts').innerHTML = W_AMOUNTS.map(a =>
+    `<button class="p-opt${a===wAmount?' sel':''}" onclick="wSelAmount(${a})">${fmtSum(a)}</button>`).join('');
+  const m = wallet.methods || {};
+  const meth = [
+    {id:'cash',  label:'💵 На кассе', ok:true},
+    {id:'click', label:'Click', ok:!!m.click},
+    {id:'payme', label:'Payme', ok:!!m.payme},
+    {id:'uzum',  label:'Uzum',  ok:!!m.uzum}];
+  document.getElementById('w-methods').innerHTML = meth.map(o =>
+    `<button class="p-opt${wMethod===o.id?' sel':''}${o.ok?'':' dim'}" onclick="wSelMethod('${o.id}')">${o.label}</button>`).join('');
+  document.getElementById('w-topup-hint').textContent = wMethod === 'cash'
+    ? 'Оплати на кассе наличными или картой — бариста зачислит по коду заявки.'
+    : 'Откроется страница оплаты, зачисление подтвердит бариста.';
+  const TX = {topup:['💵','Пополнение'], pay:['☕','Оплата заказа'], refund:['↩️','Возврат за заказ'], adjust:['⚙️','Корректировка']};
+  document.getElementById('w-tx').innerHTML = wallet.tx.length ? wallet.tx.map(t => {
+    const d = new Date(t.ts), i = TX[t.t] || ['•', t.t];
+    return `<div class="row" style="cursor:default"><div class="l"><span>${i[0]}</span><span>${i[1]}${t.o?' №'+t.o:''}<br><small style="color:rgba(242,234,215,.45)">${d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})} ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</small></span></div><div class="r" style="font-size:14px;color:${t.a>=0?'#4ade80':'var(--paper)'}">${(t.a>=0?'+':'')+fmtSum(t.a)}</div></div>`;
+  }).join('') : '<div class="row" style="cursor:default"><div class="l"><span>👛</span><span>Операций пока нет</span></div></div>';
+  renderPayOptions();
+}
+function wSelAmount(a){ wAmount = a; document.getElementById('w-custom').value = ''; renderWalletUI(); }
+function wSelMethod(id){
+  if (id !== 'cash' && !(wallet.methods||{})[id]){
+    alert(({click:'Click',payme:'Payme',uzum:'Uzum'})[id] + ' подключается — совсем скоро.\nПока пополняй на кассе: наличными или картой.');
+    return;
+  }
+  wMethod = id; renderWalletUI();
+}
+function walletTopup(){
+  const c = getClient();
+  if (!c){ alert('Сначала войди в аккаунт'); return; }
+  const custom = parseInt((document.getElementById('w-custom').value || '').replace(/\D/g,''), 10);
+  const amount = custom || wAmount;
+  if (!amount || amount < 10000){ alert('Минимальная сумма пополнения — 10 000 сум'); return; }
+  const btn = document.getElementById('w-topup-btn');
+  btn.disabled = true; btn.textContent = 'Создаём заявку…';
+  clientReq('../api/wallet.php', {action:'topup_request', amount, method:wMethod}).then(j => {
+    btn.disabled = false; btn.textContent = 'Пополнить кошелёк';
+    if (!j.ok){
+      alert(j.reason === 'method_unavailable' ? 'Этот способ ещё подключается — пока пополни на кассе.' : 'Не получилось — попробуй ещё раз');
+      return;
+    }
+    if (j.link) window.open(j.link, '_blank');
+    document.getElementById('w-pending-card').style.display = 'block';
+    document.getElementById('w-pending-text').innerHTML =
+      'Сумма: <b style="color:var(--gold)">' + fmtSum(amount) + '</b><br>' +
+      'Код заявки: <b style="color:var(--gold);font-size:24px">' + j.code + '</b><br>' +
+      (wMethod === 'cash'
+        ? 'Назови бариста код и оплати на кассе — деньги сразу упадут на кошелёк.'
+        : 'После оплаты бариста подтвердит зачисление по коду.');
+    if (navigator.vibrate) navigator.vibrate([20,40,20]);
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Пополнить кошелёк'; alert('Нет связи — попробуй ещё раз'); });
+}
+
+// === CHAT (клиент ↔ бариста) ===
+let chatSeen = localStorage.getItem('bounty_chat_seen') || '';
+function escHtml(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+function chatPoll(scrollBottom){
+  clientReq('../api/chat.php', {action:'get'}).then(j => {
+    if (j.ok) renderChat(j.msgs || [], scrollBottom);
+  }).catch(()=>{});
+}
+function renderChat(msgs, scrollBottom){
+  const onChat = document.getElementById('scr-chat').classList.contains('active');
+  const unread = msgs.filter(m => m.from === 'staff' && m.ts > chatSeen).length;
+  document.getElementById('prof-chat-badge').textContent = unread && !onChat ? '· ' + unread + ' нов.' : '';
+  const badge = document.getElementById('myord-chat-badge');
+  if (badge) badge.textContent = unread && !onChat ? unread + ' нов.' : 'открыть';
+  if (!onChat) return;
+  const el = document.getElementById('chat-list');
+  el.innerHTML = msgs.length ? msgs.map(m => {
+    const mine = m.from === 'client';
+    const d = new Date(m.ts);
+    return `<div style="align-self:${mine?'flex-end':'flex-start'};max-width:82%;background:${mine?'var(--gold)':'rgba(242,234,215,.08)'};color:${mine?'var(--navy)':'var(--paper)'};border-radius:${mine?'14px 14px 4px 14px':'14px 14px 14px 4px'};padding:9px 13px;font-size:14px">${escHtml(m.text)}<div style="font-size:10px;opacity:.6;margin-top:3px">${mine?'ты':'☕ бариста'} · ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  }).join('') : '<div class="tip">Напиши нам — бариста ответит прямо здесь</div>';
+  if (msgs.length){
+    chatSeen = msgs[msgs.length - 1].ts;
+    localStorage.setItem('bounty_chat_seen', chatSeen);
+  }
+  if (scrollBottom !== false){
+    const s = document.getElementById('scr-chat');
+    s.scrollTop = s.scrollHeight;
+  }
+}
+function chatSend(){
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  const c = getClient();
+  if (!c){ alert('Сначала войди в аккаунт'); return; }
+  inp.value = '';
+  clientReq('../api/chat.php', {action:'send', text}).then(j => { if (j.ok) chatPoll(true); }).catch(() => alert('Нет связи — попробуй ещё раз'));
+}
+setInterval(() => chatPoll(false), 30000);
 
 // === OFERTA CONSENT (обязательное согласие) ===
 const OFERTA_VERSION = 1;
@@ -1003,7 +1281,7 @@ function logoutAccount(){
     ? 'Выйти из аккаунта?\n\nКарта и бонусы сохранятся на сервере — войдёшь снова по номеру телефона и коду из SMS.'
     : 'Выйти из аккаунта?\n\nВнимание: карта пока хранится только на этом устройстве. После выхода отметки обнулятся, вход — по номеру телефона.';
   if (!confirm(msg)) return;
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen'].forEach(k => localStorage.removeItem(k));
   document.getElementById('reg-step2').style.display = 'none';
   document.getElementById('reg-step1').style.display = 'block';
   document.getElementById('reg-name').value = '';
@@ -1214,7 +1492,7 @@ function renderHistory(c){
       : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); pollOrders(); });
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); pollOrders(); refreshWallet(); chatPoll(false); });
 
 // === PWA Install ===
 let deferredPrompt;
