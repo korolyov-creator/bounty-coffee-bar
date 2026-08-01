@@ -213,6 +213,16 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div style="color:var(--gold);font-size:13px;font-weight:700">Пополнить ›</div>
     </div>
 
+    <!-- Абонемент -->
+    <div class="card dark" id="sub-home-card" onclick="go('sub')" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 18px">
+      <div style="font-size:28px">🎟</div>
+      <div style="flex:1">
+        <h3 style="margin-bottom:2px">Абонемент</h3>
+        <div class="sub" id="sub-home-sub" style="opacity:.85">Кофе каждый день — выгоднее до 35%</div>
+      </div>
+      <div style="color:var(--gold);font-size:13px;font-weight:700" id="sub-home-cta">Подробнее ›</div>
+    </div>
+
     <!-- Кофейный гороскоп дня -->
     <div class="card" id="horo-card">
       <h3>🔮 Кофейный гороскоп</h3>
@@ -407,7 +417,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.8.1 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.9.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -505,6 +515,58 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     <div class="card">
       <h3>★ ИСТОРИЯ</h3>
       <div class="menu-list-rows" id="w-tx" style="background:transparent;border:none"></div>
+    </div>
+  </main>
+
+  <!-- ============ SUB (абонемент) ============ -->
+  <main class="screen" id="scr-sub">
+    <div class="scr-head">
+      <button class="back-btn" onclick="go('home')">← Назад</button>
+      <div class="eyebrow">🎟 АБОНЕМЕНТ</div>
+      <h1>Кофе каждый день<span class="script">одна чашка в день — по подписке</span></h1>
+    </div>
+
+    <!-- Активный абонемент -->
+    <div id="sub-active-box" style="display:none">
+      <div class="card gold">
+        <h3>★ <span id="sub-plan-name">АБОНЕМЕНТ</span></h3>
+        <div class="big" id="sub-days-left">—</div>
+        <div class="sub" style="margin-top:6px;opacity:.9" id="sub-until"></div>
+        <div class="sub" style="margin-top:8px;font-weight:700" id="sub-today"></div>
+      </div>
+      <div class="card" id="sub-qr-card" style="text-align:center">
+        <h3>★ ТВОЙ QR</h3>
+        <div style="display:flex;justify-content:center;margin:12px 0"><div id="sub-qr" style="background:#fff;padding:10px;border-radius:12px"></div></div>
+        <div class="tip">Покажи бариста — он отсканирует и выдаст напиток дня.<br>Бариста пробьёт чек «Полный расчёт» — это твой фискальный чек.</div>
+      </div>
+      <div class="card" id="sub-frozen-card" style="display:none;border-color:var(--gold)">
+        <h3>❄️ ЗАМОРОЖЕН</h3>
+        <div class="sub" id="sub-frozen-text" style="margin-top:6px;line-height:1.6"></div>
+        <button class="btn-big" style="margin-top:12px" onclick="subUnfreeze()">Разморозить сейчас</button>
+      </div>
+      <div class="card" id="sub-freeze-card">
+        <h3>★ ЗАМОРОЗКА</h3>
+        <div class="sub" style="margin-top:6px;line-height:1.6">Уезжаешь? Заморозь абонемент — дни не сгорят.<br>Осталось дней заморозки: <b id="sub-freeze-left">0</b></div>
+        <button class="btn-big" style="margin-top:12px" onclick="subFreeze()">Заморозить</button>
+      </div>
+    </div>
+
+    <!-- Промо (нет абонемента) -->
+    <div id="sub-promo-box">
+      <div class="card">
+        <h3>★ КАК ЭТО РАБОТАЕТ</h3>
+        <div class="sub" style="line-height:1.7;margin-top:6px">
+          ① Оформляешь абонемент у бариста на любой точке<br>
+          ② Каждый день — один любой напиток из меню<br>
+          ③ Показываешь QR в приложении — и всё<br>
+          ④ Уезжаешь — замораживаешь, дни не сгорают
+        </div>
+      </div>
+      <div class="card" id="sub-plans-card">
+        <h3>★ ТАРИФЫ</h3>
+        <div class="menu-list-rows" id="sub-plans-list" style="background:transparent;border:none"></div>
+      </div>
+      <div class="tip" style="margin-top:12px">Оформление и оплата — у бариста (наличные или карта).<br>Чек «Аванс» при покупке, чек «Полный расчёт» при каждой чашке.</div>
     </div>
   </main>
 
@@ -640,7 +702,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
 <script>
 // === ROUTER ===
-const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile', wallet:'profile', chat:'profile'};
+const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile', wallet:'profile', chat:'profile', sub:'home'};
 function go(scr){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('scr-'+scr).classList.add('active');
@@ -652,6 +714,7 @@ function go(scr){
   if (scr === 'myorders'){ renderMyOrders(); pollOrders(); }
   if (scr === 'wallet'){ renderWalletUI(); refreshWallet(); }
   if (scr === 'chat'){ chatPoll(true); }
+  if (scr === 'sub'){ renderSubScreen(); }
   if (scr === 'order') renderPointChip();
   if ((scr === 'order' || scr === 'cart') && !pointChosen) openPointPicker();
   renderCartBar();
@@ -1027,6 +1090,11 @@ function submitOrder(){
           alert('Заказы для этого аккаунта временно недоступны.\nОбратись к администратору кофейни.');
           return;
         }
+        if (res && res.error === 'price'){
+          alert('Цены в меню обновились 🙏\nЗакрой и открой приложение, затем собери заказ заново.');
+          localStorage.removeItem('bounty_cart'); renderCartBar();
+          return;
+        }
         if (res && res.error === 'insufficient'){
           wallet.balance = res.balance || 0;
           renderPayOptions();
@@ -1254,6 +1322,109 @@ setInterval(pollOrders, 25000);
   });
   renderMenu(Object.keys(MENU)[0]);
 })();
+
+// === SUB (абонемент) ===
+let subCache = null;
+function subFmtDate(d){
+  if (!d) return '';
+  const p = String(d).split('-');
+  return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : d;
+}
+function subPhoneDigits(){
+  const c = getClient();
+  let p = ((c && c.phone) || '').replace(/\D/g, '');
+  if (p.length === 9) p = '998' + p;
+  return p;
+}
+function drawSubQr(){
+  const el = document.getElementById('sub-qr');
+  if (!el || typeof QRCode === 'undefined') return;
+  el.innerHTML = '';
+  new QRCode(el, {text:'BNTSUB|' + subPhoneDigits(), width:150, height:150, colorDark:'#0F1F3A', colorLight:'#ffffff'});
+}
+function renderSubPlans(plans){
+  const box = document.getElementById('sub-plans-list');
+  if (!box) return;
+  const order = ['month','quarter','half','year'];
+  box.innerHTML = order.filter(k => plans && plans[k]).map(k => {
+    const p = plans[k];
+    const perDay = Math.round(p.price / p.days / 1000);
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.08)">' +
+      '<div style="flex:1"><div style="font-weight:700">' + p.n + ' · ' + p.days + ' дн.</div>' +
+      '<div class="sub" style="opacity:.75;font-size:12px">≈ ' + perDay + ' 000/чашка · заморозка до ' + p.freeze + ' дн.</div></div>' +
+      '<div style="font-family:\'Playfair Display\',serif;font-weight:700;color:var(--gold)">' + fmtSum(p.price) + '</div></div>';
+  }).join('');
+}
+function updateSubHome(s){
+  const subEl = document.getElementById('sub-home-sub');
+  const cta = document.getElementById('sub-home-cta');
+  if (!subEl || !cta) return;
+  if (!s || s.state === 'none' || s.state === 'expired'){
+    subEl.textContent = 'Кофе каждый день — выгоднее до 35%';
+    cta.textContent = 'Подробнее ›';
+  } else if (s.state === 'frozen'){
+    subEl.textContent = '❄️ Заморожен до ' + subFmtDate(s.frozen_until);
+    cta.textContent = 'Открыть ›';
+  } else {
+    subEl.textContent = (s.used_today ? '✅ Сегодня получен · ' : '☕ Сегодня доступен · ') + 'осталось ' + s.days_left + ' дн.';
+    cta.textContent = 'Показать QR ›';
+  }
+}
+function renderSubScreen(){
+  const act = document.getElementById('sub-active-box'), promo = document.getElementById('sub-promo-box');
+  if (!act || !promo) return;
+  clientReq('../api/sub.php', {action:'status'}).then(j => {
+    if (!j.ok){ act.style.display = 'none'; promo.style.display = 'block'; return; }
+    renderSubPlans(j.plans);
+    const s = j.sub; subCache = s;
+    updateSubHome(s);
+    if (!s || s.state === 'none' || s.state === 'expired'){
+      act.style.display = 'none'; promo.style.display = 'block'; return;
+    }
+    promo.style.display = 'none'; act.style.display = 'block';
+    document.getElementById('sub-plan-name').textContent = '★ ' + (s.plan_name || 'Абонемент').toUpperCase();
+    document.getElementById('sub-days-left').textContent = s.days_left + ' дн.';
+    document.getElementById('sub-until').textContent = 'Действует до ' + subFmtDate(s.end);
+    const frozen = s.state === 'frozen';
+    document.getElementById('sub-today').textContent = frozen ? '' :
+      (s.used_today ? '✅ Сегодняшний кофе получен' : '☕ Сегодня доступен 1 напиток');
+    document.getElementById('sub-qr-card').style.display = frozen ? 'none' : '';
+    const fc = document.getElementById('sub-frozen-card');
+    fc.style.display = frozen ? '' : 'none';
+    if (frozen) document.getElementById('sub-frozen-text').innerHTML =
+      'Абонемент заморожен до <b>' + subFmtDate(s.frozen_until) + '</b>.<br>Срок действия продлён — дни не сгорают.';
+    document.getElementById('sub-freeze-card').style.display = (!frozen && (s.freeze_left|0) > 0) ? '' : 'none';
+    document.getElementById('sub-freeze-left').textContent = s.freeze_left || 0;
+    if (!frozen) drawSubQr();
+  }).catch(() => { act.style.display = 'none'; promo.style.display = 'block'; });
+}
+function subFreeze(){
+  const left = subCache ? (subCache.freeze_left|0) : 0;
+  if (left < 1){ alert('Дни заморозки закончились.'); return; }
+  const v = prompt('На сколько дней заморозить? (1–' + left + ')', '7');
+  if (v === null) return;
+  const days = parseInt(v, 10);
+  if (!days || days < 1 || days > left){ alert('Введи число от 1 до ' + left); return; }
+  clientReq('../api/sub.php', {action:'freeze', days:days}).then(j => {
+    if (j.ok){ alert('❄️ Абонемент заморожен на ' + days + ' дн. Срок продлён.'); renderSubScreen(); return; }
+    const msg = {no_sub:'Активного абонемента нет.', already_frozen:'Уже заморожен.',
+      not_enough_freeze:'Недостаточно дней заморозки.', used_today:'Сегодня напиток уже получен — заморозить можно с завтрашнего дня.'};
+    alert(msg[j.reason] || 'Не получилось, попробуй позже.');
+  }).catch(() => alert('Нет связи, попробуй позже.'));
+}
+function subUnfreeze(){
+  if (!confirm('Разморозить абонемент? Неиспользованные дни заморозки вернутся.')) return;
+  clientReq('../api/sub.php', {action:'unfreeze'}).then(j => {
+    if (j.ok){ alert('☀️ Абонемент снова активен!'); renderSubScreen(); return; }
+    alert(j.reason === 'not_frozen' ? 'Абонемент не заморожен.' : 'Не получилось, попробуй позже.');
+  }).catch(() => alert('Нет связи, попробуй позже.'));
+}
+function subHomeRefresh(){
+  if (!getClient()) return;
+  clientReq('../api/sub.php', {action:'status'}).then(j => {
+    if (j.ok){ subCache = j.sub; updateSubHome(j.sub); }
+  }).catch(() => {});
+}
 
 // === WALLET (кошелёк) ===
 let wallet = {balance:0, tx:[], methods:{}};
@@ -1674,7 +1845,7 @@ function renderHistory(c){
       : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); chatPoll(false); });
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); subHomeRefresh(); chatPoll(false); });
 
 // === PWA Install ===
 // В нативной обёртке (Capacitor) и в уже установленной PWA баннер не нужен

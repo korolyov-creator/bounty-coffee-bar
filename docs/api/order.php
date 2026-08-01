@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/_lib.php';
+require __DIR__ . '/prices.php';
 header('Content-Type: application/json; charset=utf-8');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo '{"ok":false}'; exit; }
 $raw = file_get_contents('php://input', false, null, 0, 16384);
@@ -20,8 +21,20 @@ foreach (array_slice($d['items'], 0, 20) as $i) {
   if (isset($i['addons']) && is_array($i['addons'])) {
     foreach (array_slice($i['addons'], 0, 6) as $a) { $addons[] = mb_substr(trim((string)$a), 0, 40); }
   }
+  $name = mb_substr(trim((string)($i['n'] ?? '')), 0, 60);
+  // серверная проверка цены: защита от подмены на клиенте
+  $pc = price_check($name, $addons, $unit);
+  if ($pc === false) {
+    audit('price_reject', array('n' => $name, 'unit' => $unit, 'ip' => $_SERVER['REMOTE_ADDR'] ?? ''));
+    tg_alert("🚨 Попытка заказа с ПОДМЕНЁННОЙ ценой\n$name за " . number_format($unit, 0, '', ' ') . " сум\nТел: " . preg_replace('/[^\d+]/', '', (string)($d['phone'] ?? '?')) . "\nЗаказ отклонён.");
+    http_response_code(422); echo '{"ok":false,"error":"price"}'; exit;
+  }
+  if ($pc === null) {
+    // позиции нет в серверном прайсе (рассинхрон меню) — пропускаем, но сигналим
+    audit('price_unknown', array('n' => $name, 'unit' => $unit));
+  }
   $items[] = array(
-    'n'       => mb_substr(trim((string)($i['n'] ?? '')), 0, 60),
+    'n'       => $name,
     'size'    => mb_substr(trim((string)($i['size'] ?? '')), 0, 30),
     'qty'     => $qty,
     'addons'  => $addons,

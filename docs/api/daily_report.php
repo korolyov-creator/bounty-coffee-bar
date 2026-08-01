@@ -70,6 +70,24 @@ foreach ($wallets as $phone => $w) {
   }
 }
 
+// Абонементы за день
+$subSellN = 0; $subSellSum = 0; $subSellCash = 0; $subSellByStaff = array(); $subUseN = 0; $subActiveN = 0;
+$subs = store_read('subs.json');
+foreach ($subs as $phone => $s) {
+  if (sub_state($s) === 'active' || sub_state($s) === 'frozen') { $subActiveN++; }
+  if (isset($s['used'][$day])) { $subUseN++; }
+  foreach (($s['hist'] ?? array()) as $h) {
+    if (($h['t'] ?? '') !== 'sell') continue;
+    $ts = strtotime($h['ts'] ?? '');
+    if (!$ts || $ts < $fromTs || $ts > $toTs) continue;
+    $subSellN++;
+    $subSellSum += (int)($h['price'] ?? 0);
+    if (($h['m'] ?? 'cash') === 'cash') { $subSellCash += (int)($h['price'] ?? 0); }
+    $sby = $h['by'] ?? '?';
+    $subSellByStaff[$sby] = ($subSellByStaff[$sby] ?? 0) + 1;
+  }
+}
+
 $f = function ($n) { return number_format($n, 0, '', ' '); };
 $msg = "📊 Bounty · сводка за " . date('d.m.Y', $fromTs) . "\n\n";
 $msg .= "☕ Выдано заказов: $doneN (отменено: $cancelN)\n";
@@ -84,9 +102,18 @@ $msg .= "ПОПОЛНЕНИЯ КОШЕЛЬКОВ:\n";
 if ($topupByStaff) {
   foreach ($topupByStaff as $by => $v) { $msg .= "· $by: " . $v['n'] . " шт · " . $f($v['sum']) . " сум\n"; }
 } else { $msg .= "· не было\n"; }
-$msg .= "\n🧾 СВЕРКА КАССЫ: наличных в кассе должно быть " . $f($doneCash + $topupCashSum) . " сум\n";
-$msg .= "(продажи " . $f($doneCash) . " + пополнения наличными " . $f($topupCashSum) . ")\n";
-$msg .= "Чеков «Аванс» на ККМ должно быть: $topupCashN шт\n";
+if ($subSellN > 0 || $subUseN > 0 || $subActiveN > 0) {
+  $msg .= "\n🎟 АБОНЕМЕНТЫ:\n";
+  $msg .= "· Продано: $subSellN шт";
+  if ($subSellN > 0) { $msg .= " на " . $f($subSellSum) . " сум"; }
+  $msg .= "\n";
+  foreach ($subSellByStaff as $sby => $n) { $msg .= "  — $sby: $n шт\n"; }
+  $msg .= "· Списаний (чашек по абонементу): $subUseN\n";
+  $msg .= "· Активных абонементов всего: $subActiveN\n";
+}
+$msg .= "\n🧾 СВЕРКА КАССЫ: наличных в кассе должно быть " . $f($doneCash + $topupCashSum + $subSellCash) . " сум\n";
+$msg .= "(продажи " . $f($doneCash) . " + пополнения нал. " . $f($topupCashSum) . ($subSellCash > 0 ? " + абонементы нал. " . $f($subSellCash) : "") . ")\n";
+$msg .= "Чеков «Аванс» на ККМ должно быть: " . ($topupCashN + $subSellN) . " шт (пополнения $topupCashN + абонементы $subSellN)\n";
 if ($nofiscalN > 0) { $msg .= "⛔ Пополнений БЕЗ отметки о чеке: $nofiscalN\n"; }
 if ($directs) { $msg .= "\n⚠️ ПРЯМЫЕ зачисления (без кода клиента):\n· " . implode("\n· ", $directs) . "\n"; }
 if ($adjusts) { $msg .= "\n✏️ Корректировки:\n· " . implode("\n· ", $adjusts) . "\n"; }

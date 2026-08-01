@@ -170,6 +170,78 @@ if ($action === 'chat_send') {
   respond(['ok' => true]);
 }
 
+// === АБОНЕМЕНТЫ (доступно бариста) ===
+
+if ($action === 'sub_info') {
+  $phone = norm_phone($d['phone'] ?? '');
+  if (!$phone) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+  $subs = store_read('subs.json');
+  respond(['ok' => true, 'phone' => $phone, 'sub' => sub_public($subs[$phone] ?? null)]);
+}
+
+if ($action === 'sub_sell') {
+  $phone = norm_phone($d['phone'] ?? '');
+  $plan = (string)($d['plan'] ?? '');
+  $method = in_array(($d['m'] ?? 'cash'), array('cash', 'card'), true) ? $d['m'] : 'cash';
+  $plans = sub_plans();
+  if (!$phone || !isset($plans[$plan])) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+  if (empty($d['fiscal'])) { respond(['ok' => false, 'reason' => 'fiscal_required'], 422); }
+  $p = $plans[$plan];
+  $who = $sess['name'] ?? $role;
+  $res = store_update('subs.json', function ($data) use ($phone, $plan, $p, $who, $method) {
+    $s = $data[$phone] ?? null;
+    $today = date('Y-m-d');
+    if ($s && sub_state($s) !== 'expired' && !empty($s['end'])) {
+      // действующий абонемент — продлеваем от даты окончания
+      $base = max(strtotime($s['end']), strtotime($today));
+      $s['end'] = date('Y-m-d', $base + $p['days'] * 86400);
+      $s['freeze_left'] = (int)($s['freeze_left'] ?? 0) + $p['freeze'];
+      $s['plan'] = $plan;
+    } else {
+      $s = array('plan' => $plan, 'start' => $today,
+        'end' => date('Y-m-d', strtotime($today) + ($p['days'] - 1) * 86400),
+        'freeze_left' => $p['freeze'], 'frozen_until' => '',
+        'cid' => $s['cid'] ?? '', 'name' => $s['name'] ?? '',
+        'used' => $s['used'] ?? array(), 'hist' => $s['hist'] ?? array());
+    }
+    $s['hist'][] = array('t' => 'sell', 'plan' => $plan, 'price' => $p['price'], 'm' => $method, 'by' => $who, 'ts' => date('c'));
+    if (count($s['hist']) > 500) { $s['hist'] = array_slice($s['hist'], -500); }
+    $data[$phone] = $s;
+    return [$data, $s];
+  });
+  audit('sub_sell', array('phone' => $phone, 'plan' => $plan, 'by' => $who, 'm' => $method));
+  tg_alert("💳 ПРОДАН АБОНЕМЕНТ «" . $p['n'] . "»\nКлиент: +$phone\nСумма: " . number_format($p['price'], 0, '', ' ') . " сум (" . ($method === 'cash' ? 'наличные' : 'карта') . ")\nСотрудник: $who\nДействует до: " . $res['end']);
+  respond(['ok' => true, 'sub' => sub_public($res)]);
+}
+
+if ($action === 'sub_redeem') {
+  $phone = norm_phone($d['phone'] ?? '');
+  if (!$phone) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+  if (empty($d['fiscal'])) { respond(['ok' => false, 'reason' => 'fiscal_required'], 422); }
+  $who = $sess['name'] ?? $role;
+  $res = store_update('subs.json', function ($data) use ($phone, $who) {
+    $s = $data[$phone] ?? null;
+    $st = sub_state($s);
+    if ($st === 'none') { return [$data, array('err' => 'no_sub')]; }
+    if ($st === 'expired') { return [$data, array('err' => 'expired')]; }
+    if ($st === 'frozen') { return [$data, array('err' => 'frozen', 'until' => $s['frozen_until'])]; }
+    $today = date('Y-m-d');
+    if (isset($s['used'][$today])) { return [$data, array('err' => 'used_today')]; }
+    $s['used'][$today] = array('by' => $who, 'ts' => date('c'));
+    if (count($s['used']) > 400) { $s['used'] = array_slice($s['used'], -400, null, true); }
+    $s['hist'][] = array('t' => 'use', 'by' => $who, 'ts' => date('c'));
+    if (count($s['hist']) > 500) { $s['hist'] = array_slice($s['hist'], -500); }
+    $data[$phone] = $s;
+    return [$data, $s];
+  });
+  if (isset($res['err'])) {
+    audit('sub_redeem_fail', array('phone' => $phone, 'err' => $res['err'], 'by' => $who));
+    respond(['ok' => false, 'reason' => $res['err'], 'until' => $res['until'] ?? '']);
+  }
+  audit('sub_redeem', array('phone' => $phone, 'by' => $who));
+  respond(['ok' => true, 'sub' => sub_public($res)]);
+}
+
 if ($role !== 'admin' && $role !== 'owner') { respond(['ok' => false, 'reason' => 'admin_only'], 403); }
 
 // === ПОДТВЕРЖДЕНИЯ ВЛАДЕЛЬЦА (только owner) ===

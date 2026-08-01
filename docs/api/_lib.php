@@ -290,6 +290,42 @@ function pay_link($method, $amount, $phone) {
   return null;
 }
 
+// === АБОНЕМЕНТЫ ===
+// subs.json: { "998XX": {plan, start, end (Y-m-d), freeze_left, frozen_until, cid, name,
+//              used:{"Y-m-d":{by,ts}}, hist:[{t:'sell'|'use'|'freeze'|'unfreeze',...}]} }
+function sub_plans() {
+  return array(
+    'month'   => array('n' => 'Месяц',   'days' => 30,  'price' => 649000,  'freeze' => 3),
+    'quarter' => array('n' => 'Квартал', 'days' => 90,  'price' => 1790000, 'freeze' => 10),
+    'half'    => array('n' => 'Полгода', 'days' => 180, 'price' => 3290000, 'freeze' => 20),
+    'year'    => array('n' => 'Год',     'days' => 365, 'price' => 5990000, 'freeze' => 40),
+  );
+}
+
+function sub_state($s) {
+  if (!$s || empty($s['end'])) { return 'none'; }
+  $today = date('Y-m-d');
+  if (!empty($s['frozen_until']) && $today <= $s['frozen_until']) { return 'frozen'; }
+  return ($today <= $s['end']) ? 'active' : 'expired';
+}
+
+function sub_days_left($s) {
+  if (!$s || empty($s['end'])) { return 0; }
+  $d = (strtotime($s['end']) - strtotime(date('Y-m-d'))) / 86400;
+  return max(0, (int)round($d) + 1);
+}
+
+function sub_public($s) {
+  if (!$s) { return null; }
+  $today = date('Y-m-d');
+  return array(
+    'plan' => $s['plan'], 'plan_name' => sub_plans()[$s['plan']]['n'] ?? $s['plan'],
+    'end' => $s['end'], 'days_left' => sub_days_left($s), 'state' => sub_state($s),
+    'used_today' => isset($s['used'][$today]),
+    'frozen_until' => $s['frozen_until'] ?? '', 'freeze_left' => (int)($s['freeze_left'] ?? 0),
+  );
+}
+
 // === TELEGRAM-АЛЕРТЫ ВЛАДЕЛЬЦУ ===
 // Конфиг: bounty_data/tg_config.json {"token":"...","chat":"263229048","report_key":"..."}
 function tg_config() {
