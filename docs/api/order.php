@@ -54,6 +54,7 @@ ftruncate($cf, 0); rewind($cf); fwrite($cf, $day . ':' . $num);
 flock($cf, LOCK_UN); fclose($cf);
 
 $id = bin2hex(random_bytes(8));
+$pk = (string)random_int(1000, 9999); // код выдачи: клиент показывает QR/цифры, бариста подтверждает
 
 if ($pay === 'wallet') {
   list($wphone, $wid) = wallet_auth($d);
@@ -83,6 +84,7 @@ $rec = array(
   'total'      => $total,
   'pay'        => $pay,
   'paid'       => $paid,
+  'pk'         => $pk,
   'ip'         => $_SERVER['REMOTE_ADDR'] ?? ''
 );
 $ok = file_put_contents($dir . '/orders.jsonl', json_encode($rec, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
@@ -90,4 +92,4 @@ if ($ok === false) {
   if ($paid) { wallet_refund_order(norm_phone($rec['phone']), $total, $id, $num, 'store_fail'); }
   http_response_code(500); echo '{"ok":false,"error":"store"}'; exit;
 }
-echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid));
+echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk));

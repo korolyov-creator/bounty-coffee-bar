@@ -16,7 +16,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!$id || !in_array($status, array('new', 'making', 'ready', 'done', 'cancel'), true)) {
     http_response_code(422); echo '{"ok":false}'; exit;
   }
-  order_set_status($id, $status, $role);
+  // Выдача заказа: подтверждение кодом выдачи (QR у клиента) либо force с алертом владельцу
+  $pkVia = '';
+  if ($status === 'done') {
+    $order = order_find($id);
+    if ($order && !empty($order['pk'])) {
+      $pkIn = substr(preg_replace('/\D/', '', (string)($d['pk'] ?? '')), 0, 4);
+      if ($pkIn !== '' && hash_equals((string)$order['pk'], $pkIn)) {
+        $pkVia = 'qr';
+      } elseif (!empty($d['force'])) {
+        $pkVia = 'force';
+        audit('order_done_force', array('id' => $id, 'num' => $order['num'] ?? 0, 'by' => $sess['name'] ?? $role));
+        tg_alert("⚠️ Заказ №" . ($order['num'] ?? '?') . " выдан БЕЗ кода клиента\nСотрудник: " . ($sess['name'] ?? $role) . "\nСумма: " . number_format((int)($order['total'] ?? 0), 0, '', ' ') . " сум");
+      } elseif ($pkIn !== '') {
+        echo json_encode(array('ok' => false, 'reason' => 'pk_wrong')); exit;
+      } else {
+        echo json_encode(array('ok' => false, 'reason' => 'pk_required')); exit;
+      }
+    }
+  }
+  order_set_status($id, $status, $role . ($pkVia ? ':' . $pkVia : ''));
   $refunded = false;
   if ($status === 'cancel') {
     $order = order_find($id);
@@ -36,7 +55,7 @@ if (is_file($f)) {
   foreach (file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
     $r = json_decode($line, true);
     if (is_array($r) && isset($r['ts']) && strtotime($r['ts']) >= $since) {
-      unset($r['ip']);
+      unset($r['ip']); unset($r['pk']);
       $r['status'] = 'new';
       $orders[$r['id']] = $r;
     }

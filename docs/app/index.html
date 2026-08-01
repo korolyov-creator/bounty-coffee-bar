@@ -213,6 +213,21 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div style="color:var(--gold);font-size:13px;font-weight:700">Пополнить ›</div>
     </div>
 
+    <!-- Кофейный гороскоп дня -->
+    <div class="card" id="horo-card">
+      <h3>🔮 Кофейный гороскоп</h3>
+      <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--gold);margin:6px 0 4px" id="horo-title"></div>
+      <div class="sub" style="line-height:1.55" id="horo-text"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.12)">
+        <div style="font-size:26px" id="horo-ic">☕</div>
+        <div style="flex:1">
+          <div class="sub" style="opacity:.7;font-size:11px">Напиток дня по звёздам</div>
+          <div style="font-weight:700" id="horo-drink"></div>
+        </div>
+        <button class="add" style="width:42px;height:42px;font-size:22px" onclick="horoOrder()">+</button>
+      </div>
+    </div>
+
     <!-- Текущая акция -->
     <div class="card dark" style="background-image:linear-gradient(135deg,rgba(15,31,58,.85),rgba(201,161,74,.15)),url('../assets/img/post-2.jpg');background-size:cover;background-position:center 30%">
       <h3>★ Акция дня</h3>
@@ -392,7 +407,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.8.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.8.1 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -442,7 +457,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
     <div class="card" style="text-align:center;padding:22px">
       <div id="ok-details" style="font-size:14px;line-height:1.8"></div>
-      <div class="tip" style="margin-top:12px">Назови номер заказа бариста при получении.<br>Статус — в «Профиль → Мои заказы».</div>
+      <div class="tip" style="margin-top:12px">При получении покажи бариста QR или назови код выдачи.<br>Статус и код — в «Профиль → Мои заказы».</div>
     </div>
     <button class="btn-big" style="margin-top:16px" onclick="go('myorders')">Мои заказы →</button>
   </main>
@@ -1021,7 +1036,7 @@ function submitOrder(){
         throw new Error(res && res.error || 'fail');
       }
       const orders = getMyOrders();
-      orders.push({id:res.id, num:res.num, ts:new Date().toISOString(), point:point.name, pickup:PICKUP_TIMES[coTime], total:payload.total, items:payload.items, status:'new', pay:coPay, paid:!!res.paid});
+      orders.push({id:res.id, num:res.num, pk:res.pk||'', ts:new Date().toISOString(), point:point.name, pickup:PICKUP_TIMES[coTime], total:payload.total, items:payload.items, status:'new', pay:coPay, paid:!!res.paid});
       localStorage.setItem('bounty_orders', JSON.stringify(orders.slice(-20)));
       localStorage.removeItem('bounty_cart');
       renderCartBar();
@@ -1032,7 +1047,9 @@ function submitOrder(){
         '<strong>' + point.name + '</strong><br>' + PICKUP_TIMES[coTime] + '<br>' +
         payload.items.map(i=>i.qty+'× '+i.n+(i.size?' ('+i.size+')':'')).join('<br>') +
         '<br><strong style="color:var(--gold)">' + fmtSum(payload.total) + '</strong>' +
-        '<br>' + (res.paid ? '💳 Оплачено с кошелька ✓' : '💵 Оплата при получении');
+        '<br>' + (res.paid ? '💳 Оплачено с кошелька ✓' : '💵 Оплата при получении') +
+        (res.pk ? '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.15)">Код выдачи — покажи бариста:<br><div id="okqr" style="display:inline-block;border-radius:10px;background:#fff;padding:8px;margin:8px 0 4px"></div><br><strong style="font-size:26px;letter-spacing:6px;color:var(--gold)">' + res.pk + '</strong></div>' : '');
+      if (res.pk) drawPickupQr('okqr', res.id, res.pk);
       coPay = 'pickup';
       pointChosen = false; // следующий заказ снова начнётся с выбора точки
       go('orderok');
@@ -1046,6 +1063,14 @@ function submitOrder(){
 
 // === MY ORDERS ===
 function getMyOrders(){ try { return JSON.parse(localStorage.getItem('bounty_orders')) || []; } catch(e){ return []; } }
+function drawPickupQr(elId, oid, pk){
+  const el = document.getElementById(elId);
+  if (!el || el.dataset.done) return;
+  el.dataset.done = '1'; el.innerHTML = '';
+  if (typeof QRCode !== 'undefined'){
+    new QRCode(el, {text:'BNT|' + oid + '|' + pk, width:130, height:130, colorDark:'#0F1F3A', colorLight:'#ffffff'});
+  }
+}
 const ORDER_STATUS = {new:['🕐','Принят'], making:['👨‍🍳','Готовим — уже в работе'], ready:['✅','Готов — забирай!'], done:['☕','Выдан'], cancel:['✖','Отменён']};
 function renderMyOrders(){
   const list = document.getElementById('myorders-list');
@@ -1061,13 +1086,21 @@ function renderMyOrders(){
     const payTag = o.paid ? ' · 💳 оплачено' : (o.status !== 'cancel' && o.status !== 'done' ? ' · 💵 при получении' : '');
     const cancelBtn = o.status === 'new'
       ? `<button class="p-opt" style="color:#e88;margin-top:8px" onclick="cancelOrder('${o.id}')">✖ Отменить заказ</button>` : '';
+    const qrBlock = (o.status === 'ready' && o.pk)
+      ? `<div style="text-align:center;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.15)">
+          <div class="s">Покажи бариста при получении:</div>
+          <div id="pkqr-${o.id}" style="display:inline-block;border-radius:10px;background:#fff;padding:8px;margin:8px 0 4px"></div>
+          <div><strong style="font-size:26px;letter-spacing:6px;color:var(--gold)">${o.pk}</strong></div>
+        </div>` : '';
     return `<div class="cart-item">
       <div class="t"><span>${st[0]} Заказ №${o.num}</span><span style="color:var(--gold)">${fmtSum(o.total)}</span></div>
       <div class="s">${st[1]}${o.credited ? ' · отметка ✓' : ''}${payTag} · ${o.point} · ${ds}</div>
       <div class="s">${o.items.map(i=>i.qty+'× '+i.n).join(', ')}</div>
+      ${qrBlock}
       ${cancelBtn}
     </div>`;
   }).join('');
+  orders.forEach(o => { if (o.status === 'ready' && o.pk) drawPickupQr('pkqr-' + o.id, o.id, o.pk); });
 }
 
 // === CANCEL ORDER (клиент, пока бариста не взял в работу) ===
@@ -1099,6 +1132,66 @@ function cancelOrder(id){
     })
     .catch(() => alert('Нет связи — попробуй ещё раз'));
 }
+// === КОФЕЙНЫЙ ГОРОСКОП ДНЯ (детерминирован по дате — у всех одинаковый) ===
+const HORO = [
+  {t:'Звёзды шепчут: сегодня день точных решений', x:'Старый бариста говорил: «Эспрессо — это правда без молока». Сегодня не разбавляй — ни кофе, ни слова. Один точный глоток решит больше, чем час сомнений.', d:'Эспрессо'},
+  {t:'День длинных дистанций', x:'Караван проходит пустыню не спринтом, а ровным шагом. Твой день — марафон, и большой американо в руке — твой верный верблюд.', d:'Американо'},
+  {t:'Мягкость — тоже сила', x:'Вода точит камень не ударом, а лаской. Будь сегодня как молочная пена: мягким снаружи, с крепким эспрессо внутри.', d:'Капучино'},
+  {t:'День баланса', x:'Мудрец наливал в чашу ровно половину. «Почему не до краёв?» — «Чтобы осталось место для нового». Латте — тот самый баланс: не слишком крепко, не слишком мягко.', d:'Латте'},
+  {t:'Звёзды советуют белую полосу', x:'Флэт уайт — кофе без лишнего шума: меньше пены, больше сути. Сегодня убери лишнее из планов — и день выпрямится сам.', d:'Флэт уайт'},
+  {t:'День маленького праздника', x:'Не жди повода — повод это ты. Раф Баунти со вкусом острова: закрой глаза, сделай глоток, и пусть Ташкент подождёт тридцать секунд.', d:'Раф Баунти'},
+  {t:'Классика не подводит', x:'Когда всё меняется, держись проверенного. Раф классик — как старый друг: не удивит, но и не предаст.', d:'Раф классик'},
+  {t:'Шоколадное настроение', x:'Притча гласит: усталому путнику дали какао с кофе, и он забыл, зачем злился. Мокко — мир, заключённый в стакане.', d:'Мокко'},
+  {t:'День неожиданных сочетаний', x:'Банан и кофе — как ты и понедельник: казалось бы, несовместимы, а вместе работают. Попробуй — и день пойдёт по-другому.', d:'Банановый кофе'},
+  {t:'Звёзды за смелость', x:'Шмель летать не должен, но летает — он просто не в курсе запретов. Возьми «Шмель» и сделай сегодня то, что «нельзя».', d:'Шмель'},
+  {t:'Холодная голова — горячее сердце', x:'Самурай перед боем пил холодное, чтобы думать ясно. Айс-латте — твой сегодняшний план: спокойствие снаружи, энергия внутри.', d:'Айс-латте'},
+  {t:'День свежего ветра', x:'Эспрессо-тоник — как первый весенний сквозняк: бодрит, пузырится и уносит вчерашние мысли. Открой окно. И стакан.', d:'Эспрессо-тоник'},
+  {t:'Медленный день — глубокий вкус', x:'Cold Brew заваривается 12 часов — и потому не горчит. Не торопи сегодня события: настоявшееся всегда вкуснее.', d:'Cold Brew'},
+  {t:'Разреши себе сладкое', x:'Дервиш сказал: «Отказывающий себе во всём начинает отказывать другим». Фраппучино — не слабость, а профилактика занудства.', d:'Фраппучино'},
+  {t:'День ясности', x:'Лонг блэк — это когда эспрессо не прячется за молоком. Говори сегодня прямо — тебя услышат.', d:'Лонг блэк'},
+  {t:'Тёплый день внутри', x:'Горячий шоколад — напиток из детства, когда всё было решаемо. Всё и сейчас решаемо. Просто ты забыл про шоколад.', d:'Горячий шоколад'},
+  {t:'Звёзды велят витаминиться', x:'Облепиха — солнце, которое можно пить. Чай облепиха-имбирь прогонит и хандру, и тех, кто её приносит.', d:'Чай облепиха-имбирь'},
+  {t:'Ягодный день', x:'Лето прячется в ягодах даже зимой. Ягодный чай — напомни организму, что хорошее время не закончилось, оно просто заваривается.', d:'Чай ягодный'},
+  {t:'День без суеты', x:'Мохито без алкоголя — как выходной среди недели: освежает и ничего не требует взамен. Мята знает своё дело.', d:'Мохито классический'},
+  {t:'Кислинка к удаче', x:'Примета бариста: кто утром выпил апельсиновый фрэш, тому день не посмеет быть кислым — квота исчерпана.', d:'Фрэш апельсиновый'},
+  {t:'День второго дыхания', x:'Айс-американо — эспрессо, который сходил в отпуск и вернулся собранным. Сделай паузу — и вернись так же.', d:'Айс-американо'},
+  {t:'Молочные реки', x:'Милкшейк — доказательство, что взрослым тоже можно. Особенно взрослым. Особенно сегодня.', d:'Милкшейк классический'},
+  {t:'Звёзды за двойную порцию спокойствия', x:'Какао американский: большой, тёплый, без кофеина и без претензий. Идеален, когда мир слишком шумит.', d:'Какао американский'},
+  {t:'День роз и личи', x:'Восточная мудрость: «Пей красиво — и жизнь подтянется». Чай роза и личи — самый красивый способ выпить чай в этом городе.', d:'Чай роза и личи'},
+  {t:'Тропический прогноз', x:'Маракуйя и манго — билет в отпуск за 35 тысяч. Посадка немедленно, багаж плохого настроения оставить у входа.', d:'Чай маракуйя и манго'},
+  {t:'День крепких основ', x:'Дом начинается с фундамента, день — с капучино. Всё остальное — отделочные работы.', d:'Капучино'},
+  {t:'Прохлада для горячих голов', x:'Айс-ти — древний ответ на вечный вопрос «как всё успеть и не закипеть». Со льдом, разумеется.', d:'Айс-ти'},
+  {t:'Лаймовое настроение', x:'Лайм-тоник шипит, но не злится. Бери пример: пузырись энергией, не выходя из берегов.', d:'Лайм-тоник'},
+  {t:'День заботы о себе', x:'Морковно-яблочный фрэш: звёзды посмотрели на твой режим и мягко намекают — хоть один стакан пользы, пожалуйста.', d:'Морковно-яблочный фрэш'},
+  {t:'Вишнёво-клюквенный вечер', x:'Кисло-сладкий чай — как хороший день: немного остроты, много тепла и послевкусие, ради которого всё затевалось.', d:'Чай клюква и вишня'},
+];
+function horoIdx(){
+  const dt = new Date();
+  const seed = dt.getFullYear() * 372 + (dt.getMonth()+1) * 31 + dt.getDate();
+  return seed % HORO.length;
+}
+function findMenuItem(name){
+  for (const cat in MENU){
+    const k = MENU[cat].findIndex(m => m.n === name);
+    if (k >= 0) return {cat, idx:k, item:MENU[cat][k]};
+  }
+  return null;
+}
+function renderHoro(){
+  const h = HORO[horoIdx()];
+  const mi = findMenuItem(h.d);
+  document.getElementById('horo-title').textContent = h.t;
+  document.getElementById('horo-text').textContent = h.x;
+  document.getElementById('horo-drink').textContent = h.d + (mi ? ' · ' + fmtSum(parseP(mi.item.p)[0]) : '');
+  document.getElementById('horo-ic').textContent = mi ? mi.item.ic : '☕';
+}
+function horoOrder(){
+  const h = HORO[horoIdx()];
+  const mi = findMenuItem(h.d);
+  if (!mi) { go('order'); return; }
+  openProd(mi.cat, mi.idx);
+}
+
 // === «Твой обычный»: последний реальный заказ, повтор в один клик ===
 function renderUsual(){
   const card = document.getElementById('usual-card');
@@ -1581,7 +1674,7 @@ function renderHistory(c){
       : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); pollOrders(); refreshWallet(); chatPoll(false); });
+window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); chatPoll(false); });
 
 // === PWA Install ===
 // В нативной обёртке (Capacitor) и в уже установленной PWA баннер не нужен

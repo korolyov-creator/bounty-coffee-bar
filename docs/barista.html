@@ -177,6 +177,22 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
   </div>
 </div>
 
+<div id="pk-ov" onclick="if(event.target===this)pkClose()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="max-width:360px;width:100%;margin:0;text-align:center">
+    <h2 style="margin-top:0">Выдача заказа №<span id="pk-num">—</span></h2>
+    <p style="color:var(--muted);font-size:13px;margin:6px 0 10px">Попроси клиента показать QR из приложения<br>или назвать код выдачи (4 цифры)</p>
+    <video id="pk-video" playsinline muted style="display:none;width:100%;border-radius:12px;margin-bottom:10px"></video>
+    <canvas id="pk-canvas" style="display:none"></canvas>
+    <button class="gold" id="pk-scan-btn" style="width:100%;margin-bottom:10px" onclick="pkScan()">📷 Сканировать QR</button>
+    <input type="text" id="pk-input" inputmode="numeric" maxlength="4" placeholder="Код из 4 цифр" style="width:100%;text-align:center;font-size:24px;letter-spacing:8px;margin-bottom:10px">
+    <button class="gold" style="width:100%;margin-bottom:10px" onclick="pkSubmit()">Подтвердить выдачу ✓</button>
+    <div style="display:flex;gap:8px">
+      <button class="chip" style="flex:1" onclick="pkForce()">Выдать без кода ⚠️</button>
+      <button class="chip" style="flex:1" onclick="pkClose()">Отмена</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let KEY = localStorage.getItem('bounty_staff_token') || '';
 let ROLE = localStorage.getItem('bounty_staff_role') || '';
@@ -415,22 +431,105 @@ function render(){
 
 function setSt(id, status){
   if (status === 'cancel' && !confirm('Отменить заказ?' + ((orders.find(o=>o.id===id)||{}).paid ? '\nДеньги вернутся на кошелёк клиента.' : ''))) return;
-  if (status === 'done'){
-    const o = orders.find(x=>x.id===id) || {};
-    const msg = o.paid
-      ? '🧾 Заказ оплачен с КОШЕЛЬКА.\nПробей чек «Полный расчёт» (зачёт аванса) на ' + fmt(o.total||0) + ' сум.\n\nЧек пробит?'
-      : '🧾 Оплата наличными/картой.\nПробей обычный фискальный чек на ' + fmt(o.total||0) + ' сум.\n\nЧек пробит?';
-    if (!confirm(msg)) return;
-  }
-  fetch(api(), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, status})})
+  if (status === 'done'){ pkOpen(id); return; }
+  postStatus(id, status, {});
+}
+function fiscalOk(o){
+  const msg = o.paid
+    ? '🧾 Заказ оплачен с КОШЕЛЬКА.\nПробей чек «Полный расчёт» (зачёт аванса) на ' + fmt(o.total||0) + ' сум.\n\nЧек пробит?'
+    : '🧾 Оплата наличными/картой.\nПробей обычный фискальный чек на ' + fmt(o.total||0) + ' сум.\n\nЧек пробит?';
+  return confirm(msg);
+}
+function postStatus(id, status, extra){
+  fetch(api(), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({id, status}, extra||{}))})
     .then(r=>r.json()).then(res => {
       if (res.ok){
         const o = orders.find(x=>x.id===id);
         if (o) o.status = status;
         render();
+        if (status === 'done'){ pkClose(); beep(1200); }
         if (res.refunded) alert('Заказ был оплачен с кошелька — деньги вернулись клиенту ✓');
+      } else if (res.reason === 'pk_wrong'){
+        alert('❌ Код не подходит к этому заказу.\nПроверь номер заказа и код клиента.');
+      } else if (res.reason === 'pk_required'){
+        alert('Нужен код выдачи клиента (или «Выдать без кода»).');
+      } else {
+        alert('Не удалось — попробуй ещё раз');
       }
     }).catch(()=>alert('Не удалось — попробуй ещё раз'));
+}
+
+// === ВЫДАЧА ПО QR/КОДУ ===
+let pkId = null, pkStream = null, pkTimer = null;
+function pkOpen(id){
+  pkId = id;
+  const o = orders.find(x=>x.id===id) || {};
+  document.getElementById('pk-num').textContent = o.num || '—';
+  document.getElementById('pk-input').value = '';
+  document.getElementById('pk-ov').style.display = 'flex';
+}
+function pkClose(){
+  document.getElementById('pk-ov').style.display = 'none';
+  pkStopCam();
+  pkId = null;
+}
+function pkStopCam(){
+  if (pkTimer){ clearInterval(pkTimer); pkTimer = null; }
+  if (pkStream){ pkStream.getTracks().forEach(t=>t.stop()); pkStream = null; }
+  const v = document.getElementById('pk-video');
+  v.style.display = 'none'; v.srcObject = null;
+  document.getElementById('pk-scan-btn').textContent = '📷 Сканировать QR';
+}
+function pkLoadJsQR(){
+  return window.jsQR ? Promise.resolve() : new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+function pkScan(){
+  if (pkStream){ pkStopCam(); return; }
+  pkLoadJsQR().then(() =>
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+  ).then(stream => {
+    pkStream = stream;
+    const v = document.getElementById('pk-video');
+    v.srcObject = stream; v.style.display = 'block'; v.play();
+    document.getElementById('pk-scan-btn').textContent = '⏹ Остановить камеру';
+    const cv = document.getElementById('pk-canvas'), cx = cv.getContext('2d');
+    pkTimer = setInterval(() => {
+      if (!v.videoWidth) return;
+      cv.width = v.videoWidth; cv.height = v.videoHeight;
+      cx.drawImage(v, 0, 0);
+      const img = cx.getImageData(0, 0, cv.width, cv.height);
+      const q = window.jsQR && window.jsQR(img.data, img.width, img.height);
+      if (q && q.data && q.data.indexOf('BNT|') === 0){
+        const parts = q.data.split('|'); // BNT|oid|pk
+        pkStopCam();
+        if (parts[1] && parts[1] !== pkId){
+          const other = orders.find(x=>x.id===parts[1]);
+          alert('⚠️ Это QR другого заказа' + (other ? ' (№' + other.num + ')' : '') + '.\nПроверь, тот ли заказ выдаёшь.');
+          return;
+        }
+        document.getElementById('pk-input').value = parts[2] || '';
+        pkSubmit();
+      }
+    }, 300);
+  }).catch(() => alert('Камера недоступна — введи код вручную'));
+}
+function pkSubmit(){
+  const code = document.getElementById('pk-input').value.replace(/\D/g,'');
+  if (code.length !== 4){ alert('Введи 4 цифры кода клиента'); return; }
+  const o = orders.find(x=>x.id===pkId) || {};
+  if (!fiscalOk(o)) return;
+  postStatus(pkId, 'done', {pk: code});
+}
+function pkForce(){
+  if (!confirm('⚠️ Выдать БЕЗ кода клиента?\nВладелец получит уведомление об этой выдаче.')) return;
+  const o = orders.find(x=>x.id===pkId) || {};
+  if (!fiscalOk(o)) return;
+  postStatus(pkId, 'done', {force: 1});
 }
 
 // === TOPUPS ===

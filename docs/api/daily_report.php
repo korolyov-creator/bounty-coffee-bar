@@ -11,16 +11,22 @@ $day = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['day'] ?? '')) ? $_GET
 $fromTs = strtotime($day . ' 00:00:00');
 $toTs = strtotime($day . ' 23:59:59');
 
-$statuses = array();
+$statuses = array(); $doneVia = array();
 $sf = bdata_path('orders_status.jsonl');
 if (is_file($sf)) {
   foreach (file($sf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
     $r = json_decode($line, true);
-    if (is_array($r) && isset($r['id'], $r['status'])) { $statuses[$r['id']] = $r['status']; }
+    if (is_array($r) && isset($r['id'], $r['status'])) {
+      $statuses[$r['id']] = $r['status'];
+      if ($r['status'] === 'done') {
+        $by = (string)($r['by'] ?? '');
+        $doneVia[$r['id']] = (strpos($by, ':qr') !== false) ? 'qr' : ((strpos($by, ':force') !== false) ? 'force' : 'old');
+      }
+    }
   }
 }
 
-$doneCash = 0; $doneWallet = 0; $doneN = 0; $cancelN = 0;
+$doneCash = 0; $doneWallet = 0; $doneN = 0; $cancelN = 0; $qrN = 0; $forceN = 0;
 $of = bdata_path('orders.jsonl');
 if (is_file($of)) {
   foreach (file($of, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
@@ -32,6 +38,8 @@ if (is_file($of)) {
     if ($st === 'done') {
       $doneN++;
       if (!empty($o['paid'])) { $doneWallet += (int)$o['total']; } else { $doneCash += (int)$o['total']; }
+      $via = $doneVia[$o['id']] ?? 'old';
+      if ($via === 'qr') { $qrN++; } elseif ($via === 'force') { $forceN++; }
     }
     if ($st === 'cancel') { $cancelN++; }
   }
@@ -65,6 +73,11 @@ foreach ($wallets as $phone => $w) {
 $f = function ($n) { return number_format($n, 0, '', ' '); };
 $msg = "📊 Bounty · сводка за " . date('d.m.Y', $fromTs) . "\n\n";
 $msg .= "☕ Выдано заказов: $doneN (отменено: $cancelN)\n";
+if ($doneN > 0) {
+  $msg .= "🔑 По коду/QR клиента: $qrN";
+  if ($forceN > 0) { $msg .= " · ⚠️ БЕЗ кода: $forceN"; }
+  $msg .= "\n";
+}
 $msg .= "💵 Выручка касса: " . $f($doneCash) . " сум\n";
 $msg .= "👛 Выручка кошелёк: " . $f($doneWallet) . " сум\n\n";
 $msg .= "ПОПОЛНЕНИЯ КОШЕЛЬКОВ:\n";
