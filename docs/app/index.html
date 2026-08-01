@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.7.1 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.7.2 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -871,7 +871,7 @@ function coSelPoint(id){ coPoint = id; pointChosen = true; localStorage.setItem(
 function coSelTime(k){ coTime = k; document.querySelectorAll('#co-times .p-opt').forEach(b=>b.classList.toggle('sel', +b.dataset.k===k)); }
 function cartQty(idx, d){
   const c = getCart();
-  c[idx].qty += d;
+  c[idx].qty = Math.min(9, c[idx].qty + d);
   if (c[idx].qty <= 0) c.splice(idx,1);
   saveCart(c);
 }
