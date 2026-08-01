@@ -967,7 +967,7 @@ function renderCart(){
   if (!c.length){ items.innerHTML=''; document.getElementById('cart-upsell').innerHTML=''; co.style.display='none'; empty.style.display='block'; return; }
   empty.style.display='none'; co.style.display='block';
   items.innerHTML = c.map((i,idx) => {
-    const sub = [i.size, ...(i.addons.length ? ['+ '+i.addons.join(', ')] : []), i.comment ? '💬 '+i.comment : ''].filter(Boolean).join(' · ');
+    const sub = [i.size, ...(i.addons.length ? ['+ '+i.addons.join(', ')] : []), i.comment ? '💬 '+escHtml(i.comment) : ''].filter(Boolean).join(' · ');
     return `<div class="cart-item">
       <div class="t"><span>${i.ic} ${i.n}</span><span style="color:var(--gold)">${fmtSum(i.unit*i.qty)}</span></div>
       ${sub ? '<div class="s">'+sub+'</div>' : ''}
@@ -1092,7 +1092,7 @@ function submitOrder(){
         }
         if (res && res.error === 'price'){
           alert('Цены в меню обновились 🙏\nЗакрой и открой приложение, затем собери заказ заново.');
-          localStorage.removeItem('bounty_cart'); renderCartBar();
+          localStorage.removeItem('bounty_cart'); renderCartBar(); renderCart();
           return;
         }
         if (res && res.error === 'insufficient'){
