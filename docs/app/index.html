@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.7.2 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.7.3 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -475,7 +475,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     <div class="card">
       <h3>★ ПОПОЛНИТЬ</h3>
       <div class="p-opts" id="w-amounts"></div>
-      <input type="tel" id="w-custom" placeholder="Или своя сумма, сум" inputmode="numeric" style="width:100%;margin-top:10px;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:11px 13px;color:var(--paper);font-size:15px">
+      <input type="tel" id="w-custom" placeholder="Или своя сумма, сум" inputmode="numeric" oninput="wCustomInput(this.value)" style="width:100%;margin-top:10px;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:11px 13px;color:var(--paper);font-size:15px">
       <h3 style="margin-top:14px">★ СПОСОБ</h3>
       <div class="p-opts" id="w-methods"></div>
       <button class="btn-big" style="margin-top:14px" id="w-topup-btn" onclick="walletTopup()">Пополнить кошелёк</button>
@@ -633,7 +633,7 @@ function go(scr){
   document.querySelector('.screen.active').scrollTop = 0;
   if (scr === 'cart'){ renderCart(); refreshWallet(); }
   if (scr === 'myorders'){ renderMyOrders(); pollOrders(); }
-  if (scr === 'wallet') refreshWallet();
+  if (scr === 'wallet'){ renderWalletUI(); refreshWallet(); }
   if (scr === 'chat'){ chatPoll(true); }
   if (scr === 'order') renderPointChip();
   if ((scr === 'order' || scr === 'cart') && !pointChosen) openPointPicker();
@@ -1158,7 +1158,7 @@ setInterval(pollOrders, 25000);
 
 // === WALLET (кошелёк) ===
 let wallet = {balance:0, tx:[], methods:{}};
-let wAmount = 50000, wMethod = 'cash';
+let wAmount = 50000, wMethod = 'cash', wPending = null;
 const W_AMOUNTS = [30000, 50000, 100000, 200000];
 function clientReq(url, extra){
   const c = getClient();
@@ -1171,7 +1171,15 @@ function refreshWallet(){
     if (!j.ok) return;
     wallet.balance = j.balance; wallet.tx = j.tx || []; wallet.methods = j.methods || {};
     renderWalletUI();
-  }).catch(()=>{});
+    if (wPending && wallet.tx.some(t => t.t === 'topup' && new Date(t.ts).getTime() >= wPending.ts - 90000)){
+      wPending = null;
+      const card = document.getElementById('w-pending-card');
+      if (card) card.style.display = 'none';
+      const hint = document.getElementById('w-topup-hint');
+      if (hint) hint.textContent = '✅ Пополнение зачислено — баланс обновлён.';
+      if (navigator.vibrate) navigator.vibrate([20,40,20]);
+    }
+  }).catch(() => { renderWalletUI(); });
 }
 function renderWalletUI(){
   const f = fmtSum(wallet.balance);
@@ -1188,7 +1196,9 @@ function renderWalletUI(){
     {id:'uzum',  label:'Uzum',  ok:!!m.uzum}];
   document.getElementById('w-methods').innerHTML = meth.map(o =>
     `<button class="p-opt${wMethod===o.id?' sel':''}${o.ok?'':' dim'}" onclick="wSelMethod('${o.id}')">${o.label}</button>`).join('');
-  document.getElementById('w-topup-hint').textContent = wMethod === 'cash'
+  document.getElementById('w-topup-hint').textContent = !getClient()
+    ? 'Чтобы пополнить кошелёк, войди в аккаунт — вкладка «Профиль».'
+    : wMethod === 'cash'
     ? 'Оплати на кассе наличными или картой — бариста зачислит по коду заявки.'
     : 'Откроется страница оплаты, зачисление подтвердит бариста.';
   const TX = {topup:['💵','Пополнение'], pay:['☕','Оплата заказа'], refund:['↩️','Возврат за заказ'], adjust:['⚙️','Корректировка']};
@@ -1199,6 +1209,11 @@ function renderWalletUI(){
   renderPayOptions();
 }
 function wSelAmount(a){ wAmount = a; document.getElementById('w-custom').value = ''; renderWalletUI(); }
+function wCustomInput(v){
+  const n = parseInt(String(v).replace(/\D/g,''), 10) || 0;
+  wAmount = n ? 0 : 50000;
+  renderWalletUI();
+}
 function wSelMethod(id){
   if (id !== 'cash' && !(wallet.methods||{})[id]){
     alert(({click:'Click',payme:'Payme',uzum:'Uzum'})[id] + ' подключается — совсем скоро.\nПока пополняй на кассе: наличными или картой.');
@@ -1221,6 +1236,10 @@ function walletTopup(){
       return;
     }
     if (j.link) window.open(j.link, '_blank');
+    wPending = {ts: Date.now(), amount};
+    document.getElementById('w-custom').value = '';
+    if (!wAmount) wAmount = 50000;
+    renderWalletUI();
     document.getElementById('w-pending-card').style.display = 'block';
     document.getElementById('w-pending-text').innerHTML =
       'Сумма: <b style="color:var(--gold)">' + fmtSum(amount) + '</b><br>' +
@@ -1231,6 +1250,11 @@ function walletTopup(){
     if (navigator.vibrate) navigator.vibrate([20,40,20]);
   }).catch(() => { btn.disabled = false; btn.textContent = 'Пополнить кошелёк'; alert('Нет связи — попробуй ещё раз'); });
 }
+
+setInterval(() => {
+  const s = document.getElementById('scr-wallet');
+  if (s && s.classList.contains('active')) refreshWallet();
+}, 30000);
 
 // === CHAT (клиент ↔ бариста) ===
 let chatSeen = localStorage.getItem('bounty_chat_seen') || '';
