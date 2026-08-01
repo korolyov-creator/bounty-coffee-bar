@@ -139,6 +139,7 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
 
 <div class="card">
   <h2 style="margin-top:0">👛 Зачислить клиенту (деньги приняты на кассе)</h2>
+  <div style="color:var(--muted);font-size:13px;margin-bottom:8px">До 300 000 сум · чек «Аванс» обязателен · владелец получает уведомление о каждом зачислении</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <input type="tel" id="tu-phone" placeholder="Телефон 9XXXXXXXX" style="flex:2;min-width:150px">
     <input type="tel" id="tu-amount" placeholder="Сумма" style="flex:1;min-width:90px">
@@ -414,6 +415,13 @@ function render(){
 
 function setSt(id, status){
   if (status === 'cancel' && !confirm('Отменить заказ?' + ((orders.find(o=>o.id===id)||{}).paid ? '\nДеньги вернутся на кошелёк клиента.' : ''))) return;
+  if (status === 'done'){
+    const o = orders.find(x=>x.id===id) || {};
+    const msg = o.paid
+      ? '🧾 Заказ оплачен с КОШЕЛЬКА.\nПробей чек «Полный расчёт» (зачёт аванса) на ' + fmt(o.total||0) + ' сум.\n\nЧек пробит?'
+      : '🧾 Оплата наличными/картой.\nПробей обычный фискальный чек на ' + fmt(o.total||0) + ' сум.\n\nЧек пробит?';
+    if (!confirm(msg)) return;
+  }
   fetch(api(), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, status})})
     .then(r=>r.json()).then(res => {
       if (res.ok){
@@ -437,24 +445,29 @@ function loadTopups(){
     document.getElementById('topups').innerHTML = j.topups.map(t =>
       '<div class="topup"><div><b style="color:var(--gold);font-size:17px">Код ' + t.code + '</b> · ' + fmt(t.amount) + ' сум · ' + (mName[t.method]||t.method) +
       '<br><small style="color:var(--muted)">' + esc(t.name||'') + ' · +' + t.phone + '</small></div>' +
-      '<span style="display:flex;gap:6px"><button class="gold" onclick="topupDo(\'' + t.tid + '\',1)">Зачислить ✓</button>' +
-      '<button class="chip" onclick="topupDo(\'' + t.tid + '\',0)">✕</button></span></div>').join('');
+      '<span style="display:flex;gap:6px"><button class="gold" onclick="topupDo(\'' + t.tid + '\',1,' + (+t.amount||0) + ')">Зачислить ✓</button>' +
+      '<button class="chip" onclick="topupDo(\'' + t.tid + '\',0,0)">✕</button></span></div>').join('');
   }).catch(()=>{});
 }
-function topupDo(tid, ok){
+function topupDo(tid, ok, amount){
   if (ok && !confirm('Деньги получены? Зачислить на кошелёк клиента?')) return;
+  if (ok && !confirm('🧾 ФИСКАЛЬНЫЙ ЧЕК\nПробей на кассе чек «АВАНС» на ' + fmt(amount) + ' сум и отдай клиенту.\n\nЧек пробит?')) return;
   if (!ok && !confirm('Отклонить заявку?')) return;
-  staffReq(ok ? 'topup_confirm' : 'topup_cancel', {tid}).then(j => {
-    if (j.ok){ beep(1200); loadTopups(); } else alert('Не получилось (' + (j.reason||'') + ')');
+  staffReq(ok ? 'topup_confirm' : 'topup_cancel', ok ? {tid, fiscal:1} : {tid}).then(j => {
+    if (j.ok){ beep(1200); loadTopups(); }
+    else alert(j.reason === 'fiscal_required' ? 'Сначала пробей чек «Аванс» на кассе' : 'Не получилось (' + (j.reason||'') + ')');
   }).catch(()=>alert('Нет связи'));
 }
 function topupDirect(){
   const phone = document.getElementById('tu-phone').value.trim();
   const amount = parseInt(document.getElementById('tu-amount').value.replace(/\D/g,''),10);
   if (!phone || !amount){ alert('Укажи телефон и сумму'); return; }
-  if (!confirm('Зачислить ' + fmt(amount) + ' сум клиенту ' + phone + '?')) return;
-  staffReq('topup_direct', {phone, amount}).then(j => {
+  if (amount > 300000){ alert('Прямое зачисление — максимум 300 000 сум.\nБольшие суммы — только через код клиента в приложении.'); return; }
+  if (!confirm('Зачислить ' + fmt(amount) + ' сум клиенту ' + phone + '?\n\nВладелец получит уведомление об этой операции.')) return;
+  if (!confirm('🧾 ФИСКАЛЬНЫЙ ЧЕК\nПробей на кассе чек «АВАНС» на ' + fmt(amount) + ' сум и отдай клиенту.\n\nЧек пробит?')) return;
+  staffReq('topup_direct', {phone, amount, fiscal:1}).then(j => {
     if (j.ok){ alert('Зачислено ✓ Баланс клиента: ' + fmt(j.balance) + ' сум'); document.getElementById('tu-amount').value=''; }
+    else if (j.reason === 'bad_input' && j.limit) alert('Максимум ' + fmt(j.limit) + ' сум — большие суммы только через код клиента');
     else alert('Не получилось — проверь номер (формат 9XXXXXXXX)');
   }).catch(()=>alert('Нет связи'));
 }

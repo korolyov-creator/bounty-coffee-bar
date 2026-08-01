@@ -290,6 +290,28 @@ function pay_link($method, $amount, $phone) {
   return null;
 }
 
+// === TELEGRAM-АЛЕРТЫ ВЛАДЕЛЬЦУ ===
+// Конфиг: bounty_data/tg_config.json {"token":"...","chat":"263229048","report_key":"..."}
+function tg_config() {
+  $c = store_read('tg_config.json');
+  return (!empty($c['token']) && !empty($c['chat'])) ? $c : null;
+}
+
+// Мгновенное уведомление владельцу. Не блокирует ответ клиенту: короткий таймаут, ошибки глотаем.
+function tg_alert($text) {
+  $c = tg_config();
+  if (!$c) { return false; }
+  $ch = curl_init('https://api.telegram.org/bot' . $c['token'] . '/sendMessage');
+  curl_setopt_array($ch, array(
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => http_build_query(array('chat_id' => $c['chat'], 'text' => $text)),
+    CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 5, CURLOPT_CONNECTTIMEOUT => 3,
+  ));
+  curl_exec($ch);
+  curl_close($ch);
+  return true;
+}
+
 // === Eskiz.uz ===
 // Конфиг: bounty_data/sms_config.json {"provider":"eskiz","email":"...","password":"...","from":"4546"}
 function sms_config() {

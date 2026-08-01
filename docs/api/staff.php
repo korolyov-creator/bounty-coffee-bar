@@ -95,17 +95,23 @@ if ($action === 'topups') {
 if ($action === 'topup_confirm' || $action === 'topup_cancel') {
   $tid = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['tid'] ?? '')), 0, 12);
   $st = $action === 'topup_confirm' ? 'done' : 'cancel';
+  // фискализация: наличное пополнение — аванс, чек ККМ «Аванс» обязателен в момент приёма денег (ПКМ №943)
+  if ($st === 'done' && empty($d['fiscal'])) { respond(['ok' => false, 'reason' => 'fiscal_required'], 422); }
   $t = store_update('topups.json', function ($data) use ($tid, $st, $who) {
     if (!isset($data[$tid]) || $data[$tid]['status'] !== 'pending') { return [$data, null]; }
     $data[$tid]['status'] = $st;
     $data[$tid]['by'] = $who;
     $data[$tid]['done_ts'] = date('c');
+    if ($st === 'done') { $data[$tid]['fiscal'] = true; }
     return [$data, $data[$tid]];
   });
   if (!$t) { respond(['ok' => false, 'reason' => 'not_pending'], 422); }
   if ($st === 'done') {
-    wallet_credit($t['phone'], $t['amount'], 'topup', array('m' => $t['method'], 'by' => $who, 'id' => $t['id'] ?? '', 'name' => $t['name'] ?? ''));
-    audit('topup_confirm', array('by' => $who, 'phone' => $t['phone'], 'amount' => $t['amount']));
+    wallet_credit($t['phone'], $t['amount'], 'topup', array('m' => $t['method'], 'by' => $who, 'id' => $t['id'] ?? '', 'name' => $t['name'] ?? '', 'f' => 1));
+    audit('topup_confirm', array('by' => $who, 'phone' => $t['phone'], 'amount' => $t['amount'], 'fiscal' => true));
+    if ((int)$t['amount'] >= 500000) {
+      tg_alert("👛 Крупное пополнение кошелька: " . number_format((int)$t['amount'], 0, '', ' ') . " сум\nКлиент: " . $t['phone'] . "\nПодтвердил: $who");
+    }
   }
   respond(['ok' => true]);
 }
@@ -113,9 +119,12 @@ if ($action === 'topup_confirm' || $action === 'topup_cancel') {
 if ($action === 'topup_direct') {
   $phone = norm_phone($d['phone'] ?? '');
   $amount = (int)($d['amount'] ?? 0);
-  if (!$phone || $amount < 1000 || $amount > 5000000) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
-  $w = wallet_credit($phone, $amount, 'topup', array('m' => 'cash', 'by' => $who));
-  audit('topup_direct', array('by' => $who, 'phone' => $phone, 'amount' => $amount));
+  // прямое зачисление без кода клиента — главный канал злоупотреблений: жёсткий лимит + чек + алерт владельцу
+  if (!$phone || $amount < 1000 || $amount > 300000) { respond(['ok' => false, 'reason' => 'bad_input', 'limit' => 300000], 422); }
+  if (empty($d['fiscal'])) { respond(['ok' => false, 'reason' => 'fiscal_required'], 422); }
+  $w = wallet_credit($phone, $amount, 'topup', array('m' => 'cash', 'by' => $who, 'f' => 1, 'direct' => 1));
+  audit('topup_direct', array('by' => $who, 'phone' => $phone, 'amount' => $amount, 'fiscal' => true));
+  tg_alert("⚠️ ПРЯМОЕ зачисление на кошелёк (без кода клиента)\nСумма: " . number_format($amount, 0, '', ' ') . " сум\nКлиент: $phone\nСотрудник: $who\nПроверь: наличные в кассе + чек «Аванс».");
   respond(['ok' => true, 'balance' => $w['balance']]);
 }
 
@@ -308,8 +317,9 @@ if ($action === 'adjust') {
   $amount = (int)($d['amount'] ?? 0);
   $note = mb_substr(trim((string)($d['note'] ?? '')), 0, 100);
   if (!$phone || $amount === 0 || abs($amount) > 5000000) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
-  $w = wallet_credit($phone, $amount, 'adjust', array('by' => 'admin', 'note' => $note));
-  audit('adjust', array('by' => 'admin', 'phone' => $phone, 'amount' => $amount, 'note' => $note));
+  $w = wallet_credit($phone, $amount, 'adjust', array('by' => $who, 'note' => $note));
+  audit('adjust', array('by' => $who, 'phone' => $phone, 'amount' => $amount, 'note' => $note));
+  tg_alert("✏️ Корректировка кошелька: " . ($amount > 0 ? '+' : '') . number_format($amount, 0, '', ' ') . " сум\nКлиент: $phone\nКто: $who\nПричина: " . ($note !== '' ? $note : '—'));
   respond(['ok' => true, 'balance' => $w['balance']]);
 }
 
