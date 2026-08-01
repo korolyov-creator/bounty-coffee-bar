@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.7.3 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.8.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
     <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
   </main>
 
@@ -536,6 +536,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <div class="prod-overlay" id="prod-overlay" onclick="if(event.target===this)closeProd()">
     <div class="prod-sheet">
       <div style="font-size:34px" id="pr-ic">☕</div>
+      <img id="pr-photo" alt="" style="display:none;width:100%;max-height:220px;object-fit:cover;border-radius:14px;margin:6px 0 4px">
+
       <h2 id="pr-name"></h2>
       <div class="sub" id="pr-desc"></div>
       <div id="pr-sizes-wrap"><h3 style="font-size:13px;color:var(--gold)">РАЗМЕР</h3><div class="p-opts" id="pr-sizes"></div></div>
@@ -652,7 +654,7 @@ const MENU = {
   ],
   'Кофе':[
     {n:'Эспрессо', d:'одинарный / двойной · 30/36 мл', p:'26 / 32 000', ic:'☕'},
-    {n:'Американо', d:'250 / 500 мл', p:'26 / 32 000', ic:'☕'},
+    {n:'Американо', d:'250 / 500 мл', p:'26 / 32 000', ic:'☕', ph:'img/cup.jpg'},
     {n:'Лонг блэк', d:'250 / 500 мл', p:'32 / 40 000', ic:'☕'}
   ],
   'С молоком':[
@@ -669,10 +671,10 @@ const MENU = {
   'Холодные':[
     {n:'Айс-капучино', d:'250 мл', p:'36 000', ic:'🧊'},
     {n:'Айс-американо', d:'250 мл', p:'32 000', ic:'🧊'},
-    {n:'Айс-латте', d:'500 мл', p:'32 000', ic:'🧊'},
+    {n:'Айс-латте', d:'500 мл', p:'32 000', ic:'🧊', ph:'img/ice_latte.jpg'},
     {n:'Эспрессо-тоник', d:'500 мл', p:'45 000', ic:'🍋'},
     {n:'Cold Brew', d:'250 / 500 мл', p:'35 / 45 000', ic:'🧊'},
-    {n:'Фраппучино', d:'500 мл', p:'45 000', ic:'🥤'},
+    {n:'Фраппучино', d:'500 мл', p:'45 000', ic:'🥤', ph:'img/ice_choco.jpg'},
     {n:'Шмель', d:'500 мл · топ-чек', p:'65 000', ic:'🐝'},
   ],
   'Напитки':[
@@ -683,13 +685,13 @@ const MENU = {
     {n:'Чай клюква и вишня', d:'500 мл', p:'35 000', ic:'🍵'},
     {n:'Чай роза и личи', d:'500 мл', p:'35 000', ic:'🍵'},
     {n:'Чай маракуйя и манго', d:'500 мл', p:'35 000', ic:'🍵'},
-    {n:'Айс-ти', d:'500 мл', p:'35 000', ic:'🧊'},
+    {n:'Айс-ти', d:'500 мл', p:'35 000', ic:'🧊', ph:'img/lemon_berry.jpg'},
     {n:'Фрэш яблочный', d:'250 / 500 мл', p:'35 / 48 000', ic:'🍏'},
     {n:'Фрэш апельсиновый', d:'250 / 500 мл', p:'50 / 80 000', ic:'🍊'},
     {n:'Морковно-яблочный фрэш', d:'500 мл', p:'42 000', ic:'🥕'},
     {n:'Милкшейк классический', d:'500 мл', p:'35 000', ic:'🥛'},
     {n:'Милкшейк банановый', d:'500 мл', p:'40 000', ic:'🍌'},
-    {n:'Мохито классический', d:'500 мл · без алк.', p:'38 000', ic:'🌿'},
+    {n:'Мохито классический', d:'500 мл · без алк.', p:'38 000', ic:'🌿', ph:'img/lemon_green.jpg'},
     {n:'Лайм-тоник', d:'500 мл', p:'35 000', ic:'🍋'},
   ],
   'Выпечка':[
@@ -716,7 +718,7 @@ function renderMenu(cat){
   const list = document.getElementById('menu-list');
   list.innerHTML = MENU[cat].map((i,idx)=>`
     <div class="item" onclick="openProd('${cat}',${idx})">
-      <div class="ic">${i.ic}</div>
+      <div class="ic"${i.ph ? ` style="background-image:url('${i.ph}');background-size:cover;background-position:center"` : ''}>${i.ph ? '' : i.ic}</div>
       <div class="info">
         <h4>${i.n}</h4>
         <p>${i.d}</p>
@@ -750,6 +752,10 @@ function openProd(cat, idx){
   const prices = parseP(i.p);
   prState = {cat, idx, n:i.n, ic:i.ic, prices, size:0, qty:1, addons:{}};
   document.getElementById('pr-ic').textContent = i.ic;
+  const prPhoto = document.getElementById('pr-photo');
+  document.getElementById('pr-ic').style.display = i.ph ? 'none' : '';
+  prPhoto.style.display = i.ph ? 'block' : 'none';
+  if (i.ph) prPhoto.src = i.ph;
   document.getElementById('pr-name').textContent = i.n;
   document.getElementById('pr-desc').textContent = i.d;
   const sw = document.getElementById('pr-sizes-wrap');
