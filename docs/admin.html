@@ -30,6 +30,17 @@ td a{color:var(--gold);text-decoration:none;font-weight:700}
 .pane.sel{display:block}
 .pill{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800}
 .p-green{background:#14532d;color:#4ade80}.p-amber{background:#3b2f0e;color:#f0b866}.p-gray{background:rgba(242,234,215,.1);color:var(--muted)}.p-red{background:#450a0a;color:#f87171}
+.loy{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:800;cursor:default}
+.l1{background:#4b3018;color:#c68f5a}
+.l2{background:#2b2f3a;color:#c7ced9}
+.l3{background:#4a3808;color:#f5c542}
+.l4{background:#0d2f43;color:#7dd3fc}
+.l5{background:#3b0f4a;color:#e879f9}
+.loy-btn{border:1px solid rgba(212,175,55,.4);background:transparent;color:var(--gold);border-radius:6px;width:22px;height:22px;font-weight:800;cursor:pointer;padding:0;font-size:13px;line-height:20px}
+.loy-btn:disabled{opacity:.35;cursor:default}
+.owner-only{display:none}
+body.is-owner .owner-only{display:block}
+body.is-owner .owner-only.owner-inline{display:inline-block}
 input{background:rgba(242,234,215,.07);border:1px solid rgba(212,175,55,.3);border-radius:10px;color:var(--paper);font-size:14px;padding:10px 12px;outline:none;font-family:inherit}
 button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer}
 button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px 13px;font-size:12px;color:var(--paper);background:transparent;cursor:pointer}
@@ -74,6 +85,8 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
   <button data-t="clients">Клиенты</button>
   <button data-t="wallets">Кошельки</button>
   <button data-t="staff">Персонал</button>
+  <button data-t="analytics" class="owner-only owner-inline">📈 Аналитика</button>
+  <button data-t="kpi" class="owner-only owner-inline">🏆 KPI</button>
 </div>
 
 <div class="pane sel" id="pane-summary">
@@ -131,6 +144,31 @@ button.chip{border:1px solid rgba(212,175,55,.35);border-radius:99px;padding:7px
     <h2 style="margin-top:0">Общий код бариста (старый, 1414)</h2>
     <div class="sub">Пока включён — вход по общему коду работает. Когда все бариста зарегистрируются, выключи его.</div>
     <button class="chip" id="legacy-btn" onclick="legacyToggle()">…</button>
+  </div>
+</div>
+
+<div class="pane owner-only" id="pane-analytics">
+  <div class="card">
+    <h2 style="margin-top:0">📈 Аналитика · 30 дней</h2>
+    <div class="sub">Только для владельца. Хиты продаж, самые платёжеспособные клиенты, полная лента заказов.</div>
+    <div class="grid" id="an-stats"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🥇 Хиты продаж</h2>
+    <div style="overflow-x:auto"><table id="an-items"></table></div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">💰 Самые платёжеспособные клиенты</h2>
+    <div class="sub">Топ-20 по сумме за 30 дней. Клик по имени → карточка с историей</div>
+    <div style="overflow-x:auto"><table id="an-payers"></table></div>
+  </div>
+</div>
+
+<div class="pane owner-only" id="pane-kpi">
+  <div class="card">
+    <h2 style="margin-top:0">🏆 KPI сотрудников · 30 дней</h2>
+    <div class="sub">Считается по заказам, которые бариста отметил «выдан клиенту» (по QR-коду или без него).</div>
+    <div style="overflow-x:auto"><table id="kpi-t"></table></div>
   </div>
 </div>
 
@@ -295,6 +333,7 @@ function renderAll(){
   document.getElementById('orders-t').innerHTML = '<tr><th>Заказ</th><th>Статус</th><th>Точка</th><th>Клиент</th><th>Состав</th><th>Сумма</th></tr>' + (rows || '<tr><td colspan="6" class="sub">Заказов за 7 дней нет</td></tr>');
 
   renderClients();
+  if (ROLE === 'owner'){ renderAnalytics(); renderKpi(); }
 
   // wallets
   const wrows = DATA.wallets.slice().sort((a,b)=>b.balance-a.balance).map(w =>
@@ -307,6 +346,26 @@ function renderAll(){
   document.getElementById('wallets-t').innerHTML = '<tr><th>Клиент</th><th>Баланс</th><th>Последние операции</th></tr>' + (wrows || '<tr><td colspan="3" class="sub">Кошельков пока нет</td></tr>');
 }
 
+const LOYALTY = {1:['🥉','Бронза'], 2:['🥈','Серебро'], 3:['🥇','Золото'], 4:['💎','Платина'], 5:['👑','VIP']};
+function loyPill(tier){
+  const t = Math.max(1, Math.min(5, +tier || 1));
+  return '<span class="loy l' + t + '" title="' + LOYALTY[t][1] + '">' + LOYALTY[t][0] + ' ' + LOYALTY[t][1] + '</span>';
+}
+function loyControls(phone, tier){
+  if (ROLE !== 'owner') return '';
+  const t = Math.max(1, Math.min(5, +tier || 1));
+  return ' <button class="loy-btn" ' + (t>=5?'disabled':'') + ' onclick="loyBump(\'' + phone + '\',' + (t+1) + ')" title="Повысить">▲</button>' +
+         '<button class="loy-btn" ' + (t<=1?'disabled':'') + ' onclick="loyBump(\'' + phone + '\',' + (t-1) + ')" title="Понизить">▼</button>';
+}
+function loyBump(phone, tier){
+  if (ROLE !== 'owner') return;
+  const label = LOYALTY[tier] ? LOYALTY[tier][1] : '';
+  if (!confirm('Изменить статус лояльности клиента +' + phone + ' на ' + label + '?')) return;
+  staffReq('client_loyalty', {phone, tier}).then(j => {
+    if (j.ok) load(); else alert('Не получилось (' + (j.reason||'') + ')');
+  }).catch(()=>alert('Нет связи'));
+}
+
 function renderClients(){
   const q = (document.getElementById('cl-search').value || '').toLowerCase();
   const list = DATA.clients.filter(c => !q || (c.name||'').toLowerCase().includes(q) || String(c.phone).includes(q))
@@ -314,13 +373,50 @@ function renderClients(){
   const rows = list.map(c =>
     '<tr' + (c.blocked ? ' style="opacity:.55"' : '') + '><td><b>' + esc(c.name||'—') + '</b>' + (c.account ? ' <span class="pill p-green">SMS</span>' : '') + (c.blocked ? ' <span class="pill p-red">БЛОК</span>' : '') + '<br><small>' + esc(c.id||'') + '</small></td>' +
     '<td><a href="tel:+' + c.phone + '">+' + c.phone + '</a> <a href="#" onclick="openChat(\'' + c.phone + '\',\'' + esc(c.name||'') + '\');return false">💬</a></td>' +
+    '<td>' + loyPill(c.loyalty) + loyControls(c.phone, c.loyalty) + '</td>' +
     '<td>' + (c.stamps||0) + '/5</td><td>' + (c.total||0) + '</td><td>' + (c.free||0) + '</td>' +
     '<td><b style="color:var(--gold)">' + fmt(c.wallet||0) + '</b></td>' +
     '<td><small>' + esc(c.reg||'') + '</small></td>' +
     '<td>' + (c.blocked
       ? '<button class="chip" onclick="clientBlock(\'' + c.phone + '\',false)">Разблокировать</button>'
       : '<button class="chip" style="color:#f87171;border-color:#f87171" onclick="clientBlock(\'' + c.phone + '\',true)">Блок</button>') + '</td></tr>').join('');
-  document.getElementById('clients-t').innerHTML = '<tr><th>Клиент</th><th>Телефон</th><th>Отметки</th><th>Покупок</th><th>Беспл.</th><th>Кошелёк</th><th>Рег.</th><th></th></tr>' + (rows || '<tr><td colspan="8" class="sub">Не найдено</td></tr>');
+  document.getElementById('clients-t').innerHTML = '<tr><th>Клиент</th><th>Телефон</th><th>Лояльность</th><th>Отметки</th><th>Покупок</th><th>Беспл.</th><th>Кошелёк</th><th>Рег.</th><th></th></tr>' + (rows || '<tr><td colspan="9" class="sub">Не найдено</td></tr>');
+}
+
+function renderAnalytics(){
+  const a = DATA.analytics; if (!a) return;
+  const revTotal = (a.top_payers||[]).reduce((s,p)=>s+(p.sum||0),0);
+  document.getElementById('an-stats').innerHTML = [
+    ['Всего заказов за 30 дней', a.orders_total || 0],
+    ['Оборот по топ-20 клиентам', fmt(revTotal) + ' сум'],
+    ['Уникальных активных клиентов', (a.top_payers||[]).length],
+    ['Позиций в хитах', (a.top_items||[]).length],
+  ].map(s=>'<div class="stat"><div class="v">' + s[1] + '</div><div class="l">' + s[0] + '</div></div>').join('');
+  const irows = (a.top_items||[]).map((i,idx)=>
+    '<tr><td><b>' + (idx+1) + '.</b> ' + esc(i.name) + '</td>' +
+    '<td><b style="color:var(--gold)">' + i.qty + '</b> шт</td>' +
+    '<td>' + fmt(i.sum) + ' сум</td></tr>').join('');
+  document.getElementById('an-items').innerHTML = '<tr><th>Позиция</th><th>Продано</th><th>Оборот</th></tr>' +
+    (irows || '<tr><td colspan="3" class="sub">Пока продаж нет</td></tr>');
+  const prows = (a.top_payers||[]).map((p,idx)=>
+    '<tr><td><b>' + (idx+1) + '.</b> ' + esc(p.name||'—') + '<br><a href="tel:+' + p.phone + '">+' + p.phone + '</a></td>' +
+    '<td>' + loyPill(p.loyalty) + loyControls(p.phone, p.loyalty) + '</td>' +
+    '<td>' + p.orders + '</td>' +
+    '<td><b style="color:var(--gold)">' + fmt(p.sum) + '</b> сум</td>' +
+    '<td>' + fmt(p.wallet||0) + '</td></tr>').join('');
+  document.getElementById('an-payers').innerHTML = '<tr><th>Клиент</th><th>Лояльность</th><th>Заказов</th><th>Сумма</th><th>Кошелёк</th></tr>' +
+    (prows || '<tr><td colspan="5" class="sub">Данных пока нет</td></tr>');
+}
+
+function renderKpi(){
+  const k = DATA.staff_kpi || [];
+  const rows = k.map((s,idx) =>
+    '<tr><td><b>' + (idx+1) + '.</b> ' + esc(s.name) + '<br><small style="color:var(--gold)">' + esc(s.login) + '</small></td>' +
+    '<td><b style="color:var(--gold);font-size:16px">' + s.orders + '</b></td>' +
+    '<td>' + fmt(s.avg) + ' сум</td>' +
+    '<td>' + fmt(s.sum) + ' сум</td></tr>').join('');
+  document.getElementById('kpi-t').innerHTML = '<tr><th>Бариста</th><th>Заказов выдано</th><th>Средний чек</th><th>Общий оборот</th></tr>' +
+    (rows || '<tr><td colspan="4" class="sub">Пока никто не выдавал заказов — как только бариста нажмут «✓ Выдан клиенту», статистика появится здесь</td></tr>');
 }
 
 function clientBlock(phone, block){
@@ -492,6 +588,7 @@ function start(){
   setInterval(load, 30000);
   setInterval(loadStaff, 60000);
   if (ROLE === 'owner'){
+    document.body.classList.add('is-owner');
     document.getElementById('role-title').textContent = 'Владелец';
     loadApprovals();
     setInterval(loadApprovals, 15000);

@@ -321,6 +321,7 @@ if ($action === 'overview') {
   $accounts = store_read('accounts.json');
   $wallets = store_read('wallets.json');
   $block = store_read('blocklist.json');
+  $loyalty = store_read('loyalty.json');
   $clients = array();
   $f = bdata_path('clients.jsonl');
   if (is_file($f)) {
@@ -342,6 +343,7 @@ if ($action === 'overview') {
   foreach ($clients as $p => &$c) {
     $c['wallet'] = (int)($wallets[$p]['balance'] ?? 0);
     $c['blocked'] = isset($block['phones'][$p]);
+    $c['loyalty'] = (int)($loyalty[$p]['tier'] ?? 1);
   }
   unset($c);
 
@@ -377,10 +379,99 @@ if ($action === 'overview') {
       'tx' => array_slice(array_reverse($w['tx']), 0, 10));
   }
 
+  // --- АНАЛИТИКА (owner-only, 30 дней) ---
+  $analytics = null;
+  $staffKpi = null;
+  if ($role === 'owner') {
+    $sinceAn = time() - 30 * 86400;
+    $ordersAll = array();
+    if (is_file($of)) {
+      foreach (file($of, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $r = json_decode($line, true);
+        if (is_array($r) && isset($r['ts']) && strtotime($r['ts']) >= $sinceAn) {
+          unset($r['ip']);
+          $r['status'] = 'new';
+          $ordersAll[$r['id']] = $r;
+        }
+      }
+    }
+    if (is_file($sf)) {
+      foreach (file($sf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $r = json_decode($line, true);
+        if (is_array($r) && isset($ordersAll[$r['id'] ?? ''])) {
+          $ordersAll[$r['id']]['status'] = $r['status'];
+          if (!empty($r['by'])) { $ordersAll[$r['id']]['status_by'] = $r['by']; }
+        }
+      }
+    }
+    // Хиты продаж — по всем непокрытым заказам
+    $items = array();
+    // Топ клиенты — по phone, сумма и количество (только не отменённые)
+    $payers = array();
+    // KPI бариста: считаем «выданные» заказы (status=done) по staff-логину
+    $kpi = array();
+    foreach ($ordersAll as $o) {
+      $cancelled = ($o['status'] ?? '') === 'cancel';
+      if (!$cancelled) {
+        foreach ($o['items'] ?? array() as $it) {
+          $name = trim((string)($it['n'] ?? ''));
+          if ($name === '') continue;
+          $qty = (int)($it['qty'] ?? 1);
+          $sum = (int)($it['s'] ?? $it['p'] ?? 0) * $qty;
+          if (!isset($items[$name])) { $items[$name] = array('name' => $name, 'qty' => 0, 'sum' => 0); }
+          $items[$name]['qty'] += $qty;
+          $items[$name]['sum'] += $sum;
+        }
+        $ph = norm_phone($o['phone'] ?? '') ?: (string)($o['phone'] ?? '');
+        if ($ph !== '') {
+          if (!isset($payers[$ph])) { $payers[$ph] = array('phone' => $ph, 'name' => $o['name'] ?? '', 'orders' => 0, 'sum' => 0); }
+          $payers[$ph]['orders']++;
+          $payers[$ph]['sum'] += (int)($o['total'] ?? 0);
+          if (!$payers[$ph]['name']) { $payers[$ph]['name'] = $o['name'] ?? ''; }
+        }
+      }
+      if (($o['status'] ?? '') === 'done') {
+        $by = (string)($o['status_by'] ?? '');
+        if ($by !== '' && $by !== 'client') {
+          if (!isset($kpi[$by])) { $kpi[$by] = array('login' => $by, 'orders' => 0, 'sum' => 0); }
+          $kpi[$by]['orders']++;
+          $kpi[$by]['sum'] += (int)($o['total'] ?? 0);
+        }
+      }
+    }
+    usort($items, function ($a, $b) { return $b['qty'] - $a['qty']; });
+    usort($payers, function ($a, $b) { return $b['sum'] - $a['sum']; });
+    // добавляем в топ-клиентов кошелёк и лояльность
+    foreach ($payers as &$pr) {
+      $pr['wallet'] = (int)($wallets[$pr['phone']]['balance'] ?? 0);
+      $pr['loyalty'] = (int)($loyalty[$pr['phone']]['tier'] ?? 1);
+    }
+    unset($pr);
+    // KPI — имена бариста
+    $staffAcc = store_read('staff_accounts.json');
+    foreach ($kpi as &$k) {
+      $lg = $k['login'];
+      $k['name'] = $lg === 'admin' ? 'Администратор' : ($staffAcc[$lg]['name'] ?? $lg);
+      $k['avg'] = $k['orders'] > 0 ? (int)round($k['sum'] / $k['orders']) : 0;
+    }
+    unset($k);
+    usort($kpi, function ($a, $b) { return $b['orders'] - $a['orders']; });
+
+    $analytics = array(
+      'period_days' => 30,
+      'top_items' => array_slice(array_values($items), 0, 20),
+      'top_payers' => array_slice(array_values($payers), 0, 20),
+      'orders_total' => count($ordersAll),
+    );
+    $staffKpi = array_values($kpi);
+  }
+
   respond(['ok' => true,
     'clients' => array_values($clients),
     'orders' => array_values($orders),
     'wallets' => $walletsOut,
+    'analytics' => $analytics,
+    'staff_kpi' => $staffKpi,
   ]);
 }
 
@@ -393,6 +484,21 @@ if ($action === 'adjust') {
   audit('adjust', array('by' => $who, 'phone' => $phone, 'amount' => $amount, 'note' => $note));
   tg_alert("✏️ Корректировка кошелька: " . ($amount > 0 ? '+' : '') . number_format($amount, 0, '', ' ') . " сум\nКлиент: $phone\nКто: $who\nПричина: " . ($note !== '' ? $note : '—'));
   respond(['ok' => true, 'balance' => $w['balance']]);
+}
+
+// === ЛОЯЛЬНОСТЬ КЛИЕНТОВ (только owner) ===
+if ($action === 'client_loyalty') {
+  if ($role !== 'owner') { respond(['ok' => false, 'reason' => 'owner_only'], 403); }
+  $phone = norm_phone($d['phone'] ?? '');
+  $tier = (int)($d['tier'] ?? 0);
+  $note = mb_substr(trim((string)($d['note'] ?? '')), 0, 100);
+  if (!$phone || $tier < 1 || $tier > 5) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+  store_update('loyalty.json', function ($data) use ($phone, $tier, $note) {
+    $data[$phone] = array('tier' => $tier, 'updated' => date('c'), 'by' => 'owner', 'note' => $note);
+    return [$data, true];
+  });
+  audit('client_loyalty', array('phone' => $phone, 'tier' => $tier, 'note' => $note));
+  respond(['ok' => true, 'tier' => $tier]);
 }
 
 // === УПРАВЛЕНИЕ ПЕРСОНАЛОМ ===
