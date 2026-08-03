@@ -43,5 +43,7 @@ $res = store_update('otp.json', function ($data) use ($phone, $now, $code) {
 if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 429); }
 
 $sent = sms_send($phone, "Bounty Coffee Bar: kod dlya vhoda $code. Nikomu ne soobshchayte.");
-if (!$sent) { respond(['ok' => false, 'reason' => 'sms_failed'], 502); }
+// Провайдер настроен, но отправка не прошла (тест-режим Eskiz до договора, сбой шлюза):
+// отвечаем sms_unavailable, чтобы клиент ушёл в локальную регистрацию, а не в тупиковый alert
+if (!$sent) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
 respond(['ok' => true]);
