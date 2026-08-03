@@ -101,7 +101,9 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
 /* PROFILE */
 .prof-head{text-align:center;padding:20px 0}
-.prof-head .ava{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--navy);font-weight:800;font-family:'Playfair Display',serif;margin:0 auto 14px}
+.prof-head .ava{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--navy);font-weight:800;font-family:'Playfair Display',serif;margin:0 auto 14px;position:relative;overflow:hidden;background-size:cover;background-position:center;cursor:pointer}
+.prof-head .ava .cam{position:absolute;bottom:-2px;right:-2px;background:var(--navy);color:var(--gold);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--gold);font-family:sans-serif}
+.prof-head .ava.has-photo{color:transparent}
 .prof-head .name{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:4px}
 .prof-head .level{display:inline-block;padding:4px 12px;background:rgba(201,161,74,.2);color:var(--gold);border-radius:99px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
 
@@ -374,7 +376,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ PROFILE ============ -->
   <main class="screen" id="scr-profile">
     <div class="prof-head">
-      <div class="ava" id="prof-ava">?</div>
+      <div class="ava" id="prof-ava" onclick="document.getElementById('avatar-input').click()" title="Нажми, чтобы загрузить фото">?<div class="cam">📷</div></div>
+      <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="avatarUpload(event)">
       <div class="name" id="prof-name">Гость</div>
       <div class="level" id="prof-level">★ BOUNTY CLUB</div>
     </div>
@@ -1669,6 +1672,51 @@ function accountPull(){
 }
 
 // === LOGOUT: выход из аккаунта, повторный вход по SMS-коду ===
+// === AVATAR UPLOAD ===
+function avatarUpload(e){
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)){ alert('Выбери файл-изображение'); return; }
+  if (file.size > 8 * 1024 * 1024){ alert('Слишком большой файл (макс 8 МБ). Выбери фото поменьше.'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const size = 400;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const short = Math.min(img.width, img.height);
+      const sx = (img.width - short) / 2, sy = (img.height - short) / 2;
+      ctx.drawImage(img, sx, sy, short, short, 0, 0, size, size);
+      let dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      if (dataUrl.length > 200000){
+        dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      }
+      const c = JSON.parse(localStorage.getItem('bounty_client') || '{}');
+      const key = 'bounty_avatar_' + (c.id || c.phone || 'guest');
+      try {
+        localStorage.setItem(key, dataUrl);
+        const ava = document.getElementById('prof-ava');
+        ava.style.backgroundImage = 'url(' + dataUrl + ')';
+        ava.classList.add('has-photo');
+        ava.firstChild.nodeValue = '';
+      } catch (err){
+        alert('Не получилось сохранить фото — попробуй фото поменьше.');
+      }
+      document.getElementById('avatar-input').value = '';
+    };
+    img.onerror = () => alert('Не удалось прочитать изображение');
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function avatarRemove(){
+  const c = JSON.parse(localStorage.getItem('bounty_client') || '{}');
+  localStorage.removeItem('bounty_avatar_' + (c.id || c.phone || 'guest'));
+  renderCard(c);
+}
+
 function logoutAccount(){
   const hasToken = !!localStorage.getItem('bounty_token');
   const msg = hasToken
@@ -1858,7 +1906,17 @@ function renderLoyalty(){
   punch.innerHTML = html;
   document.getElementById('redeem-btn').style.display = c.stamps >= GOAL ? 'block' : 'none';
   // profile
-  document.getElementById('prof-ava').textContent = c.name[0].toUpperCase();
+  const ava = document.getElementById('prof-ava');
+  const photo = localStorage.getItem('bounty_avatar_' + (c.id || c.phone || 'guest'));
+  if (photo){
+    ava.style.backgroundImage = 'url(' + photo + ')';
+    ava.classList.add('has-photo');
+    ava.firstChild.nodeValue = '';
+  } else {
+    ava.style.backgroundImage = '';
+    ava.classList.remove('has-photo');
+    ava.firstChild.nodeValue = c.name[0].toUpperCase();
+  }
   document.getElementById('prof-name').textContent = c.name;
   document.getElementById('prof-level').textContent = c.free >= 3 ? '★ GOLD MEMBER' : '★ BOUNTY CLUB';
   document.getElementById('prof-stamps').textContent = c.stamps;
