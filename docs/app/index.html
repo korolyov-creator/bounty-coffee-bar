@@ -337,7 +337,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="info">
         <div class="name">Bounty Сайрам</div>
         <div class="addr">📍 улица Сайрам 25/1 · Ташкент</div>
-        <div class="hours"><span class="dot"></span>Открыто · 08:00–23:00</div>
+        <div class="hours"><span class="dot"></span>Открыто · 08:00–20:00</div>
         <div class="acts">
           <a href="https://maps.app.goo.gl/iok3Hvfezpa393VC8" target="_blank">Google Maps</a>
           <a href="https://yandex.ru/maps/org/218338813837/" target="_blank">Yandex</a>
@@ -794,6 +794,15 @@ const MENU = {
 // === Render menu ===
 function renderMenu(cat){
   const list = document.getElementById('menu-list');
+  if (cat === 'Комбо'){
+    list.innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:rgba(242,234,215,.85)">
+        <div style="font-size:56px;margin-bottom:12px">🚧</div>
+        <h3 style="margin:0 0 8px;font-family:var(--display, serif);font-size:22px">Скоро!</h3>
+        <p style="margin:0;font-size:14px;line-height:1.5;opacity:.75">Готовим фирменные комбо — кофе + выпечка со скидкой. Запустим совсем скоро.</p>
+      </div>`;
+    return;
+  }
   list.innerHTML = MENU[cat].map((i,idx)=>`
     <div class="item" onclick="openProd('${cat}',${idx})">
       <div class="ic"${i.ph ? ` style="background-image:url('${i.ph}');background-size:cover;background-position:center"` : ''}>${i.ph ? '' : i.ic}</div>
@@ -920,7 +929,7 @@ function renderCartBar(){
 }
 const POINTS = [
   {id:'hadra',  name:'Хадра · Ц-14', sub:'ул. Хадра 25 · 24/7'},
-  {id:'sayram', name:'Сайрам 25/1',  sub:'08:00 – 23:00'}
+  {id:'sayram', name:'Сайрам 25/1',  sub:'08:00 – 20:00'}
 ];
 const PICKUP_TIMES = ['Как можно скорее','Через 15 мин','Через 30 мин','Через 45 мин'];
 let coPoint = localStorage.getItem('bounty_point') || null, coTime = 0;
