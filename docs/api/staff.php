@@ -226,8 +226,15 @@ if ($action === 'sub_redeem') {
     if ($st === 'expired') { return [$data, array('err' => 'expired')]; }
     if ($st === 'frozen') { return [$data, array('err' => 'frozen', 'until' => $s['frozen_until'])]; }
     $today = date('Y-m-d');
-    if (isset($s['used'][$today])) { return [$data, array('err' => 'used_today')]; }
-    $s['used'][$today] = array('by' => $who, 'ts' => date('c'));
+    // проверка часового окна (для «Утро» — 08:00-10:00)
+    $hoursErr = sub_hours_check($s['plan']);
+    if ($hoursErr !== null) { return [$data, array('err' => 'off_hours', 'hours' => $hoursErr)]; }
+    // VIP разрешает до 2 напитков в день; остальные — 1
+    $p = sub_plans()[$s['plan']] ?? null;
+    $maxPerDay = !empty($p['vip']) ? 2 : 1;
+    $used = isset($s['used'][$today]) ? (is_array($s['used'][$today]) && isset($s['used'][$today]['n']) ? (int)$s['used'][$today]['n'] : 1) : 0;
+    if ($used >= $maxPerDay) { return [$data, array('err' => 'used_today', 'max' => $maxPerDay)]; }
+    $s['used'][$today] = array('by' => $who, 'ts' => date('c'), 'n' => $used + 1);
     if (count($s['used']) > 400) { $s['used'] = array_slice($s['used'], -400, null, true); }
     $s['hist'][] = array('t' => 'use', 'by' => $who, 'ts' => date('c'));
     if (count($s['hist']) > 500) { $s['hist'] = array_slice($s['hist'], -500); }
@@ -236,7 +243,7 @@ if ($action === 'sub_redeem') {
   });
   if (isset($res['err'])) {
     audit('sub_redeem_fail', array('phone' => $phone, 'err' => $res['err'], 'by' => $who));
-    respond(['ok' => false, 'reason' => $res['err'], 'until' => $res['until'] ?? '']);
+    respond(['ok' => false, 'reason' => $res['err'], 'until' => $res['until'] ?? '', 'hours' => $res['hours'] ?? '', 'max' => $res['max'] ?? 1]);
   }
   audit('sub_redeem', array('phone' => $phone, 'by' => $who));
   respond(['ok' => true, 'sub' => sub_public($res)]);

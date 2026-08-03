@@ -295,11 +295,45 @@ function pay_link($method, $amount, $phone) {
 //              used:{"Y-m-d":{by,ts}}, hist:[{t:'sell'|'use'|'freeze'|'unfreeze',...}]} }
 function sub_plans() {
   return array(
-    'month'   => array('n' => 'Месяц',   'days' => 30,  'price' => 649000,  'freeze' => 3),
-    'quarter' => array('n' => 'Квартал', 'days' => 90,  'price' => 1790000, 'freeze' => 10),
-    'half'    => array('n' => 'Полгода', 'days' => 180, 'price' => 3290000, 'freeze' => 20),
-    'year'    => array('n' => 'Год',     'days' => 365, 'price' => 5990000, 'freeze' => 40),
+    'morning'   => array('n' => 'Утро · Месяц', 'days' => 30, 'price' => 349000, 'freeze' => 2,
+                         'hours' => '08:00-10:00', 'tag' => '☀️',
+                         'desc' => 'Утренний напиток каждое утро с 8:00 до 10:00. Идеально по дороге на работу.'),
+    'month'     => array('n' => 'Месяц',   'days' => 30,  'price' => 649000,  'freeze' => 3,
+                         'hours' => '', 'tag' => '',
+                         'desc' => '1 напиток в день · без ограничений по времени.'),
+    'quarter'   => array('n' => 'Квартал', 'days' => 90,  'price' => 1790000, 'freeze' => 10,
+                         'hours' => '', 'tag' => '',
+                         'desc' => '1 напиток в день · без ограничений по времени.'),
+    'half'      => array('n' => 'Полгода', 'days' => 180, 'price' => 3290000, 'freeze' => 20,
+                         'hours' => '', 'tag' => '',
+                         'desc' => '1 напиток в день · без ограничений по времени.'),
+    'year'      => array('n' => 'Год',     'days' => 365, 'price' => 5990000, 'freeze' => 40,
+                         'hours' => '', 'tag' => '',
+                         'desc' => '1 напиток в день · без ограничений по времени.'),
+    'vip'       => array('n' => 'VIP · Год', 'days' => 365, 'price' => 9990000, 'freeze' => 60,
+                         'hours' => '', 'tag' => '👑', 'vip' => true,
+                         'perks' => array(
+                           'До 2 напитков в день (любые, включая фирменный раф Bounty)',
+                           'Приоритет в очереди — «VIP» на стакане',
+                           'Скидка 20% на всю выпечку и ПП-сэндвичи',
+                           'Именной стакан на любимую точку',
+                           '60 дней заморозки в подарок',
+                         ),
+                         'desc' => 'Премиум для тех, кто с нами каждый день.'),
   );
+}
+
+// Проверить, попадает ли текущий момент в окно плана (для морнинг-абонемента).
+// Возвращает null если ок, или строку с сообщением о запрете.
+function sub_hours_check($plan) {
+  $p = sub_plans()[$plan] ?? null;
+  if (!$p || empty($p['hours'])) { return null; }
+  list($from, $to) = array_map('trim', explode('-', $p['hours']));
+  $now = date('H:i');
+  if ($now < $from || $now >= $to) {
+    return $p['hours'];
+  }
+  return null;
 }
 
 function sub_state($s) {
@@ -318,11 +352,13 @@ function sub_days_left($s) {
 function sub_public($s) {
   if (!$s) { return null; }
   $today = date('Y-m-d');
+  $p = sub_plans()[$s['plan']] ?? null;
   return array(
-    'plan' => $s['plan'], 'plan_name' => sub_plans()[$s['plan']]['n'] ?? $s['plan'],
+    'plan' => $s['plan'], 'plan_name' => $p['n'] ?? $s['plan'],
     'end' => $s['end'], 'days_left' => sub_days_left($s), 'state' => sub_state($s),
     'used_today' => isset($s['used'][$today]),
     'frozen_until' => $s['frozen_until'] ?? '', 'freeze_left' => (int)($s['freeze_left'] ?? 0),
+    'hours' => $p['hours'] ?? '', 'is_vip' => !empty($p['vip']),
   );
 }
 

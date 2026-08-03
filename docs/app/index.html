@@ -223,6 +223,17 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div style="color:var(--gold);font-size:13px;font-weight:700" id="sub-home-cta">Подробнее ›</div>
     </div>
 
+    <!-- Мы за здоровье клиента -->
+    <div class="card" style="border:1px solid rgba(74,222,128,.35);background:linear-gradient(180deg,rgba(20,83,45,.15),rgba(15,31,58,.4))">
+      <h3 style="display:flex;align-items:center;gap:8px">💚 Мы заботимся о клиенте</h3>
+      <div class="sub" style="line-height:1.7;margin-top:8px;color:rgba(242,234,215,.9);font-size:14px">
+        🥛 <b>Только безлактозное молоко</b> — во всех капучино, латте, рафах. Никакой тяжести после кофе.<br>
+        🥐 <b>Выпечка без сахара и без глютена</b> — отдельная витрина для тех, кто следит за формой.<br>
+        🥗 <b>ПП-сэндвичи</b> — цельнозерновой хлеб, курица/тунец, овощи. Сытно, чисто, без муки высшего сорта.
+      </div>
+      <div class="tip" style="margin-top:10px">Спроси у бариста — покажем состав любой позиции.</div>
+    </div>
+
     <!-- Кофейный гороскоп дня -->
     <div class="card" id="horo-card">
       <h3>🔮 Кофейный гороскоп</h3>
@@ -736,15 +747,24 @@ const MENU = {
     {n:'Лонг блэк', d:'250 / 500 мл', p:'32 / 40 000', ic:'☕'}
   ],
   'С молоком':[
-    {n:'Капучино', d:'250 / 500 мл', p:'30 / 36 000', ic:'☕'},
-    {n:'Латте', d:'500 мл', p:'32 000', ic:'☕'},
-    {n:'Флэт уайт', d:'250 / 500 мл', p:'36 / 45 000', ic:'☕'},
-    {n:'Раф Баунти', d:'250 / 500 мл · фирменный', p:'40 / 46 000', ic:'🌴'},
-    {n:'Раф классик', d:'250 / 500 мл', p:'40 / 46 000', ic:'☕'},
-    {n:'Мокко', d:'250 / 500 мл', p:'38 / 42 000', ic:'🍫'},
-    {n:'Банановый кофе', d:'500 мл', p:'40 000', ic:'🍌'},
-    {n:'Какао американский', d:'500 мл', p:'45 000', ic:'🍫'},
-    {n:'Горячий шоколад', d:'250 мл', p:'32 000', ic:'🍫'},
+    {n:'Капучино', d:'250 / 500 мл · безлактозное молоко 🥛✓', p:'30 / 36 000', ic:'☕'},
+    {n:'Латте', d:'500 мл · безлактозное молоко 🥛✓', p:'32 000', ic:'☕'},
+    {n:'Флэт уайт', d:'250 / 500 мл · безлактозное молоко 🥛✓', p:'36 / 45 000', ic:'☕'},
+    {n:'Раф Баунти', d:'250 / 500 мл · фирменный · безлактозное 🥛✓', p:'40 / 46 000', ic:'🌴'},
+    {n:'Раф классик', d:'250 / 500 мл · безлактозное молоко 🥛✓', p:'40 / 46 000', ic:'☕'},
+    {n:'Мокко', d:'250 / 500 мл · безлактозное молоко 🥛✓', p:'38 / 42 000', ic:'🍫'},
+    {n:'Банановый кофе', d:'500 мл · безлактозное молоко 🥛✓', p:'40 000', ic:'🍌'},
+    {n:'Какао американский', d:'500 мл · безлактозное молоко 🥛✓', p:'45 000', ic:'🍫'},
+    {n:'Горячий шоколад', d:'250 мл · безлактозное молоко 🥛✓', p:'32 000', ic:'🍫'},
+  ],
+  'ПП · без сахара':[
+    {n:'ПП-сэндвич с курицей', d:'цельнозерновой хлеб · без муки в/с', p:'42 000', ic:'🥗'},
+    {n:'ПП-сэндвич с тунцом', d:'цельнозерновой хлеб · овощи', p:'45 000', ic:'🥗'},
+    {n:'Овсянка с ягодами', d:'без сахара · с медом на выбор', p:'32 000', ic:'🥣'},
+    {n:'Гранола-боул', d:'йогурт без сахара + фрукты', p:'38 000', ic:'🥣'},
+    {n:'Кето-маффин', d:'без сахара · без глютена · миндальная мука', p:'28 000', ic:'🧁'},
+    {n:'Печенье овсяное', d:'без сахара · без муки · финики', p:'18 000', ic:'🍪'},
+    {n:'Круассан миндальный БГ', d:'без глютена · без сахара', p:'32 000', ic:'🥐'},
   ],
   'Холодные':[
     {n:'Айс-капучино', d:'250 мл', p:'36 000', ic:'🧊'},
@@ -1354,14 +1374,26 @@ function drawSubQr(){
 function renderSubPlans(plans){
   const box = document.getElementById('sub-plans-list');
   if (!box) return;
-  const order = ['month','quarter','half','year'];
+  const order = ['morning','month','quarter','half','year','vip'];
+  const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   box.innerHTML = order.filter(k => plans && plans[k]).map(k => {
     const p = plans[k];
     const perDay = Math.round(p.price / p.days / 1000);
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.08)">' +
-      '<div style="flex:1"><div style="font-weight:700">' + p.n + ' · ' + p.days + ' дн.</div>' +
-      '<div class="sub" style="opacity:.75;font-size:12px">≈ ' + perDay + ' 000/чашка · заморозка до ' + p.freeze + ' дн.</div></div>' +
-      '<div style="font-family:\'Playfair Display\',serif;font-weight:700;color:var(--gold)">' + fmtSum(p.price) + '</div></div>';
+    const tag = p.tag ? p.tag + ' ' : '';
+    const hoursLine = p.hours ? '<div style="color:#f5c542;font-size:12px;margin-top:2px">🕗 ' + esc(p.hours) + ' — только утро</div>' : '';
+    const descLine = p.desc ? '<div class="sub" style="opacity:.75;font-size:12px;margin-top:2px">' + esc(p.desc) + '</div>' : '';
+    const perksHtml = (p.perks && p.perks.length)
+      ? '<ul style="margin:6px 0 0;padding-left:18px;font-size:12px;line-height:1.6;color:rgba(242,234,215,.85)">' +
+        p.perks.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>'
+      : '';
+    const isVip = !!p.vip;
+    const border = isVip ? 'border:1px solid rgba(232,121,249,.5);border-radius:14px;padding:12px 14px;margin:8px 0;background:linear-gradient(180deg,rgba(232,121,249,.06),rgba(59,15,74,.15))'
+                         : 'border-bottom:1px solid rgba(255,255,255,.08);padding:11px 0';
+    return '<div style="display:flex;align-items:flex-start;gap:12px;' + border + '">' +
+      '<div style="flex:1"><div style="font-weight:700">' + tag + esc(p.n) + ' · ' + p.days + ' дн.</div>' +
+      hoursLine + descLine + perksHtml +
+      '<div class="sub" style="opacity:.75;font-size:11px;margin-top:6px">≈ ' + perDay + ' 000/чашка · заморозка до ' + p.freeze + ' дн.</div></div>' +
+      '<div style="font-family:\'Playfair Display\',serif;font-weight:700;color:' + (isVip ? '#e879f9' : 'var(--gold)') + ';white-space:nowrap">' + fmtSum(p.price) + '</div></div>';
   }).join('');
 }
 function updateSubHome(s){
@@ -1395,8 +1427,11 @@ function renderSubScreen(){
     document.getElementById('sub-days-left').textContent = s.days_left + ' дн.';
     document.getElementById('sub-until').textContent = 'Действует до ' + subFmtDate(s.end);
     const frozen = s.state === 'frozen';
+    const hoursText = s.hours ? ' · окно ' + s.hours : '';
+    const maxDrinks = s.is_vip ? 2 : 1;
     document.getElementById('sub-today').textContent = frozen ? '' :
-      (s.used_today ? '✅ Сегодняшний кофе получен' : '☕ Сегодня доступен 1 напиток');
+      (s.used_today ? '✅ Сегодняшний кофе получен' + hoursText
+                    : '☕ Сегодня доступно ' + maxDrinks + ' напитк' + (maxDrinks === 1 ? '' : 'а') + hoursText);
     document.getElementById('sub-qr-card').style.display = frozen ? 'none' : '';
     const fc = document.getElementById('sub-frozen-card');
     fc.style.display = frozen ? '' : 'none';
