@@ -2036,8 +2036,8 @@ function accountPull(){
     .then(r => r.json())
     .then(j => {
       if (!j.ok){
-        // единая сессия: токен отозван — на этом номере вошли с другого устройства
-        if (j.reason === 'bad_token') forceLogout('Вход в твой аккаунт выполнен на другом устройстве.\nЗдесь нужно войти заново по номеру и SMS-коду.');
+        // токен недействителен (истёк или вытеснен) — нужен повторный вход
+        if (j.reason === 'bad_token') forceLogout('Сессия устарела.\nВойди заново по номеру и SMS-коду — карта и баллы сохранены.');
         return;
       }
       if (!j.account) return;
@@ -2046,8 +2046,36 @@ function accountPull(){
       saveClient({name:a.name, phone:a.phone, id:a.id,
         points:(typeof a.points === 'number' ? a.points : undefined),
         stamps:a.stamps||0, total:a.total||0, free:a.free||0, reg:a.reg, hist:a.hist||[]});
+      mergeServerOrders(j.orders);
+      refreshWallet();
     })
     .catch(()=>{});
+}
+// Заказы с сервера (по номеру) → в локальный список: «Мои заказы» одинаковы на всех устройствах
+function mergeServerOrders(srv){
+  if (!Array.isArray(srv) || !srv.length) return;
+  const orders = getMyOrders();
+  const byId = {};
+  orders.forEach(o => { byId[o.id] = o; });
+  let changed = false;
+  srv.forEach(s => {
+    const loc = byId[s.id];
+    if (loc){
+      if (s.status && s.status !== loc.status){ loc.status = s.status; changed = true; }
+      if (s.pk && !loc.pk){ loc.pk = s.pk; changed = true; }
+    } else {
+      // заказ с другого устройства: credited=true, чтобы не дублировать локальное начисление (сервер уже начислил)
+      orders.push({id:s.id, num:s.num, ts:s.ts, point:s.point_name||s.point, items:s.items||[],
+        total:s.total, status:s.status||'new', pay:s.pay, paid:!!s.paid, pk:s.pk, credited:true});
+      changed = true;
+    }
+  });
+  if (changed){
+    orders.sort((a,b) => String(a.ts).localeCompare(String(b.ts)));
+    localStorage.setItem('bounty_orders', JSON.stringify(orders.slice(-20)));
+    if (document.getElementById('scr-myorders').classList.contains('active')) renderMyOrders();
+    renderCartBar();
+  }
 }
 function forceLogout(msg){
   ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen'].forEach(k => localStorage.removeItem(k));
@@ -2516,6 +2544,9 @@ function renderHistory(c){
   }).join('');
 }
 window.addEventListener('load', () => { startEntry(); renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); subHomeRefresh(); chatPoll(false); });
+// Мультиустройство: регулярно подтягиваем аккаунт с сервера (карта/баллы/заказы одинаковы на всех телефонах)
+setInterval(accountPull, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden){ accountPull(); pollOrders(); } });
 
 // === PWA Install ===
 // В нативной обёртке (Capacitor) и в уже установленной PWA баннер не нужен

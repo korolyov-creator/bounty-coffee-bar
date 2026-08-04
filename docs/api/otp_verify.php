@@ -50,10 +50,17 @@ $account = store_update('accounts.json', function ($data) use ($phone, $name) {
 
 $token = bin2hex(random_bytes(24));
 store_update('tokens.json', function ($data) use ($token, $phone) {
-  // чистка токенов старше года + ЕДИНАЯ СЕССИЯ: новый вход отзывает все прежние токены этого номера
+  // МУЛЬТИСЕССИЯ: один номер может быть залогинен на нескольких устройствах одновременно.
+  // Чистка: токены старше года + не больше 8 активных токенов на номер (вытесняем самые старые).
   $cut = time() - 365 * 86400;
+  $mine = array();
   foreach ($data as $t => $v) {
-    if (($v['ts'] ?? 0) < $cut || (isset($v['phone']) && $v['phone'] === $phone)) unset($data[$t]);
+    if (($v['ts'] ?? 0) < $cut) { unset($data[$t]); continue; }
+    if (isset($v['phone']) && $v['phone'] === $phone) { $mine[$t] = (int)($v['ts'] ?? 0); }
+  }
+  if (count($mine) >= 8) {
+    asort($mine);
+    foreach (array_slice(array_keys($mine), 0, count($mine) - 7) as $t) { unset($data[$t]); }
   }
   $data[$token] = array('phone' => $phone, 'ts' => time());
   return [$data, true];
