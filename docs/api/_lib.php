@@ -227,7 +227,17 @@ function wallet_auth($d) {
   if (!$phone || $id === '') { respond(['ok' => false, 'reason' => 'bad_auth'], 401); }
   $wallets = store_read('wallets.json');
   if (isset($wallets[$phone]) && !empty($wallets[$phone]['id']) && $wallets[$phone]['id'] !== $id) {
-    respond(['ok' => false, 'reason' => 'id_mismatch'], 403);
+    // id мог смениться при перевходе (единая сессия) — сверяем с каноном accounts.json и перепривязываем
+    $accounts = store_read('accounts.json');
+    $canon = isset($accounts[$phone]['id']) ? $accounts[$phone]['id'] : '';
+    if ($canon !== '' && $canon === $id) {
+      store_update('wallets.json', function ($data) use ($phone, $id) {
+        if (isset($data[$phone])) { $data[$phone]['id'] = $id; }
+        return [$data, true];
+      });
+    } else {
+      respond(['ok' => false, 'reason' => 'id_mismatch'], 403);
+    }
   }
   return array($phone, $id);
 }
