@@ -1,11 +1,13 @@
-// Bounty PWA · Service Worker v31
-const CACHE = 'bounty-app-v31';
+// Bounty PWA · Service Worker v32
+const CACHE = 'bounty-app-v32';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png'
 ];
 
