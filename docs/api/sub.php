@@ -7,6 +7,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(['ok' => false], 405); }
 $d = json_body();
 if (!$d) { respond(['ok' => false], 400); }
 
+// публичный action — вернуть только список тарифов (без auth)
+if (($d['action'] ?? '') === 'plans') {
+  respond(['ok' => true, 'plans' => sub_plans()]);
+}
+
 $phone = norm_phone($d['phone'] ?? '');
 $cid = substr(preg_replace('/[^A-Za-z0-9\-]/', '', (string)($d['client_id'] ?? '')), 0, 32);
 if (!$phone || $cid === '') { respond(['ok' => false, 'reason' => 'bad_auth'], 401); }

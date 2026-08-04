@@ -385,7 +385,13 @@ function load(){
     orders = res.orders.sort((a,b) => b.ts.localeCompare(a.ts));
     const fresh = orders.filter(o => !knownIds.has(o.id) && o.status === 'new');
     orders.forEach(o => knownIds.add(o.id));
-    if (!firstLoad && fresh.length) beep();
+    if (!firstLoad && fresh.length) {
+      // Тройной сигнал + вибрация для нового заказа
+      beep(1200); setTimeout(()=>beep(1400),180); setTimeout(()=>beep(1600),360);
+      if (navigator.vibrate) navigator.vibrate([200,100,200]);
+      document.title = '🔔 (' + fresh.length + ') Новый заказ · Bounty';
+      setTimeout(()=>{ document.title = 'Bounty · панель бариста'; }, 8000);
+    }
     firstLoad = false;
     document.getElementById('bar').textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU') + ' · активных: ' + orders.filter(o=>['new','making','ready'].includes(o.status)).length + ' · ' + (ROLE === 'admin' ? 'админ' : (SNAME || 'бариста'));
     render();
@@ -513,14 +519,27 @@ function pkLoadJsQR(){
 }
 function pkScan(){
   if (pkStream){ pkStopCam(); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    alert('Браузер не поддерживает камеру.\nВведи 4-значный код клиента вручную.');
+    return;
+  }
+  const btn = document.getElementById('pk-scan-btn');
+  btn.textContent = '⏳ Запрашиваю доступ к камере…';
   pkLoadJsQR().then(() =>
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false})
   ).then(stream => {
     pkStream = stream;
     const v = document.getElementById('pk-video');
-    v.srcObject = stream; v.style.display = 'block'; v.play();
+    v.srcObject = stream;
+    v.setAttribute('playsinline','');
+    v.setAttribute('muted','');
+    v.style.display = 'block';
+    return v.play().catch(()=>{});
+  }).then(() => {
     document.getElementById('pk-scan-btn').textContent = '⏹ Остановить камеру';
+    const v = document.getElementById('pk-video');
     const cv = document.getElementById('pk-canvas'), cx = cv.getContext('2d');
+    const v = document.getElementById('pk-video');
     pkTimer = setInterval(() => {
       if (!v.videoWidth) return;
       cv.width = v.videoWidth; cv.height = v.videoHeight;
@@ -547,7 +566,20 @@ function pkScan(){
         alert('Это QR заказа, а не абонемента.\nДля выдачи заказа нажми «Выдан клиенту» на самом заказе.');
       }
     }, 300);
-  }).catch(() => alert('Камера недоступна — введи код вручную'));
+  }).catch(err => {
+    const btn = document.getElementById('pk-scan-btn');
+    btn.textContent = '📷 Сканировать QR';
+    const name = (err && err.name) || '';
+    if (name === 'NotAllowedError' || name === 'PermissionDeniedError'){
+      alert('Разрешение на камеру отклонено.\nОткрой Настройки → Bounty Coffee Bar → Камера → Вкл.\nПока — введи 4-значный код клиента вручную.');
+    } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError'){
+      alert('Камера не найдена на устройстве.\nВведи 4-значный код клиента вручную.');
+    } else if (name === 'NotReadableError'){
+      alert('Камера занята другим приложением. Закрой его и попробуй снова.');
+    } else {
+      alert('Не удалось включить камеру (' + (name || 'ошибка') + ').\nВведи 4-значный код клиента вручную.');
+    }
+  });
 }
 function pkSubmit(){
   const code = document.getElementById('pk-input').value.replace(/\D/g,'');

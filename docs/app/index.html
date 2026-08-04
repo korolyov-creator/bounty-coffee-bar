@@ -23,7 +23,7 @@
   --ink:#0b0f17;--muted:#6b7280;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bot:env(safe-area-inset-bottom,0px);
-  --tab-h:72px;
+  --tab-h:60px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45;overscroll-behavior:none}
@@ -37,6 +37,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 /* HEADERS */
 .scr-head{margin-bottom:18px}
 .scr-head .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+.loy-badge{display:inline-flex;align-items:center;gap:4px;background:#4b3018;color:#c68f5a;font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;letter-spacing:.02em;line-height:1.4;flex:none}
 .scr-head h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1.05;letter-spacing:-.01em}
 .scr-head h1 .script{font-family:'Cookie',cursive;color:var(--gold);font-size:.7em;font-weight:400;display:block;margin-top:2px;line-height:1}
 .scr-head .greet{color:rgba(242,234,215,.7);font-size:14px;margin-top:6px}
@@ -116,7 +117,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .menu-list-rows .row .r{color:rgba(242,234,215,.4);font-size:18px}
 
 /* TAB BAR */
-.tabbar{position:absolute;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--safe-bot));background:rgba(9,21,41,.96);backdrop-filter:blur(20px);border-top:1px solid rgba(201,161,74,.18);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px;padding-bottom:var(--safe-bot);z-index:50}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--safe-bot));background:rgba(9,21,41,.55);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-top:1px solid rgba(201,161,74,.22);display:flex;justify-content:space-around;align-items:flex-start;padding-top:6px;padding-bottom:calc(var(--safe-bot) - 4px);z-index:50}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.tabbar{background:rgba(9,21,41,.92)}}
 .tab{flex:1;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:rgba(242,234,215,.5);font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:color .15s;-webkit-tap-highlight-color:transparent}
 .tab .ico{font-size:22px;line-height:1}
 .tab.active{color:var(--gold)}
@@ -190,19 +192,32 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <main class="screen active" id="scr-home">
     <div class="scr-head">
       <div class="eyebrow">★ С ВОЗВРАЩЕНИЕМ</div>
-      <h1>Привет<span class="script" id="home-name">гость</span></h1>
-      <div class="greet">Тихая пауза ждёт тебя — Ц-14 открыт 24/7</div>
+      <h1 id="home-greeting">Привет<span class="script" id="home-name">гость</span></h1>
+      <div class="greet" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span id="home-status-badge" class="loy-badge">🥉 Бронза</span>
+        <span id="home-greet-text">Тихая пауза ждёт тебя — Ц-14 открыт 24/7</span>
+      </div>
     </div>
 
-    <!-- Loyalty punch preview -->
-    <div class="card gold" onclick="go('card')" style="cursor:pointer">
-      <h3>★ 6-Й КОФЕ БЕСПЛАТНО</h3>
-      <div class="stars-row">
-        <span class="count" id="home-stamps">0</span>
-        <span class="label">/ 5 покупок</span>
+    <!-- Статус лояльности + прогресс -->
+    <div class="card gold" onclick="go('card')" style="cursor:pointer;padding:16px 18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div class="sub" style="opacity:.75;font-size:11px;margin:0">ТВОЙ СТАТУС</div>
+          <h3 id="loy-status-title" style="margin:0;font-size:22px;font-family:'Playfair Display',serif">🥉 Бронза</h3>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:800;color:var(--gold);line-height:1" id="loy-points">0</div>
+          <div class="sub" style="opacity:.75;font-size:11px;margin:0">баллов</div>
+        </div>
       </div>
-      <div class="progress"><div class="bar" id="home-bar" style="width:0%"></div></div>
-      <div class="sub" style="margin-top:10px;opacity:.85" id="home-loyalty-sub">Покажи карту бариста при покупке ☕</div>
+      <div class="progress" style="margin-top:10px"><div class="bar" id="loy-bar" style="width:0%"></div></div>
+      <div class="sub" style="margin-top:8px;font-size:12px;line-height:1.4" id="loy-progress-text">До следующего уровня ещё чуть-чуть</div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(15,31,58,.25)">
+        <div class="sub" style="color:var(--navy);opacity:.7;font-size:10.5px;margin:0;letter-spacing:.03em;font-weight:700">СЕЙЧАС У ТЕБЯ ЕСТЬ:</div>
+        <div id="loy-perks-current" style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--navy);opacity:.85">Штамп 5+1 бесплатно · базовые акции</div>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--navy);opacity:.8;font-weight:600">Открыть карту и все уровни →</div>
     </div>
 
     <!-- Кошелёк -->
@@ -251,11 +266,17 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <!-- Текущая акция -->
-    <div class="card dark" style="background-image:linear-gradient(135deg,rgba(15,31,58,.85),rgba(201,161,74,.15)),url('../assets/img/post-2.jpg');background-size:cover;background-position:center 30%">
-      <h3>★ Акция дня</h3>
-      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1.1;margin-bottom:6px">Ночной эспрессо<br>−20% после 23:00</div>
-      <div class="sub" style="opacity:.85">Только на Ц-14 · 24/7</div>
+    <!-- Флагман Ц-14 фото -->
+    <div class="card dark" onclick="go('locations')" style="cursor:pointer;padding:0;overflow:hidden;border:1px solid rgba(212,175,55,.25)">
+      <div style="width:100%;aspect-ratio:16/9;background-image:url('../assets/img/interior-hadra.jpg');background-size:cover;background-position:center center;background-color:var(--navy-deep)"></div>
+      <div style="padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <h3 style="margin:0">☕ Флагман Ц-14 · Хадра</h3>
+          <span style="background:#22c55e;color:var(--navy);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.03em">24/7</span>
+        </div>
+        <div class="sub" style="margin-top:6px;opacity:.85">ул. Хадра 25 · Ташкент · открыто прямо сейчас</div>
+        <div style="margin-top:8px;font-size:13px;color:var(--gold);font-weight:700">🌙 Акция дня: ночной эспрессо −20% после 23:00</div>
+      </div>
     </div>
 
     <!-- Твой обычный (последний заказ) -->
@@ -313,13 +334,28 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
     <div class="divider"></div>
 
-    <div class="card">
-      <h3>★ КАК РАБОТАЕТ</h3>
-      <p style="font-size:13px;line-height:1.6;color:rgba(242,234,215,.75)">
-        Каждая покупка любого напитка = <b style="color:var(--gold)">1 отметка</b>. Собери <b style="color:var(--gold)">5 отметок</b> — <b style="color:var(--gold)">шестой напиток бесплатно</b> (до 35 000 сум).
-        <br><br>
-        Отметку ставит бариста на твоём телефоне при оплате. Карта действует во всех точках Bounty.
-      </p>
+    <div class="card gold" style="padding:16px 18px">
+      <div class="sub" style="opacity:.7;font-size:11px;margin:0;letter-spacing:.05em;font-weight:700">ТВОЙ УРОВЕНЬ СЕЙЧАС</div>
+      <h3 id="card-status-title" style="margin:6px 0 2px;font-size:24px;font-family:'Playfair Display',serif">🥉 Бронза</h3>
+      <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:800;color:var(--navy);line-height:1;margin-top:6px" id="card-points">0</div>
+      <div class="sub" style="opacity:.7;font-size:12px;margin:0;color:var(--navy)">баллов накоплено</div>
+      <div class="progress" style="margin-top:12px"><div class="bar" id="card-bar" style="width:0%"></div></div>
+      <div id="card-progress-text" style="margin-top:8px;font-size:12.5px;line-height:1.5;color:var(--navy)">Следующий уровень открывается через несколько покупок</div>
+    </div>
+
+    <h3 style="color:var(--gold);font-family:'Playfair Display',serif;font-size:18px;margin:22px 0 10px">Все уровни · сравни</h3>
+    <div id="loy-levels-list"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>★ КАК КОПИТЬ БАЛЛЫ</h3>
+      <div style="font-size:13px;line-height:1.7;color:rgba(242,234,215,.85);margin-top:4px">
+        ☕ <b>Покупка напитка</b> — <b style="color:var(--gold)">+10 баллов</b> (30–40 тыс. чек)<br>
+        🥐 <b>Покупка с едой</b> — <b style="color:var(--gold)">+15 баллов</b><br>
+        📱 <b>Заказ через приложение</b> — <b style="color:var(--gold)">+5 бонусных</b><br>
+        🎂 <b>День рождения</b> — <b style="color:var(--gold)">+50 баллов</b><br>
+        🤝 <b>Друг зарегистрировался по твоей карте</b> — <b style="color:var(--gold)">+100 баллов</b><br>
+        📸 <b>Отметка @bountycoffeebar.tashkent в сторис</b> — <b style="color:var(--gold)">+20 баллов</b>
+      </div>
     </div>
   </main>
 
@@ -417,6 +453,14 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <div class="l"><span>❓</span><span>Помощь — напиши нам</span></div>
         <div class="r">›</div>
       </div>
+      <div class="row" onclick="go('feedback')">
+        <div class="l"><span>💡</span><span>Пожелания и предложения</span></div>
+        <div class="r">›</div>
+      </div>
+      <div class="row" onclick="go('feedback');setTimeout(()=>document.getElementById('fb-type').value='partnership',50)">
+        <div class="l"><span>🤝</span><span>Сотрудничество и франшиза</span></div>
+        <div class="r">›</div>
+      </div>
       <div class="row" onclick="window.open('../oferta.html','_blank')">
         <div class="l"><span>📄</span><span>Публичная оферта</span></div>
         <div class="r">›</div>
@@ -431,14 +475,13 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.9.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька<br>
-    <span style="opacity:.6">Вход для сотрудников: <a href="../barista.html" target="_blank" style="color:var(--gold)">бариста</a> · <a href="../admin.html" target="_blank" style="color:var(--gold)">администратор</a></span></div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.9.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
   </main>
 
   <!-- ============ HISTORY ============ -->
   <main class="screen" id="scr-history">
     <div class="scr-head">
-      <button class="back-btn" onclick="go('profile')">← Назад</button>
+      <button class="back-btn" onclick="goBack('profile')">← Назад</button>
       <div class="eyebrow">📋 ИСТОРИЯ ПОКУПОК</div>
       <h1>Всё на месте<span class="script">каждая покупка — здесь</span></h1>
     </div>
@@ -450,7 +493,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ CART / CHECKOUT ============ -->
   <main class="screen" id="scr-cart">
     <div class="scr-head">
-      <button class="back-btn" onclick="go('order')">← Назад</button>
+      <button class="back-btn" onclick="goBack('order')">← Назад</button>
       <div class="eyebrow">🧾 ТВОЙ ЗАКАЗ</div>
       <h1>Корзина<span class="script">самовывоз без очереди</span></h1>
     </div>
@@ -489,7 +532,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ MY ORDERS ============ -->
   <main class="screen" id="scr-myorders">
     <div class="scr-head">
-      <button class="back-btn" onclick="go('profile')">← Назад</button>
+      <button class="back-btn" onclick="goBack('profile')">← Назад</button>
       <div class="eyebrow">🧾 МОИ ЗАКАЗЫ</div>
       <h1>Предзаказы<span class="script">статус в реальном времени</span></h1>
     </div>
@@ -501,7 +544,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ WALLET ============ -->
   <main class="screen" id="scr-wallet">
     <div class="scr-head">
-      <button class="back-btn" onclick="go('profile')">← Назад</button>
+      <button class="back-btn" onclick="goBack('profile')">← Назад</button>
       <div class="eyebrow">👛 КОШЕЛЁК</div>
       <h1>Твой баланс<span class="script">плати в одно касание</span></h1>
     </div>
@@ -535,7 +578,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ SUB (абонемент) ============ -->
   <main class="screen" id="scr-sub">
     <div class="scr-head">
-      <button class="back-btn" onclick="go('home')">← Назад</button>
+      <button class="back-btn" onclick="goBack('home')">← Назад</button>
       <div class="eyebrow">🎟 АБОНЕМЕНТ</div>
       <h1>Кофе каждый день<span class="script">одна чашка в день — по подписке</span></h1>
     </div>
@@ -584,10 +627,37 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
   </main>
 
+  <!-- ============ FEEDBACK ============ -->
+  <main class="screen" id="scr-feedback">
+    <div class="scr-head">
+      <button class="back-btn" onclick="goBack('profile')">← Назад</button>
+      <div class="eyebrow">💡 ПОЖЕЛАНИЯ И СОТРУДНИЧЕСТВО</div>
+      <h1>Скажи, что улучшить<span class="script">или предложи вместе поработать</span></h1>
+    </div>
+    <div class="card">
+      <div class="sub" style="margin-bottom:10px">Тип обращения</div>
+      <select id="fb-type" style="width:100%;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:12px 13px;color:var(--paper);font-size:15px;font-family:inherit">
+        <option value="suggestion">💡 Пожелание / идея</option>
+        <option value="complaint">⚠️ Жалоба / что не работает</option>
+        <option value="partnership">🤝 Сотрудничество / франшиза</option>
+        <option value="job">💼 Хочу к вам работать</option>
+        <option value="other">📝 Другое</option>
+      </select>
+      <div class="sub" style="margin:14px 0 6px">Как к тебе обращаться</div>
+      <input type="text" id="fb-name" placeholder="Имя" maxlength="60" style="width:100%;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:12px 13px;color:var(--paper);font-size:15px">
+      <div class="sub" style="margin:14px 0 6px">Телефон или Telegram (для ответа)</div>
+      <input type="text" id="fb-contact" placeholder="+998 __ ___ __ __ или @username" maxlength="60" style="width:100%;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:12px 13px;color:var(--paper);font-size:15px">
+      <div class="sub" style="margin:14px 0 6px">Сообщение</div>
+      <textarea id="fb-text" rows="6" maxlength="2000" placeholder="Опиши свою идею или предложение — читаем все, отвечаем" style="width:100%;background:rgba(242,234,215,.06);border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:12px 13px;color:var(--paper);font-size:15px;font-family:inherit;resize:vertical"></textarea>
+      <button class="btn-big" style="margin-top:14px" onclick="feedbackSend()">Отправить →</button>
+      <div class="tip" style="margin-top:12px">💬 Владелец получает уведомление сразу. По сотрудничеству и франшизе связываемся в течение рабочего дня.</div>
+    </div>
+  </main>
+
   <!-- ============ CHAT ============ -->
   <main class="screen" id="scr-chat">
     <div class="scr-head">
-      <button class="back-btn" onclick="go('myorders')">← Назад</button>
+      <button class="back-btn" onclick="goBack('myorders')">← Назад</button>
       <div class="eyebrow">💬 ЧАТ С БАРИСТА</div>
       <h1>Мы на связи<span class="script">ответим быстро</span></h1>
     </div>
@@ -672,9 +742,34 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   </div>
 
   <!-- REGISTRATION OVERLAY -->
-  <div class="reg-overlay" id="reg-overlay">
+  <!-- Экран выбора роли (показывается перед reg-overlay если не залогинен) -->
+  <div class="reg-overlay" id="role-picker" style="display:none;justify-content:flex-start;padding-top:calc(var(--safe-top) + 40px)">
     <div class="logo">Bounty</div>
-    <div class="sub-t">Coffee Bar · Клуб</div>
+    <div class="sub-t">Coffee Bar · выбери, кто ты</div>
+    <div style="display:grid;gap:10px;margin-top:30px">
+      <button class="btn-big" onclick="roleChoose('client')" style="text-align:left;padding:16px 18px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:26px">☕</span>
+        <span style="flex:1"><span style="display:block;font-size:16px;font-weight:800">Я клиент</span><span style="display:block;font-size:12px;opacity:.75;font-weight:500">Заказать, копить баллы, статусы</span></span>
+      </button>
+      <button class="btn-big btn-ghost" onclick="roleChoose('barista')" style="text-align:left;padding:16px 18px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:26px">👨‍🍳</span>
+        <span style="flex:1"><span style="display:block;font-size:16px;font-weight:800">Я бариста</span><span style="display:block;font-size:12px;opacity:.75;font-weight:500">Панель приёма заказов</span></span>
+      </button>
+      <button class="btn-big btn-ghost" onclick="roleChoose('admin')" style="text-align:left;padding:16px 18px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:26px">🛠</span>
+        <span style="flex:1"><span style="display:block;font-size:16px;font-weight:800">Я администратор</span><span style="display:block;font-size:12px;opacity:.75;font-weight:500">Управление сменой и персоналом</span></span>
+      </button>
+      <button class="btn-big btn-ghost" onclick="roleChoose('owner')" style="text-align:left;padding:16px 18px;display:flex;align-items:center;gap:12px;border-color:var(--gold)">
+        <span style="font-size:26px">👑</span>
+        <span style="flex:1"><span style="display:block;font-size:16px;font-weight:800;color:var(--gold)">Я владелец</span><span style="display:block;font-size:12px;opacity:.75;font-weight:500">Аналитика, KPI, лояльность</span></span>
+      </button>
+    </div>
+    <div class="hint" style="margin-top:24px;font-size:12px">Обычно выбирай «Я клиент» — тут кэшбек и статусы.<br>Служебные роли откроют внешнюю панель Bounty.</div>
+  </div>
+
+  <div class="reg-overlay" id="reg-overlay">
+    <div class="logo" id="reg-hello">Bounty</div>
+    <div class="sub-t" id="reg-hello-sub">Coffee Bar · Клуб</div>
     <div id="reg-step1">
       <label>Как тебя зовут?</label>
       <input type="text" id="reg-name" placeholder="Имя" autocomplete="given-name" maxlength="30">
@@ -716,14 +811,21 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
 <script>
 // === ROUTER ===
-const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile', wallet:'profile', chat:'profile', sub:'home'};
-function go(scr){
+const TAB_MAP = {cart:'order', orderok:'order', myorders:'profile', history:'profile', wallet:'profile', chat:'profile', sub:'home', feedback:'profile'};
+const NAV_STACK = [];
+function go(scr, opts){
+  opts = opts || {};
+  const cur = document.querySelector('.screen.active');
+  const curId = cur && cur.id ? cur.id.replace('scr-','') : null;
+  if (!opts.silent && curId && curId !== scr){ NAV_STACK.push(curId); if (NAV_STACK.length > 20) NAV_STACK.shift(); }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('scr-'+scr).classList.add('active');
+  const target = document.getElementById('scr-'+scr);
+  if (!target){ console.warn('no screen', scr); return; }
+  target.classList.add('active');
   const tab = TAB_MAP[scr] || scr;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.scr===tab));
   window.scrollTo(0,0);
-  document.querySelector('.screen.active').scrollTop = 0;
+  target.scrollTop = 0;
   if (scr === 'cart'){ renderCart(); refreshWallet(); }
   if (scr === 'myorders'){ renderMyOrders(); pollOrders(); }
   if (scr === 'wallet'){ renderWalletUI(); refreshWallet(); }
@@ -734,6 +836,12 @@ function go(scr){
   renderCartBar();
   if (navigator.vibrate) navigator.vibrate(10);
 }
+function goBack(fallback){
+  const prev = NAV_STACK.pop();
+  go(prev || fallback || 'home', {silent:true});
+}
+// системная кнопка Android «назад» + двойной свайп
+window.addEventListener('popstate', () => goBack());
 
 // === MENU DATA ===
 const MENU = {
@@ -814,15 +922,81 @@ const MENU = {
   ]
 };
 
+// === COMBO builder state ===
+let comboState = {drink:null, food:null};
+function comboReset(){ comboState = {drink:null, food:null}; renderMenu('Комбо'); }
+function comboPick(kind, cat, idx){
+  const item = MENU[cat][idx];
+  comboState[kind] = {cat, idx, item};
+  renderMenu('Комбо');
+}
+function comboAddToCart(){
+  if (!comboState.drink || !comboState.food){ alert('Выбери и напиток, и еду'); return; }
+  const dp = parseP(comboState.drink.item.p)[0];
+  const fp = parseP(comboState.food.item.p)[0];
+  const total = Math.round((dp + fp) * 0.85 / 500) * 500; // −15% и до 500
+  const line = {
+    n:'🍱 Комбо · ' + comboState.drink.item.n + ' + ' + comboState.food.item.n,
+    p: total, qty:1, u: 'combo:' + comboState.drink.item.n + '|' + comboState.food.item.n,
+    s: total,
+  };
+  cart.push(line);
+  saveCart(); renderCartBar();
+  comboState = {drink:null, food:null};
+  toast('🍱 Комбо в корзине! Скидка 15%', 3000);
+  go('cart');
+}
+
 // === Render menu ===
 function renderMenu(cat){
   const list = document.getElementById('menu-list');
   if (cat === 'Комбо'){
+    const foodCats = ['ПП · без сахара','Выпечка','Еда','Сэндвичи'];
+    const drinks = [];
+    Object.keys(MENU).forEach(k => { if (k !== 'Комбо' && k !== 'Добавки' && !foodCats.includes(k)) MENU[k].forEach((i,idx)=>drinks.push({cat:k,idx,item:i})); });
+    const foods = [];
+    Object.keys(MENU).forEach(k => { if (foodCats.includes(k)) (MENU[k]||[]).forEach((i,idx)=>foods.push({cat:k,idx,item:i})); });
+    const short = (t, n=32) => t.length > n ? t.slice(0, n-1) + '…' : t;
+    const escH = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const dp = comboState.drink ? parseP(comboState.drink.item.p)[0] : 0;
+    const fp = comboState.food ? parseP(comboState.food.item.p)[0] : 0;
+    const sum = dp + fp;
+    const discSum = Math.round(sum * 0.85 / 500) * 500;
+    const saved = sum - discSum;
     list.innerHTML = `
-      <div style="text-align:center;padding:48px 20px;color:rgba(242,234,215,.85)">
-        <div style="font-size:56px;margin-bottom:12px">🚧</div>
-        <h3 style="margin:0 0 8px;font-family:var(--display, serif);font-size:22px">Скоро!</h3>
-        <p style="margin:0;font-size:14px;line-height:1.5;opacity:.75">Готовим фирменные комбо — кофе + выпечка со скидкой. Запустим совсем скоро.</p>
+      <div style="padding:8px 4px 20px">
+        <div style="text-align:center;padding:6px 0 14px">
+          <div style="font-size:14px;color:var(--gold);font-weight:700;letter-spacing:.15em;text-transform:uppercase">🍱 Собери своё комбо</div>
+          <div class="sub" style="font-size:12px;margin-top:4px">1 напиток + 1 позиция еды · <b style="color:var(--gold)">−15%</b> от суммы</div>
+        </div>
+
+        <div class="card" style="padding:12px 14px;border:1px solid rgba(212,175,55,.35)">
+          <div class="sub" style="font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);margin:0 0 8px;font-weight:700">Шаг 1 · напиток</div>
+          ${comboState.drink
+            ? `<div style="display:flex;align-items:center;gap:10px"><div style="font-size:26px">${comboState.drink.item.ic||'☕'}</div><div style="flex:1"><div style="font-weight:700">${escH(comboState.drink.item.n)}</div><div class="sub" style="font-size:12px;margin:0">${fmtSum(dp)}</div></div><button class="chip" onclick="comboPick('drink',null,null);document.querySelector('#combo-drinks').style.display='block'">Сменить</button></div>`
+            : `<div id="combo-drinks" style="display:block"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px">${drinks.map(d=>`<button class="chip" style="padding:8px 10px;text-align:left" onclick="comboPick('drink','${escH(d.cat)}',${d.idx})"><div style="font-size:18px">${d.item.ic||'☕'}</div><div style="font-size:12px;font-weight:600;line-height:1.2">${escH(short(d.item.n,18))}</div><div style="font-size:10px;color:var(--gold);margin-top:2px">${fmtSum(parseP(d.item.p)[0])}</div></button>`).join('')}</div></div>`}
+        </div>
+
+        <div class="card" style="padding:12px 14px;margin-top:10px;border:1px solid rgba(212,175,55,.35)">
+          <div class="sub" style="font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);margin:0 0 8px;font-weight:700">Шаг 2 · еда</div>
+          ${foods.length === 0
+            ? `<div class="sub">Пока нет позиций еды в меню — скоро добавим</div>`
+            : comboState.food
+              ? `<div style="display:flex;align-items:center;gap:10px"><div style="font-size:26px">${comboState.food.item.ic||'🥐'}</div><div style="flex:1"><div style="font-weight:700">${escH(comboState.food.item.n)}</div><div class="sub" style="font-size:12px;margin:0">${fmtSum(fp)}</div></div><button class="chip" onclick="comboPick('food',null,null)">Сменить</button></div>`
+              : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px">${foods.map(d=>`<button class="chip" style="padding:8px 10px;text-align:left" onclick="comboPick('food','${escH(d.cat)}',${d.idx})"><div style="font-size:18px">${d.item.ic||'🥐'}</div><div style="font-size:12px;font-weight:600;line-height:1.2">${escH(short(d.item.n,18))}</div><div style="font-size:10px;color:var(--gold);margin-top:2px">${fmtSum(parseP(d.item.p)[0])}</div></button>`).join('')}</div>`}
+        </div>
+
+        ${(comboState.drink && comboState.food) ? `
+          <div class="card gold" style="padding:16px 18px;margin-top:12px;text-align:center">
+            <div class="sub" style="opacity:.75;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--navy);margin:0">Итого со скидкой 15%</div>
+            <div style="font-family:'Playfair Display',serif;font-size:34px;font-weight:800;color:var(--navy);line-height:1;margin-top:4px">${fmtSum(discSum)}</div>
+            <div style="text-decoration:line-through;opacity:.55;font-size:13px;color:var(--navy)">${fmtSum(sum)}</div>
+            <div style="font-size:12px;color:var(--navy);opacity:.75;margin-top:2px">Экономия: ${fmtSum(saved)}</div>
+            <button class="btn-big" style="margin-top:12px" onclick="comboAddToCart()">В корзину →</button>
+          </div>
+        ` : `
+          <div class="tip" style="margin-top:14px;text-align:center">Выбери напиток и еду — скидка применится автоматически</div>
+        `}
       </div>`;
     return;
   }
@@ -1234,36 +1408,36 @@ function cancelOrder(id){
 }
 // === КОФЕЙНЫЙ ГОРОСКОП ДНЯ (детерминирован по дате — у всех одинаковый) ===
 const HORO = [
-  {t:'Звёзды шепчут: сегодня день точных решений', x:'Старый бариста говорил: «Эспрессо — это правда без молока». Сегодня не разбавляй — ни кофе, ни слова. Один точный глоток решит больше, чем час сомнений.', d:'Эспрессо'},
-  {t:'День длинных дистанций', x:'Караван проходит пустыню не спринтом, а ровным шагом. Твой день — марафон, и большой американо в руке — твой верный верблюд.', d:'Американо'},
-  {t:'Мягкость — тоже сила', x:'Вода точит камень не ударом, а лаской. Будь сегодня как молочная пена: мягким снаружи, с крепким эспрессо внутри.', d:'Капучино'},
-  {t:'День баланса', x:'Мудрец наливал в чашу ровно половину. «Почему не до краёв?» — «Чтобы осталось место для нового». Латте — тот самый баланс: не слишком крепко, не слишком мягко.', d:'Латте'},
-  {t:'Звёзды советуют белую полосу', x:'Флэт уайт — кофе без лишнего шума: меньше пены, больше сути. Сегодня убери лишнее из планов — и день выпрямится сам.', d:'Флэт уайт'},
-  {t:'День маленького праздника', x:'Не жди повода — повод это ты. Раф Баунти со вкусом острова: закрой глаза, сделай глоток, и пусть Ташкент подождёт тридцать секунд.', d:'Раф Баунти'},
-  {t:'Классика не подводит', x:'Когда всё меняется, держись проверенного. Раф классик — как старый друг: не удивит, но и не предаст.', d:'Раф классик'},
-  {t:'Шоколадное настроение', x:'Притча гласит: усталому путнику дали какао с кофе, и он забыл, зачем злился. Мокко — мир, заключённый в стакане.', d:'Мокко'},
-  {t:'День неожиданных сочетаний', x:'Банан и кофе — как ты и понедельник: казалось бы, несовместимы, а вместе работают. Попробуй — и день пойдёт по-другому.', d:'Банановый кофе'},
-  {t:'Звёзды за смелость', x:'Шмель летать не должен, но летает — он просто не в курсе запретов. Возьми «Шмель» и сделай сегодня то, что «нельзя».', d:'Шмель'},
-  {t:'Холодная голова — горячее сердце', x:'Самурай перед боем пил холодное, чтобы думать ясно. Айс-латте — твой сегодняшний план: спокойствие снаружи, энергия внутри.', d:'Айс-латте'},
-  {t:'День свежего ветра', x:'Эспрессо-тоник — как первый весенний сквозняк: бодрит, пузырится и уносит вчерашние мысли. Открой окно. И стакан.', d:'Эспрессо-тоник'},
-  {t:'Медленный день — глубокий вкус', x:'Cold Brew заваривается 12 часов — и потому не горчит. Не торопи сегодня события: настоявшееся всегда вкуснее.', d:'Cold Brew'},
-  {t:'Разреши себе сладкое', x:'Дервиш сказал: «Отказывающий себе во всём начинает отказывать другим». Фраппучино — не слабость, а профилактика занудства.', d:'Фраппучино'},
-  {t:'День ясности', x:'Лонг блэк — это когда эспрессо не прячется за молоком. Говори сегодня прямо — тебя услышат.', d:'Лонг блэк'},
-  {t:'Тёплый день внутри', x:'Горячий шоколад — напиток из детства, когда всё было решаемо. Всё и сейчас решаемо. Просто ты забыл про шоколад.', d:'Горячий шоколад'},
-  {t:'Звёзды велят витаминиться', x:'Облепиха — солнце, которое можно пить. Чай облепиха-имбирь прогонит и хандру, и тех, кто её приносит.', d:'Чай облепиха-имбирь'},
-  {t:'Ягодный день', x:'Лето прячется в ягодах даже зимой. Ягодный чай — напомни организму, что хорошее время не закончилось, оно просто заваривается.', d:'Чай ягодный'},
-  {t:'День без суеты', x:'Мохито без алкоголя — как выходной среди недели: освежает и ничего не требует взамен. Мята знает своё дело.', d:'Мохито классический'},
-  {t:'Кислинка к удаче', x:'Примета бариста: кто утром выпил апельсиновый фрэш, тому день не посмеет быть кислым — квота исчерпана.', d:'Фрэш апельсиновый'},
-  {t:'День второго дыхания', x:'Айс-американо — эспрессо, который сходил в отпуск и вернулся собранным. Сделай паузу — и вернись так же.', d:'Айс-американо'},
-  {t:'Молочные реки', x:'Милкшейк — доказательство, что взрослым тоже можно. Особенно взрослым. Особенно сегодня.', d:'Милкшейк классический'},
-  {t:'Звёзды за двойную порцию спокойствия', x:'Какао американский: большой, тёплый, без кофеина и без претензий. Идеален, когда мир слишком шумит.', d:'Какао американский'},
-  {t:'День роз и личи', x:'Восточная мудрость: «Пей красиво — и жизнь подтянется». Чай роза и личи — самый красивый способ выпить чай в этом городе.', d:'Чай роза и личи'},
-  {t:'Тропический прогноз', x:'Маракуйя и манго — билет в отпуск за 35 тысяч. Посадка немедленно, багаж плохого настроения оставить у входа.', d:'Чай маракуйя и манго'},
-  {t:'День крепких основ', x:'Дом начинается с фундамента, день — с капучино. Всё остальное — отделочные работы.', d:'Капучино'},
-  {t:'Прохлада для горячих голов', x:'Айс-ти — древний ответ на вечный вопрос «как всё успеть и не закипеть». Со льдом, разумеется.', d:'Айс-ти'},
-  {t:'Лаймовое настроение', x:'Лайм-тоник шипит, но не злится. Бери пример: пузырись энергией, не выходя из берегов.', d:'Лайм-тоник'},
-  {t:'День заботы о себе', x:'Морковно-яблочный фрэш: звёзды посмотрели на твой режим и мягко намекают — хоть один стакан пользы, пожалуйста.', d:'Морковно-яблочный фрэш'},
-  {t:'Вишнёво-клюквенный вечер', x:'Кисло-сладкий чай — как хороший день: немного остроты, много тепла и послевкусие, ради которого всё затевалось.', d:'Чай клюква и вишня'},
+  {t:'Сегодня — режим main character', x:'День работает под твой саундтрек. Эспрессо — как beat drop: коротко, громко, невозможно проигнорировать. Один глоток и ты в главной роли своего дня.', d:'Эспрессо'},
+  {t:'Long story short — американо', x:'Планов много, времени мало? Американо — твой summary дня в 500 мл. Пей и решай, а не листай.', d:'Американо'},
+  {t:'Soft launch дня', x:'Не надо резких движений — стартуй как капучино: сначала пенка, потом суть. Мягко, но с эспрессо внутри.', d:'Капучино'},
+  {t:'Vibe check пройден', x:'Латте — это когда всё just right. Не крепко, не пресно, идеальный vibe для дня, в котором никто не выносит мозг.', d:'Латте'},
+  {t:'Минимализм — новый luxury', x:'Флэт уайт: меньше пены, больше essence. Убери из списка дел всё, что не приносит дофамина. Останется главное.', d:'Флэт уайт'},
+  {t:'Твой день — tropical arc', x:'Раф Баунти = mental отпуск на 3 минуты. Закрой глаза, глотни, представь океан. Ташкент подождёт.', d:'Раф Баунти'},
+  {t:'Comfort mode: on', x:'Раф классик — как любимый плейлист на repeat. Никаких сюрпризов, только приятное узнавание. Иногда так и надо.', d:'Раф классик'},
+  {t:'Шоколадный dopamine hit', x:'Мокко = кофе, который обнимает. Легальный способ поднять настроение без побочек. Заказывай и врубайся в свой мир.', d:'Мокко'},
+  {t:'Random encounter energy', x:'Банановый кофе — как встреча с человеком, о котором ты забыл, но соскучился. Странно, тепло и правильно.', d:'Банановый кофе'},
+  {t:'Bee mode: activated 🐝', x:'«Шмель» летает вопреки физике — он просто не читал инструкцию. Пей и делай то, что якобы невозможно. Спойлер: возможно.', d:'Шмель'},
+  {t:'Cool girl / cool guy summer', x:'Айс-латте — заявка на то, что ты в контроле. Внешне холодно, внутри — план на день, который сработает.', d:'Айс-латте'},
+  {t:'Fresh air, fresh takes', x:'Эспрессо-тоник шипит и будит. Как хорошая новость перед сном: неожиданно, но приятно. Take it.', d:'Эспрессо-тоник'},
+  {t:'Slow day, deep taste', x:'Cold Brew настаивается 12 часов — и потому не горчит. Твой день тоже: не гони, дай событиям завариться.', d:'Cold Brew'},
+  {t:'Guilty pleasure day', x:'Фраппучино — legal dose дофамина без комиссии. Никто не осудит, кроме твоего диетолога, но его сегодня нет.', d:'Фраппучино'},
+  {t:'No filter Friday (даже если не пятница)', x:'Лонг блэк — эспрессо без масок. Говори прямо, без формулировок «мне кажется» — сегодня зайдёт лучше.', d:'Лонг блэк'},
+  {t:'Inner child unlocked', x:'Горячий шоколад — терапия из детства без записи к специалисту. Всё решаемо, ты просто забыл про какао.', d:'Горячий шоколад'},
+  {t:'Immunity flex', x:'Облепиха-имбирь = ЗОЖ, который на самом деле вкусно. Хандра сегодня в очереди на выход.', d:'Чай облепиха-имбирь'},
+  {t:'Berry good day', x:'Ягодный чай — напоминание, что лето живёт в чашке круглый год. Согревает и не даёт грустить.', d:'Чай ягодный'},
+  {t:'Mocktail energy', x:'Мохито без алко — как выходной среди недели. Освежает, ничего не требует взамен, никого не бесит.', d:'Мохито классический'},
+  {t:'Vitamin C = удача', x:'Кто утром пьёт апельсиновый фрэш — у того день не смеет быть кислым. Проверенная примета Ц-14.', d:'Фрэш апельсиновый'},
+  {t:'Second wind, please', x:'Айс-американо — эспрессо после reset. Сделай паузу, вернись собранным, продолжи побеждать.', d:'Айс-американо'},
+  {t:'Милкшейк = ok to be soft', x:'Взрослые тоже имеют право. Особенно те, кто сегодня уже сделал слишком много решений.', d:'Милкшейк классический'},
+  {t:'Cozy AF', x:'Какао американский — большой, тёплый, без претензий. Как хороший разговор без агенды.', d:'Какао американский'},
+  {t:'Aesthetic day', x:'Роза и личи — самый Instagram-ready напиток дня. Пей красиво, живи красиво, чек красивый пришлём.', d:'Чай роза и личи'},
+  {t:'Tropic tab open', x:'Маракуйя-манго = билет в отпуск за 35 000. Багаж плохого настроения оставь у входа.', d:'Чай маракуйя и манго'},
+  {t:'Reset the baseline', x:'Капучино — фундамент дня. Всё остальное — отделочные работы. Сначала база, потом креатив.', d:'Капучино'},
+  {t:'Chill or die trying', x:'Айс-ти — древний ответ на «как всё успеть и не выгореть». Со льдом. Всегда со льдом.', d:'Айс-ти'},
+  {t:'Fizz, don\'t explode', x:'Лайм-тоник пузырится, но не бесит. Возьми пример — энергия без выхода из берегов, идеальный vibe.', d:'Лайм-тоник'},
+  {t:'Self-care check-in', x:'Морковно-яблочный фрэш — звёзды намекают на режим. Один стакан пользы в день никого ещё не убил.', d:'Морковно-яблочный фрэш'},
+  {t:'Bittersweet is a personality', x:'Клюква-вишня — как хороший день: немного остроты, много тепла, послевкусие того стоит.', d:'Чай клюква и вишня'},
 ];
 function horoIdx(){
   const dt = new Date();
@@ -1324,16 +1498,29 @@ function pollOrders(){
     .then(r=>r.json())
     .then(res => {
       if (!res || !res.ok) return;
-      let changed = false;
-      orders.forEach(o => { if (res.statuses[o.id] && res.statuses[o.id] !== o.status){
-        o.status = res.statuses[o.id]; changed = true;
-        if (o.status === 'done' && !o.credited){ o.credited = true; creditStamp(o.num); }
-      } });
+      let changed = false, becameReady = false, becameMaking = false;
+      orders.forEach(o => {
+        const newSt = res.statuses[o.id];
+        if (newSt && newSt !== o.status){
+          if (newSt === 'ready' && o.status !== 'ready') becameReady = true;
+          if (newSt === 'making' && o.status === 'new') becameMaking = true;
+          o.status = newSt; changed = true;
+          if (o.status === 'done' && !o.credited){ o.credited = true; creditStamp(o.num); }
+        }
+      });
       if (changed){
         localStorage.setItem('bounty_orders', JSON.stringify(orders));
         if (document.getElementById('scr-myorders').classList.contains('active')) renderMyOrders();
-        const ready = orders.find(o=>o.status==='ready');
-        if (ready && navigator.vibrate) navigator.vibrate([50,100,50]);
+        if (becameReady){
+          // Двойной приятный сигнал + вибрация: заказ готов к получению
+          beep(880); setTimeout(()=>beep(1200),200);
+          if (navigator.vibrate) navigator.vibrate([100,80,100,80,200]);
+          toast('☕ Заказ готов — забери у бариста', 5000);
+        } else if (becameMaking){
+          beep(660);
+          if (navigator.vibrate) navigator.vibrate([50,50,50]);
+          toast('👨‍🍳 Бариста готовит твой заказ', 3500);
+        }
       }
     }).catch(()=>{});
 }
@@ -1417,6 +1604,12 @@ function updateSubHome(s){
 function renderSubScreen(){
   const act = document.getElementById('sub-active-box'), promo = document.getElementById('sub-promo-box');
   if (!act || !promo) return;
+  // сначала гарантируем что промо с тарифами показывается сразу (даже без логина)
+  act.style.display = 'none';
+  promo.style.display = 'block';
+  fetch('../api/sub.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'plans'})})
+    .then(r => r.json()).then(j => { if (j && j.plans) renderSubPlans(j.plans); }).catch(()=>{});
   clientReq('../api/sub.php', {action:'status'}).then(j => {
     if (!j.ok){ act.style.display = 'none'; promo.style.display = 'block'; return; }
     renderSubPlans(j.plans);
@@ -1672,6 +1865,41 @@ function accountPull(){
 }
 
 // === LOGOUT: выход из аккаунта, повторный вход по SMS-коду ===
+// === FEEDBACK / SUGGESTIONS ===
+function feedbackSend(){
+  const type = document.getElementById('fb-type').value;
+  const name = document.getElementById('fb-name').value.trim();
+  const contact = document.getElementById('fb-contact').value.trim();
+  const text = document.getElementById('fb-text').value.trim();
+  if (text.length < 5){ alert('Напиши хотя бы пару слов'); return; }
+  if (!name){ alert('Как к тебе обращаться?'); return; }
+  const c = JSON.parse(localStorage.getItem('bounty_client') || '{}');
+  fetch('../api/feedback.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type, name, contact, text, phone: c.phone || '', client_id: c.id || ''})})
+    .then(r => r.json()).then(j => {
+      if (j.ok){
+        beep(760);
+        document.getElementById('fb-text').value = '';
+        alert('Спасибо! Твоё обращение отправлено ✓\nОтветим в течение дня.');
+        go('profile');
+      } else {
+        alert('Не получилось отправить: ' + (j.reason || 'ошибка сети') + '\nПопробуй ещё раз или напиши в Telegram @bountycoffeebar');
+      }
+    }).catch(() => alert('Нет связи. Проверь интернет и попробуй ещё раз.'));
+}
+function beep(freq){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq || 880; o.type = 'sine';
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    o.start(); o.stop(ctx.currentTime + 0.4);
+  }catch(e){}
+}
+
 // === AVATAR UPLOAD ===
 function avatarUpload(e){
   const file = e.target.files && e.target.files[0];
@@ -1877,18 +2105,133 @@ function redeemFree(){
 }
 
 let qrObj = null;
+function escHTML(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// === ROLE PICKER (первый вход) ===
+function showRolePicker(){
+  const rp = document.getElementById('role-picker');
+  const reg = document.getElementById('reg-overlay');
+  reg.classList.remove('show');
+  rp.style.display = 'flex';
+}
+function hideRolePicker(){
+  document.getElementById('role-picker').style.display = 'none';
+}
+function roleChoose(role){
+  hideRolePicker();
+  if (role === 'client'){
+    document.getElementById('reg-overlay').classList.add('show');
+    // приветствие если уже был вход
+    const last = localStorage.getItem('bounty_last_name') || '';
+    if (last){
+      document.getElementById('reg-hello').textContent = 'Привет, ' + last + '!';
+      document.getElementById('reg-hello-sub').textContent = 'войди по номеру, чтобы вернуть карту';
+    }
+    return;
+  }
+  const urls = {
+    barista: 'https://bountycoffeebar.uz/barista.html',
+    admin:   'https://bountycoffeebar.uz/admin.html',
+    owner:   'https://bountycoffeebar.uz/admin.html',
+  };
+  const label = {barista:'бариста', admin:'админа', owner:'владельца'}[role];
+  if (confirm('Открыть панель ' + label + '? Она откроется в браузере.')){
+    window.open(urls[role], '_blank');
+    setTimeout(showRolePicker, 300);
+  } else {
+    showRolePicker();
+  }
+}
+
+// === СИСТЕМА СТАТУСОВ ===
+const LOY_TIERS = [
+  {id:'bronze',   name:'Бронза',    icon:'🥉', color:'#c68f5a', bg:'#4b3018', min:0,   next:100,
+   perks:['5 покупок → 6-й напиток бесплатно','Уведомления об акциях','Персональные предложения по дню рождения']},
+  {id:'silver',   name:'Серебро',   icon:'🥈', color:'#c7ced9', bg:'#2b2f3a', min:100, next:300,
+   perks:['5% кэшбек на кошелёк с каждой покупки','Ранний доступ к сезонным напиткам','Бесплатный сироп на выбор']},
+  {id:'gold',     name:'Золото',    icon:'🥇', color:'#f5c542', bg:'#4a3808', min:300, next:800,
+   perks:['10% кэшбек на кошелёк','Приоритет в очереди (метка Gold)','Апгрейд размера бесплатно 1×/день','−15% на всю ПП-выпечку']},
+  {id:'platinum', name:'Платина',   icon:'💎', color:'#7dd3fc', bg:'#0d2f43', min:800, next:2000,
+   perks:['15% кэшбек на кошелёк','Приоритет + именной стакан на любимой точке','Двойные баллы по вторникам','1 сюрприз-напиток от бариста в месяц','Приглашения на закрытые дегустации']},
+  {id:'diamond',  name:'Бриллиант', icon:'💠', color:'#e879f9', bg:'#3b0f4a', min:2000, next:null,
+   perks:['20% кэшбек на кошелёк','Бесплатный кофе каждую пятницу утром','Пожизненная скидка 20% на ПП/выпечку','Именная зона в Ц-14 (фото и подпись)','Персональный бариста-консультант','Приглашение на открытие каждой новой точки Bounty']},
+];
+function loyTierFor(points){
+  let t = LOY_TIERS[0];
+  for (const x of LOY_TIERS) if (points >= x.min) t = x;
+  return t;
+}
+function loyPointsOf(c){
+  // если сервер уже даёт очки — используем; иначе оцениваем по total
+  if (c && typeof c.points === 'number') return c.points;
+  return ((c && c.total) || 0) * 10 + ((c && c.free) || 0) * 50;
+}
+function loyRenderBadge(tier){
+  return '<span class="loy-badge" style="background:' + tier.bg + ';color:' + tier.color + '">' + tier.icon + ' ' + tier.name + '</span>';
+}
+function loyRenderLevelsList(currentTierId, points){
+  const el = document.getElementById('loy-levels-list');
+  if (!el) return;
+  el.innerHTML = LOY_TIERS.map(t => {
+    const active = t.id === currentTierId;
+    const passed = points >= t.min;
+    return '<div class="card" style="padding:14px 16px;' +
+      (active ? 'border:1px solid ' + t.color + ';background:linear-gradient(180deg,' + t.bg + '55,rgba(15,31,58,.3))' : passed ? 'opacity:.75' : 'opacity:.55') +
+      '"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">' +
+      '<div><div style="font-family:\'Playfair Display\',serif;font-size:18px;font-weight:700;color:' + t.color + '">' + t.icon + ' ' + t.name + '</div>' +
+      '<div class="sub" style="font-size:11px;margin:0;opacity:.75">от ' + t.min + ' баллов' + (t.next ? ' до ' + t.next : '') + '</div></div>' +
+      (active ? '<span class="loy-badge" style="background:' + t.color + ';color:' + t.bg + '">ТЫ ЗДЕСЬ</span>' :
+        passed ? '<span style="color:var(--good);font-size:12px">✓ достигнут</span>' : '') +
+      '</div><ul style="list-style:none;padding:0;margin:6px 0 0;font-size:12.5px;line-height:1.6">' +
+      t.perks.map(p => '<li style="padding-left:16px;position:relative"><span style="position:absolute;left:0;color:' + t.color + '">•</span>' + p + '</li>').join('') +
+      '</ul></div>';
+  }).join('');
+}
+
 function renderLoyalty(){
   const c = getClient();
   const reg = document.getElementById('reg-overlay');
-  if (!c){ reg.classList.add('show'); return; }
+  if (!c){
+    // если ещё не выбирали роль — покажем role-picker
+    if (!localStorage.getItem('bounty_role_picked')) showRolePicker();
+    else reg.classList.add('show');
+    return;
+  }
   reg.classList.remove('show');
+  hideRolePicker();
+  if (c.name) localStorage.setItem('bounty_last_name', c.name);
+  if (!localStorage.getItem('bounty_role_picked')) localStorage.setItem('bounty_role_picked','client');
+  // status
+  const pts = loyPointsOf(c);
+  const tier = loyTierFor(pts);
+  const nextIdx = LOY_TIERS.findIndex(t => t.id === tier.id) + 1;
+  const nextTier = LOY_TIERS[nextIdx] || null;
+  const progressPct = nextTier ? Math.min(100, ((pts - tier.min) / (nextTier.min - tier.min)) * 100) : 100;
   // home
   document.getElementById('home-name').textContent = c.name;
-  document.getElementById('home-stamps').textContent = c.stamps;
-  document.getElementById('home-bar').style.width = (c.stamps/GOAL*100) + '%';
-  document.getElementById('home-loyalty-sub').textContent = c.stamps >= GOAL
-    ? '🎁 Бесплатный кофе ждёт — покажи бариста!'
-    : 'Ещё ' + (GOAL - c.stamps) + ' — и кофе бесплатно ☕';
+  const hour = new Date().getHours();
+  const salut = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 17 ? 'Добрый день' : 'Добрый вечер';
+  document.getElementById('home-greeting').innerHTML = salut + '<span class="script" id="home-name">' + escHTML(c.name) + '</span>';
+  const badge = document.getElementById('home-status-badge');
+  badge.innerHTML = tier.icon + ' ' + tier.name;
+  badge.style.background = tier.bg; badge.style.color = tier.color;
+  document.getElementById('home-greet-text').textContent = tier.id === 'diamond' ? 'Твой персональный бариста уже ждёт' :
+    nextTier ? ('До ' + nextTier.name + ' осталось ' + (nextTier.min - pts) + ' баллов') : '';
+  document.getElementById('loy-status-title').textContent = tier.icon + ' ' + tier.name;
+  document.getElementById('loy-points').textContent = pts;
+  document.getElementById('loy-bar').style.width = progressPct + '%';
+  document.getElementById('loy-progress-text').textContent = nextTier
+    ? 'Ещё ' + (nextTier.min - pts) + ' баллов до уровня «' + nextTier.icon + ' ' + nextTier.name + '»'
+    : '💠 Ты на максимальном уровне — спасибо, что с нами';
+  document.getElementById('loy-perks-current').textContent = tier.perks.slice(0,2).join(' · ');
+  // card screen — большая версия
+  document.getElementById('card-status-title').textContent = tier.icon + ' ' + tier.name;
+  document.getElementById('card-points').textContent = pts;
+  document.getElementById('card-bar').style.width = progressPct + '%';
+  document.getElementById('card-progress-text').innerHTML = nextTier
+    ? 'До ' + nextTier.icon + ' <b>' + nextTier.name + '</b>: осталось ' + (nextTier.min - pts) + ' баллов'
+    : '💠 Максимальный уровень';
+  loyRenderLevelsList(tier.id, pts);
   // card
   document.getElementById('card-name').textContent = 'BOUNTY · ' + c.name.toUpperCase();
   document.getElementById('card-id').textContent = c.id;

@@ -9,6 +9,9 @@ $phone = norm_phone($d['phone'] ?? '');
 if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
 client_guard($phone);
 
+// Демо-аккаунт для App Review: фиксированный код, SMS не шлём
+if ($phone === '998900000000') { respond(['ok' => true]); }
+
 if (!sms_config()) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
 
 $ip = client_ip();

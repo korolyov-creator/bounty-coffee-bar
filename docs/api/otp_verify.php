@@ -10,6 +10,13 @@ $code = preg_replace('/\D/', '', (string)($d['code'] ?? ''));
 if (!$phone || strlen($code) !== 5) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
 client_guard($phone);
 
+// Демо-аккаунт для App Review: фиксированный код 11111
+if ($phone === '998900000000') {
+  $res = ($code === '11111') ? 'ok' : 'wrong_code';
+  if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 401); }
+  goto demo_ok;
+}
+
 $now = time();
 $res = store_update('otp.json', function ($data) use ($phone, $code, $now) {
   $e = isset($data[$phone]) ? $data[$phone] : null;
@@ -23,6 +30,7 @@ $res = store_update('otp.json', function ($data) use ($phone, $code, $now) {
 });
 if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 401); }
 
+demo_ok:
 $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
 
 $account = store_update('accounts.json', function ($data) use ($phone, $name) {
