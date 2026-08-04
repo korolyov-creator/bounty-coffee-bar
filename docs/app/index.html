@@ -215,7 +215,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="sub" style="margin-top:8px;font-size:12px;line-height:1.4" id="loy-progress-text">До следующего уровня ещё чуть-чуть</div>
       <div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(15,31,58,.25)">
         <div class="sub" style="color:var(--navy);opacity:.7;font-size:10.5px;margin:0;letter-spacing:.03em;font-weight:700">СЕЙЧАС У ТЕБЯ ЕСТЬ:</div>
-        <div id="loy-perks-current" style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--navy);opacity:.85">Штамп 5+1 бесплатно · базовые акции</div>
+        <div id="loy-perks-current" style="margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--navy);opacity:.85">Кэшбек на кошелёк с каждого заказа · базовые акции</div>
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--navy);opacity:.8;font-weight:600">Открыть карту и все уровни →</div>
     </div>
@@ -268,7 +268,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
     <!-- Флагман Ц-14 фото -->
     <div class="card dark" onclick="go('locations')" style="cursor:pointer;padding:0;overflow:hidden;border:1px solid rgba(212,175,55,.25)">
-      <div style="width:100%;aspect-ratio:16/9;background-image:url('../assets/img/interior-hadra.jpg');background-size:cover;background-position:center center;background-color:var(--navy-deep)"></div>
+      <div style="width:100%;aspect-ratio:16/9;background-image:url('../assets/img/facade-hadra.jpg');background-size:cover;background-position:center center;background-color:var(--navy-deep)"></div>
       <div style="padding:14px 18px">
         <div style="display:flex;justify-content:space-between;align-items:baseline">
           <h3 style="margin:0">☕ Флагман Ц-14 · Хадра</h3>
@@ -298,6 +298,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ ORDER ============ -->
   <main class="screen" id="scr-order">
     <div class="scr-head">
+      <button class="back-btn" onclick="goBack('home')">← Назад</button>
       <div class="eyebrow">★ MENU</div>
       <h1>Что хочешь?<span class="script">выбирай</span></h1>
     </div>
@@ -312,6 +313,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ CARD (QR) ============ -->
   <main class="screen" id="scr-card">
     <div class="scr-head">
+      <button class="back-btn" onclick="goBack('home')">← Назад</button>
       <div class="eyebrow">★ КАРТА ЛОЯЛЬНОСТИ</div>
       <h1>Покажи бариста<span class="script">для отметки покупки</span></h1>
     </div>
@@ -321,16 +323,10 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div class="id" id="card-id">—</div>
       <div class="qr-real" id="qr-real"></div>
 
-      <!-- Панч-карта: 5 покупок + подарок -->
-      <div class="punch" id="punch"></div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px" id="punch-hint">5 покупок — шестой кофе бесплатно</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Баллы и кэшбек начисляются автоматически при заказе</div>
     </div>
 
-    <div class="row-flex" style="margin-top:14px">
-      <button class="btn-big col" style="font-size:13px" onclick="stampPurchase()">☕ Отметить покупку</button>
-      <button class="btn-big btn-ghost col" style="font-size:13px;display:none" id="redeem-btn" onclick="redeemFree()">🎁 Бесплатный кофе</button>
-    </div>
-    <div class="tip">Кнопки нажимает бариста — попроси отметить покупку</div>
+    <div class="tip">Покажи QR бариста при покупке на кассе — покупка зачтётся в баллы</div>
 
     <div class="divider"></div>
 
@@ -362,12 +358,13 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <!-- ============ LOCATIONS ============ -->
   <main class="screen" id="scr-locations">
     <div class="scr-head">
+      <button class="back-btn" onclick="goBack('home')">← Назад</button>
       <div class="eyebrow">★ ГДЕ МЫ</div>
       <h1>Наши локации<span class="script">в двух шагах</span></h1>
     </div>
 
     <div class="loc-card">
-      <div class="img" style="background-image:url('../assets/img/interior-hadra.jpg')">
+      <div class="img" style="background-image:url('../assets/img/facade-hadra.jpg')">
         <div class="badge">⚡ 24/7</div>
       </div>
       <div class="info">
@@ -411,6 +408,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
   <!-- ============ PROFILE ============ -->
   <main class="screen" id="scr-profile">
+    <button class="back-btn" onclick="goBack('home')" style="margin-top:4px">← Назад</button>
     <div class="prof-head">
       <div class="ava" id="prof-ava" onclick="document.getElementById('avatar-input').click()" title="Нажми, чтобы загрузить фото">?<div class="cam">📷</div></div>
       <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="avatarUpload(event)">
@@ -419,9 +417,9 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
 
     <div class="row-flex" style="margin-bottom:18px">
-      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-stamps">0</div><div class="sub" style="margin-top:0">Отметок сейчас</div></div>
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-stamps">0</div><div class="sub" style="margin-top:0">Баллов</div></div>
       <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-total">0</div><div class="sub" style="margin-top:0">Покупок всего</div></div>
-      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-free">0</div><div class="sub" style="margin-top:0">Бесплатных ☕</div></div>
+      <div class="card col" style="text-align:center;padding:16px"><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);font-weight:700" id="prof-free">0%</div><div class="sub" style="margin-top:0">Кэшбек</div></div>
     </div>
 
     <div class="menu-list-rows">
@@ -475,7 +473,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.9.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.11.0 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
   </main>
 
   <!-- ============ HISTORY ============ -->
@@ -487,7 +485,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
     <div class="card" style="padding:14px 16px;margin-bottom:14px;font-size:14px" id="hist-progress"></div>
     <div class="menu-list-rows" id="hist-list"></div>
-    <div class="tip" style="margin-top:14px">Запись появляется, когда бариста отмечает покупку по твоей карте.<br>Покупки суммируются: 5 отметок → шестой кофе бесплатно 🎁</div>
+    <div class="tip" style="margin-top:14px">Заказы через приложение попадают сюда автоматически.<br>Покупку на кассе бариста отмечает по твоему QR — баллы и кэшбек начисляются сами.</div>
   </main>
 
   <!-- ============ CART / CHECKOUT ============ -->
@@ -741,8 +739,19 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     <button class="btn-big" id="oferta-btn" disabled onclick="acceptOferta()">Принимаю условия</button>
   </div>
 
+  <!-- WELCOME SPLASH: приветствие + автопроверка обновления (каждый запуск) -->
+  <div class="reg-overlay" id="welcome-splash" style="display:flex;z-index:320;justify-content:center">
+    <div style="text-align:center">
+      <div class="logo">Bounty</div>
+      <div class="sub-t">Coffee Bar</div>
+      <div id="splash-hello" style="margin-top:26px;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--cream)">Добро пожаловать!</div>
+      <div id="splash-status" style="margin-top:14px;font-size:13px;color:rgba(242,234,215,.65)">Проверяем обновления…</div>
+      <div style="margin-top:18px;font-size:22px;animation:bounce .7s ease-in-out infinite alternate">☕</div>
+    </div>
+  </div>
+
   <!-- REGISTRATION OVERLAY -->
-  <!-- Экран выбора роли (показывается перед reg-overlay если не залогинен) -->
+  <!-- Экран выбора роли (показывается при каждом запуске после splash) -->
   <div class="reg-overlay" id="role-picker" style="display:none;justify-content:flex-start;padding-top:calc(var(--safe-top) + 40px)">
     <div class="logo">Bounty</div>
     <div class="sub-t">Coffee Bar · выбери, кто ты</div>
@@ -778,7 +787,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       <div style="margin-top:26px">
         <button class="btn-big" id="reg-btn" onclick="registerClient()">Получить карту ☕</button>
       </div>
-      <div class="hint">Вход и регистрация — по номеру телефона:<br>карта и бонусы привязаны к номеру, вход по коду из SMS.<br>5 покупок — шестой кофе бесплатно.</div>
+      <div class="hint">Вход и регистрация — по номеру телефона:<br>карта и бонусы привязаны к номеру, вход по коду из SMS.<br>Кэшбек на кошелёк с каждого заказа.</div>
     </div>
     <div id="reg-step2" style="display:none">
       <label>Код из SMS</label>
@@ -1322,6 +1331,7 @@ function submitOrder(){
         payload.items.map(i=>i.qty+'× '+i.n+(i.size?' ('+i.size+')':'')).join('<br>') +
         '<br><strong style="color:var(--gold)">' + fmtSum(payload.total) + '</strong>' +
         '<br>' + (res.paid ? '💳 Оплачено с кошелька ✓' : '💵 Оплата при получении') +
+        (res.cashback ? '<br><strong style="color:#4ade80">🎁 +' + fmtSum(res.cashback) + ' кэшбек на кошелёк</strong>' : '') +
         (res.pk ? '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.15)">Код выдачи — покажи бариста:<br><div id="okqr" style="display:inline-block;border-radius:10px;background:#fff;padding:8px;margin:8px 0 4px"></div><br><strong style="font-size:26px;letter-spacing:6px;color:var(--gold)">' + res.pk + '</strong></div>' : '');
       if (res.pk) drawPickupQr('okqr', res.id, res.pk);
       coPay = 'pickup';
@@ -1711,7 +1721,7 @@ function renderWalletUI(){
     : wMethod === 'cash'
     ? 'Оплати на кассе наличными или картой — бариста зачислит по коду заявки.'
     : 'Откроется страница оплаты, зачисление подтвердит бариста.';
-  const TX = {topup:['💵','Пополнение'], pay:['☕','Оплата заказа'], refund:['↩️','Возврат за заказ'], adjust:['⚙️','Корректировка']};
+  const TX = {topup:['💵','Пополнение'], pay:['☕','Оплата заказа'], refund:['↩️','Возврат за заказ'], adjust:['⚙️','Корректировка'], cashback:['🎁','Кэшбек за заказ']};
   document.getElementById('w-tx').innerHTML = wallet.tx.length ? wallet.tx.map(t => {
     const d = new Date(t.ts), i = TX[t.t] || ['•', t.t];
     return `<div class="row" style="cursor:default"><div class="l"><span>${i[0]}</span><span>${i[1]}${t.o?' №'+t.o:''}<br><small style="color:rgba(242,234,215,.45)">${d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})} ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</small></span></div><div class="r" style="font-size:14px;color:${t.a>=0?'#4ade80':'var(--paper)'}">${(t.a>=0?'+':'')+fmtSum(t.a)}</div></div>`;
@@ -1844,7 +1854,8 @@ function accountPush(){
   const c = getClient(); const token = localStorage.getItem('bounty_token');
   if (!c || !token) return;
   fetch('../api/account_sync.php', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({token, action:'sync', name:c.name, stamps:c.stamps, total:c.total, free:c.free, hist:(c.hist||[]).slice(-200)})
+    body: JSON.stringify({token, action:'sync', name:c.name, stamps:c.stamps, total:c.total, free:c.free,
+      points:(typeof c.points === 'number' ? c.points : undefined), hist:(c.hist||[]).slice(-200)})
   }).catch(()=>{});
 }
 function accountPull(){
@@ -1854,14 +1865,28 @@ function accountPull(){
     body: JSON.stringify({token, action:'get'})})
     .then(r => r.json())
     .then(j => {
-      if (!j.ok || !j.account) return;
-      const c = getClient(); const a = j.account;
-      // сервер главнее, если там больше активности (кабинет пополнялся с другого устройства)
-      if (!c || (a.total||0) > (c.total||0)){
-        saveClient({name:a.name, phone:a.phone, id:a.id, stamps:a.stamps||0, total:a.total||0, free:a.free||0, reg:a.reg, hist:a.hist||[]});
+      if (!j.ok){
+        // единая сессия: токен отозван — на этом номере вошли с другого устройства
+        if (j.reason === 'bad_token') forceLogout('Вход в твой аккаунт выполнен на другом устройстве.\nЗдесь нужно войти заново по номеру и SMS-коду.');
+        return;
       }
+      if (!j.account) return;
+      const a = j.account;
+      // сервер — единый источник правды: карта одинакова на всех устройствах
+      saveClient({name:a.name, phone:a.phone, id:a.id,
+        points:(typeof a.points === 'number' ? a.points : undefined),
+        stamps:a.stamps||0, total:a.total||0, free:a.free||0, reg:a.reg, hist:a.hist||[]});
     })
     .catch(()=>{});
+}
+function forceLogout(msg){
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen'].forEach(k => localStorage.removeItem(k));
+  if (msg) alert(msg);
+  entryDone = true;
+  go('home');
+  renderUsual();
+  renderCartBar();
+  renderLoyalty(); // клиента нет — покажет экран входа
 }
 
 // === LOGOUT: выход из аккаунта, повторный вход по SMS-коду ===
@@ -1966,9 +1991,10 @@ function logoutAccount(){
   if (navigator.vibrate) navigator.vibrate(20);
 }
 
-// === LOYALTY: клиент, панч-карта «6-й кофе бесплатно» ===
-const PIN = '1414'; // код бариста
-const GOAL = 5;
+// === LOYALTY: баллы + кэшбек на кошелёк (начисляются автоматически при заказе) ===
+function cashbackPctFor(pts){
+  return pts >= 2000 ? 20 : pts >= 800 ? 15 : pts >= 300 ? 10 : pts >= 100 ? 5 : 3;
+}
 function getClient(){ try { return JSON.parse(localStorage.getItem('bounty_client')); } catch(e){ return null; } }
 function saveClient(c){ localStorage.setItem('bounty_client', JSON.stringify(c)); renderLoyalty(); }
 
@@ -2055,7 +2081,7 @@ function verifyCode(){
       if (j.ok && j.account){
         localStorage.setItem('bounty_token', j.token);
         const a = j.account;
-        saveClient({name: a.name, phone: a.phone, id: a.id, stamps: a.stamps||0, total: a.total||0, free: a.free||0, reg: a.reg, hist: a.hist||[]});
+        saveClient({name: a.name, phone: a.phone, id: a.id, points:(typeof a.points === 'number' ? a.points : undefined), stamps: a.stamps||0, total: a.total||0, free: a.free||0, reg: a.reg, hist: a.hist||[]});
         document.getElementById('reg-overlay').classList.remove('show');
         document.getElementById('reg-step2').style.display = 'none';
         document.getElementById('reg-step1').style.display = 'block';
@@ -2071,43 +2097,56 @@ function verifyCode(){
     .catch(() => { btn.disabled = false; btn.textContent = 'Войти ☕'; alert('Нет связи, попробуй ещё раз'); });
 }
 
-// Автоотметка лояльности при выдаче предзаказа (1 заказ = 1 отметка)
+// Автоначисление баллов при выдаче предзаказа (+10 покупка, +5 заказ через приложение).
+// Сервер начисляет то же самое сам — тут дублируем для мгновенного отображения, затем accountPull подтянет точное значение.
 function creditStamp(num){
   const c = getClient(); if (!c) return;
-  if (c.stamps >= GOAL) return; // карта полная — сначала бесплатный кофе
-  c.stamps++; c.total++;
-  (c.hist = c.hist || []).push({t:'stamp', d:new Date().toISOString(), n:c.stamps + '/' + GOAL, o:num});
+  c.total = (c.total || 0) + 1;
+  c.points = loyPointsOf(c) + 15;
+  (c.hist = c.hist || []).push({t:'buy', d:new Date().toISOString(), o:num});
   saveClient(c);
   syncClient(true);
+  accountPull();
   if (navigator.vibrate) navigator.vibrate(30);
-}
-
-function stampPurchase(){
-  const c = getClient(); if (!c) return;
-  if (c.stamps >= GOAL){ alert('Карта полная — сначала выдай бесплатный кофе 🎁'); return; }
-  const pin = prompt('Код бариста:');
-  if (pin !== PIN){ if (pin !== null) alert('Неверный код'); return; }
-  c.stamps++; c.total++;
-  (c.hist = c.hist || []).push({t:'stamp', d:new Date().toISOString(), n:c.stamps + '/' + GOAL});
-  saveClient(c);
-  if (navigator.vibrate) navigator.vibrate(30);
-  if (c.stamps >= GOAL) alert('🎉 5 отметок! Следующий кофе — БЕСПЛАТНО');
-}
-
-function redeemFree(){
-  const c = getClient(); if (!c || c.stamps < GOAL) return;
-  const pin = prompt('Код бариста (выдача бесплатного кофе):');
-  if (pin !== PIN){ if (pin !== null) alert('Неверный код'); return; }
-  c.stamps = 0; c.free++; c.total++;
-  (c.hist = c.hist || []).push({t:'free', d:new Date().toISOString()});
-  saveClient(c);
-  alert('🎁 Бесплатный кофе выдан. Наслаждайся!');
 }
 
 let qrObj = null;
 function escHTML(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-// === ROLE PICKER (первый вход) ===
+// === ВХОД ПРИ КАЖДОМ ОТКРЫТИИ: splash (приветствие + автообновление) → выбор роли ===
+let entryDone = false;
+function startEntry(){
+  const c = getClient();
+  const last = (c && c.name) || localStorage.getItem('bounty_last_name') || '';
+  document.getElementById('splash-hello').textContent = last ? ('С возвращением, ' + last + '!') : 'Добро пожаловать!';
+  const st = document.getElementById('splash-status');
+  let finished = false;
+  const finish = () => {
+    if (finished) return; finished = true;
+    document.getElementById('welcome-splash').style.display = 'none';
+    showRolePicker();
+  };
+  if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistration){
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg) { setTimeout(finish, 900); return; }
+      Promise.resolve(reg.update()).catch(()=>{}).then(() => {
+        if (reg.waiting){
+          st.textContent = '✨ Устанавливаем свежую версию…';
+          try { reg.waiting.postMessage({type:'SKIP_WAITING'}); } catch(e){}
+          setTimeout(finish, 1600);
+        } else {
+          st.textContent = 'У тебя свежая версия ✓';
+          setTimeout(finish, 900);
+        }
+      });
+    }).catch(() => setTimeout(finish, 900));
+  } else {
+    setTimeout(finish, 1000);
+  }
+  setTimeout(finish, 4000); // страховка: не держим человека на splash
+}
+
+// === ROLE PICKER (каждый запуск) ===
 function showRolePicker(){
   const rp = document.getElementById('role-picker');
   const reg = document.getElementById('reg-overlay');
@@ -2120,6 +2159,12 @@ function hideRolePicker(){
 function roleChoose(role){
   hideRolePicker();
   if (role === 'client'){
+    entryDone = true;
+    if (getClient()){
+      // уже залогинен на этом устройстве — сразу в приложение
+      renderLoyalty();
+      return;
+    }
     document.getElementById('reg-overlay').classList.add('show');
     // приветствие если уже был вход
     const last = localStorage.getItem('bounty_last_name') || '';
@@ -2146,7 +2191,7 @@ function roleChoose(role){
 // === СИСТЕМА СТАТУСОВ ===
 const LOY_TIERS = [
   {id:'bronze',   name:'Бронза',    icon:'🥉', color:'#c68f5a', bg:'#4b3018', min:0,   next:100,
-   perks:['5 покупок → 6-й напиток бесплатно','Уведомления об акциях','Персональные предложения по дню рождения']},
+   perks:['3% кэшбек на кошелёк с каждого заказа','Уведомления об акциях','Персональные предложения по дню рождения']},
   {id:'silver',   name:'Серебро',   icon:'🥈', color:'#c7ced9', bg:'#2b2f3a', min:100, next:300,
    perks:['5% кэшбек на кошелёк с каждой покупки','Ранний доступ к сезонным напиткам','Бесплатный сироп на выбор']},
   {id:'gold',     name:'Золото',    icon:'🥇', color:'#f5c542', bg:'#4a3808', min:300, next:800,
@@ -2192,15 +2237,13 @@ function renderLoyalty(){
   const c = getClient();
   const reg = document.getElementById('reg-overlay');
   if (!c){
-    // если ещё не выбирали роль — покажем role-picker
-    if (!localStorage.getItem('bounty_role_picked')) showRolePicker();
-    else reg.classList.add('show');
+    // до завершения экрана входа (splash → выбор роли) оверлеями управляет startEntry/roleChoose
+    if (entryDone) reg.classList.add('show');
     return;
   }
   reg.classList.remove('show');
-  hideRolePicker();
+  if (entryDone) hideRolePicker();
   if (c.name) localStorage.setItem('bounty_last_name', c.name);
-  if (!localStorage.getItem('bounty_role_picked')) localStorage.setItem('bounty_role_picked','client');
   // status
   const pts = loyPointsOf(c);
   const tier = loyTierFor(pts);
@@ -2242,12 +2285,6 @@ function renderLoyalty(){
   } else {
     qrEl.innerHTML = '<div style="font-family:Menlo,monospace;font-size:20px;padding:60px 0">' + c.id + '</div>';
   }
-  const punch = document.getElementById('punch');
-  let html = '';
-  for (let i = 0; i < GOAL; i++) html += '<div class="cup' + (i < c.stamps ? ' filled' : '') + '">☕</div>';
-  html += '<div class="cup gift' + (c.stamps >= GOAL ? ' ready' : '') + '">🎁</div>';
-  punch.innerHTML = html;
-  document.getElementById('redeem-btn').style.display = c.stamps >= GOAL ? 'block' : 'none';
   // profile
   const ava = document.getElementById('prof-ava');
   const photo = localStorage.getItem('bounty_avatar_' + (c.id || c.phone || 'guest'));
@@ -2261,10 +2298,10 @@ function renderLoyalty(){
     ava.firstChild.nodeValue = c.name[0].toUpperCase();
   }
   document.getElementById('prof-name').textContent = c.name;
-  document.getElementById('prof-level').textContent = c.free >= 3 ? '★ GOLD MEMBER' : '★ BOUNTY CLUB';
-  document.getElementById('prof-stamps').textContent = c.stamps;
+  document.getElementById('prof-level').textContent = '★ ' + tier.name.toUpperCase();
+  document.getElementById('prof-stamps').textContent = pts;
   document.getElementById('prof-total').textContent = c.total;
-  document.getElementById('prof-free').textContent = c.free;
+  document.getElementById('prof-free').textContent = cashbackPctFor(pts) + '%';
   // владелец видит вход в свою панель прямо из профиля
   document.getElementById('owner-row').style.display =
     String(c.phone || '').replace(/\D/g, '').endsWith('998998520605'.slice(-9)) ? '' : 'none';
@@ -2274,9 +2311,9 @@ function renderLoyalty(){
 function renderHistory(c){
   const prog = document.getElementById('hist-progress');
   const list = document.getElementById('hist-list');
-  prog.innerHTML = c.stamps >= GOAL
-    ? '🎁 <strong>Бесплатный кофе готов</strong> — покажи карту бариста!'
-    : 'Накоплено <strong style="color:var(--gold)">' + c.stamps + ' из ' + GOAL + '</strong> · до бесплатного кофе ещё ' + (GOAL - c.stamps) + ' — покупки суммируются';
+  const hpts = loyPointsOf(c);
+  const htier = loyTierFor(hpts);
+  prog.innerHTML = 'Накоплено <strong style="color:var(--gold)">' + hpts + ' баллов</strong> · уровень ' + htier.icon + ' ' + htier.name + ' · кэшбек ' + cashbackPctFor(hpts) + '% на кошелёк';
   const hist = (c.hist || []).slice().reverse();
   if (!hist.length){
     list.innerHTML = '<div class="row"><div class="l"><span>☕</span><span>Пока пусто — первая покупка появится здесь</span></div></div>';
@@ -2290,7 +2327,7 @@ function renderHistory(c){
       : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
-window.addEventListener('load', () => { renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); subHomeRefresh(); chatPoll(false); });
+window.addEventListener('load', () => { startEntry(); renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); subHomeRefresh(); chatPoll(false); });
 
 // === PWA Install ===
 // В нативной обёртке (Capacitor) и в уже установленной PWA баннер не нужен

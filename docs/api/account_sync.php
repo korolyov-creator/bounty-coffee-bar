@@ -27,6 +27,11 @@ if ($action === 'sync') {
     foreach (array('stamps', 'total', 'free') as $k) {
       if (isset($d[$k])) { $a[$k] = max(0, min(100000, (int)$d[$k])); }
     }
+    // баллы: сервер главнее — клиент может только догонять, не занижать
+    if (isset($d['points'])) {
+      $p = max(0, min(1000000, (int)$d['points']));
+      if (!isset($a['points']) || $p > (int)$a['points']) { $a['points'] = $p; }
+    }
     $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
     if ($name !== '') { $a['name'] = $name; }
     if (isset($d['hist']) && is_array($d['hist'])) {

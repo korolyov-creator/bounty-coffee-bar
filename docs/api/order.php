@@ -105,4 +105,34 @@ if ($ok === false) {
   if ($paid) { wallet_refund_order(norm_phone($rec['phone']), $total, $id, $num, 'store_fail'); }
   http_response_code(500); echo '{"ok":false,"error":"store"}'; exit;
 }
-echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk));
+
+// Лояльность (замена панч-карты): баллы + кэшбек на кошелёк, всё серверно и автоматически.
+// +10 баллов покупка, +5 за заказ через приложение. Кэшбек по уровню: 3/5/10/15/20%.
+$cashback = 0;
+$lphone = norm_phone($rec['phone']);
+if ($lphone) {
+  $pts = store_update('accounts.json', function ($data) use ($lphone) {
+    if (!isset($data[$lphone])) { return [$data, null]; }
+    $a = $data[$lphone];
+    $a['total'] = (int)($a['total'] ?? 0) + 1;
+    $base = isset($a['points']) ? (int)$a['points']
+      : ((int)($a['total'] ?? 0) - 1) * 10 + ((int)($a['free'] ?? 0)) * 50; // миграция со штампов
+    $a['points'] = $base + 15;
+    $data[$lphone] = $a;
+    return [$data, (int)$a['points']];
+  });
+  if ($pts !== null) {
+    $pct = $pts >= 2000 ? 20 : ($pts >= 800 ? 15 : ($pts >= 300 ? 10 : ($pts >= 100 ? 5 : 3)));
+    $cashback = (int)floor($total * $pct / 100);
+    if ($cashback > 0) {
+      store_update('wallets.json', function ($data) use ($lphone, $rec, $cashback, $id, $num) {
+        $w = wallet_entry($data, $lphone, $rec['client_id'], $rec['name']);
+        $w['balance'] = (int)$w['balance'] + $cashback;
+        wallet_push_tx($w, array('t' => 'cashback', 'a' => $cashback, 'ts' => date('c'), 'o' => $num, 'oid' => $id));
+        $data[$lphone] = $w;
+        return [$data, true];
+      });
+    }
+  }
+}
+echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => $cashback));
