@@ -164,7 +164,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 /* POINT PICKER (выбор точки приготовления) */
 .point-overlay{position:fixed;inset:0;background:rgba(10,20,40,.82);z-index:150;display:none;align-items:flex-end;justify-content:center}
 .point-overlay.show{display:flex;animation:fade .25s ease}
-.point-sheet{background:var(--navy-deep);border:1px solid rgba(201,161,74,.25);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.point-sheet{background:var(--navy-deep);border:1px solid rgba(201,161,74,.25);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:22px 20px calc(var(--safe-bot) + 24px)}
 .point-sheet h2{font-family:'Playfair Display',serif;font-size:21px;margin-bottom:4px;color:var(--paper)}
 .point-sheet .sub{color:rgba(242,234,215,.6);font-size:13px;margin-bottom:14px}
 .point-btn{display:block;width:100%;padding:16px;margin-bottom:10px;background:rgba(242,234,215,.05);border:1px solid rgba(201,161,74,.25);border-radius:14px;color:var(--paper);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;text-align:left}
@@ -184,6 +184,28 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .divider{height:1px;background:rgba(201,161,74,.15);margin:18px 0}
 .lang-chip{background:rgba(242,234,215,.08);border:1px solid rgba(212,175,55,.3);border-radius:10px;color:var(--paper);font-size:11px;font-weight:700;padding:5px 9px;cursor:pointer;letter-spacing:.03em}
 .lang-chip.sel{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+
+/* v1.14: интерактивность — тактильный отклик нажатий */
+.item,.btn-big,.chip,.point-btn,.p-opt,.add,.lang-chip,.card.gold{transition:transform .12s ease,box-shadow .12s ease}
+.item:active{transform:scale(.98)}
+.btn-big:active{transform:scale(.97)}
+.chip:active,.p-opt:active,.add:active,.lang-chip:active{transform:scale(.92)}
+.tab{transition:transform .12s ease}
+.tab:active{transform:scale(.88)}
+.point-btn:active{transform:scale(.97)}
+
+/* свайп-закрытие нижних шитов + «ручка» */
+.point-sheet,.prod-sheet{transition:transform .22s ease;touch-action:pan-y}
+.point-sheet::before,.prod-sheet::before{content:'';display:block;width:38px;height:4px;border-radius:99px;background:rgba(242,234,215,.28);margin:0 auto 12px}
+
+/* конфетти при оформлении заказа */
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden}
+.confetti i{position:absolute;top:-6vh;font-style:normal;will-change:transform;animation:cf-fall linear forwards}
+@keyframes cf-fall{to{transform:translate3d(var(--cx),110vh,0) rotate(var(--cr))}}
+
+/* pull-to-refresh индикатор */
+.ptr-hint{position:absolute;left:0;right:0;top:calc(var(--safe-top) + 4px);text-align:center;font-size:12px;color:var(--gold);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80}
+.ptr-hint.show{opacity:1}
 </style>
 </head>
 <body>
@@ -689,7 +711,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <style>
   .prod-overlay{position:fixed;inset:0;background:rgba(10,20,40,.78);z-index:250;display:none;align-items:flex-end;justify-content:center}
   .prod-overlay.show{display:flex;animation:fade .25s ease}
-  .prod-sheet{background:var(--navy-deep);border:1px solid rgba(212,175,55,.25);width:100%;max-width:520px;max-height:88vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px) + 20px)}
+  .prod-sheet{background:var(--navy-deep);border:1px solid rgba(212,175,55,.25);width:100%;max-width:520px;max-height:88vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 20px calc(var(--safe-bot) + 20px)}
   .prod-sheet h2{font-family:'Playfair Display',serif;font-size:22px;margin:4px 0 2px}
   .prod-sheet .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
   .p-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
@@ -701,7 +723,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   .stepper{display:flex;align-items:center;gap:14px;margin:12px 0}
   .stepper button{width:38px;height:38px;border-radius:12px;border:1px solid rgba(212,175,55,.4);background:transparent;color:var(--gold);font-size:20px;font-weight:700}
   .stepper .qv{font-size:18px;font-weight:700;min-width:24px;text-align:center}
-  .cartbar{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);background:var(--gold);color:#0F1F3A;border-radius:14px;padding:13px 18px;font-weight:700;font-size:14px;display:none;justify-content:space-between;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer}
+  .cartbar{position:fixed;left:14px;right:14px;bottom:calc(var(--safe-bot) + 86px);background:var(--gold);color:#0F1F3A;border-radius:14px;padding:13px 18px;font-weight:700;font-size:14px;display:none;justify-content:space-between;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer}
   .cartbar.show{display:flex;animation:fade .25s ease}
   .cart-item{background:rgba(242,234,215,.05);border:1px solid rgba(212,175,55,.18);border-radius:14px;padding:12px 14px;margin-bottom:10px}
   .cart-item .t{display:flex;justify-content:space-between;font-size:14px;font-weight:700}
@@ -859,7 +881,7 @@ function go(scr, opts){
   if (scr === 'order') renderPointChip();
   if ((scr === 'order' || scr === 'cart') && !pointChosen) openPointPicker();
   renderCartBar();
-  if (navigator.vibrate) navigator.vibrate(10);
+  buzz(10);
 }
 function goBack(fallback){
   const prev = NAV_STACK.pop();
@@ -970,7 +992,7 @@ function comboAddToCart(){
   saveCart(c);
   comboState = {drink:null, food:null};
   toast('🍱 Комбо в корзине! Скидка 15%', 3000);
-  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+  buzz([15,30,15]);
   go('cart');
 }
 
@@ -1099,7 +1121,7 @@ function openProd(cat, idx){
   document.getElementById('pr-comment').value = '';
   prTotal();
   document.getElementById('prod-overlay').classList.add('show');
-  if (navigator.vibrate) navigator.vibrate(10);
+  buzz(10);
 }
 function closeProd(){ document.getElementById('prod-overlay').classList.remove('show'); prState = null; }
 function prSize(k){
@@ -1125,12 +1147,113 @@ function prTotal(){
   document.getElementById('pr-btn').textContent = 'В корзину · ' + fmtSum(prUnit() * prState.qty);
 }
 function fmtSum(n){ const cur = {ru:' сум', uz:' soʻm', en:' UZS'}[typeof APP_LANG !== 'undefined' ? APP_LANG : 'ru'] || ' сум'; return n.toLocaleString('ru-RU').replace(/,/g,' ') + cur; }
+// === v1.14: ИНТЕРАКТИВНОСТЬ ===
+// haptics: в нативной оболочке — Capacitor Haptics (Taptic Engine), в вебе — navigator.vibrate
+function buzz(p){
+  try{
+    const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+    if (H){
+      if (Array.isArray(p)){
+        const total = p.reduce((a,b)=>a+b,0);
+        H.notification({type: total >= 200 ? 'WARNING' : 'SUCCESS'});
+      } else if (p > 15) H.impact({style:'MEDIUM'});
+      else H.impact({style:'LIGHT'});
+      return;
+    }
+    if (navigator.vibrate) navigator.vibrate(p);
+  }catch(e){}
+}
+// плавный count-up чисел (баллы лояльности)
+function animNum(el, v){
+  if (!el) return;
+  const from = parseInt(el.dataset.n || el.textContent, 10) || 0;
+  el.dataset.n = v;
+  if (from === v || Math.abs(v - from) > 5000){ el.textContent = v; return; }
+  const t0 = performance.now(), dur = 700;
+  requestAnimationFrame(function step(t){
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (v - from) * e);
+    if (k < 1) requestAnimationFrame(step);
+  });
+}
+// конфетти при успешном заказе
+function confettiBurst(){
+  const box = document.createElement('div');
+  box.className = 'confetti';
+  const glyphs = ['🎉','⭐','✨','☕','🥐'];
+  let html = '';
+  for (let i = 0; i < 26; i++){
+    const left = Math.random() * 100;
+    const cx = (Math.random() * 120 - 60).toFixed(0) + 'px';
+    const cr = (Math.random() * 540 - 270).toFixed(0) + 'deg';
+    const dur = (1.4 + Math.random() * 1.2).toFixed(2) + 's';
+    const delay = (Math.random() * 0.5).toFixed(2) + 's';
+    const size = (14 + Math.random() * 14).toFixed(0) + 'px';
+    html += `<i style="left:${left}%;font-size:${size};--cx:${cx};--cr:${cr};animation-duration:${dur};animation-delay:${delay}">${glyphs[i % glyphs.length]}</i>`;
+  }
+  box.innerHTML = html;
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 3200);
+}
+// свайп-вниз закрывает нижние шиты
+function sheetSwipe(sel, closeFn){
+  const sheet = document.querySelector(sel);
+  if (!sheet) return;
+  let y0 = null, dy = 0;
+  sheet.addEventListener('touchstart', e => {
+    if (sheet.scrollTop > 0){ y0 = null; return; }
+    y0 = e.touches[0].clientY; dy = 0; sheet.style.transition = 'none';
+  }, {passive:true});
+  sheet.addEventListener('touchmove', e => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy > 0 && sheet.scrollTop <= 0) sheet.style.transform = 'translateY(' + dy + 'px)';
+  }, {passive:true});
+  sheet.addEventListener('touchend', () => {
+    if (y0 === null) return;
+    sheet.style.transition = 'transform .22s ease';
+    if (dy > 90){
+      sheet.style.transform = 'translateY(110%)';
+      buzz(10);
+      setTimeout(() => { closeFn(); sheet.style.transform = ''; }, 200);
+    } else sheet.style.transform = '';
+    y0 = null;
+  });
+}
+// pull-to-refresh: потяни вниз «Мои заказы» или «Кошелёк»
+function pullToRefresh(scrId, fn){
+  const scr = document.getElementById(scrId);
+  if (!scr) return;
+  let y0 = null, done = false;
+  scr.addEventListener('touchstart', e => {
+    y0 = scr.scrollTop <= 0 ? e.touches[0].clientY : null; done = false;
+  }, {passive:true});
+  scr.addEventListener('touchmove', e => {
+    if (y0 === null || done) return;
+    if (e.touches[0].clientY - y0 > 70){
+      done = true; buzz(10);
+      toast('↻ Обновляю…', 900);
+      try{ fn(); }catch(err){}
+    }
+  }, {passive:true});
+}
+document.addEventListener('DOMContentLoaded', function(){
+  sheetSwipe('.prod-sheet', closeProd);
+  sheetSwipe('.point-sheet', function(){
+    document.getElementById('point-overlay').classList.remove('show');
+    if (coPoint){ pointChosen = true; renderPointChip(); if (document.getElementById('scr-cart').classList.contains('active')) renderCart(); }
+    else go('home');
+  });
+  pullToRefresh('scr-myorders', function(){ pollOrders(); if (typeof renderMyOrders === 'function') renderMyOrders(); });
+  pullToRefresh('scr-wallet', function(){ refreshWallet(); if (typeof renderWalletUI === 'function') renderWalletUI(); });
+});
+
 function toast(msg, ms){
   let t = document.getElementById('app-toast');
   if (!t){
     t = document.createElement('div');
     t.id = 'app-toast';
-    t.style.cssText = 'position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(20,28,48,.96);color:var(--paper);border:1px solid rgba(212,175,55,.45);border-radius:14px;padding:12px 18px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.45);max-width:86vw;text-align:center;opacity:0;transition:opacity .25s';
+    t.style.cssText = 'position:fixed;left:50%;bottom:calc(var(--tab-h) + var(--safe-bot) + 18px);transform:translateX(-50%);background:rgba(20,28,48,.96);color:var(--paper);border:1px solid rgba(212,175,55,.45);border-radius:14px;padding:12px 18px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.45);max-width:86vw;text-align:center;opacity:0;transition:opacity .25s';
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -1151,7 +1274,7 @@ function prAdd(){
   });
   saveCart(cart);
   closeProd();
-  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+  buzz([15,30,15]);
 }
 
 // === CART ===
@@ -1193,7 +1316,7 @@ function pickPoint(id){
   document.getElementById('point-overlay').classList.remove('show');
   renderPointChip();
   if (document.getElementById('scr-cart').classList.contains('active')) renderCart();
-  if (navigator.vibrate) navigator.vibrate(15);
+  buzz(15);
 }
 function pointOverlayDismiss(ev){
   if (ev.target !== ev.currentTarget) return;
@@ -1271,7 +1394,7 @@ function addUpsell(cat, idx){
   const ex = c.find(i => i.n === m.n && i.size === size && !(i.addons||[]).length && !i.comment);
   if (ex) ex.qty = Math.min(9, ex.qty + 1); else c.push({n:m.n, ic:m.ic, size, qty:1, addons:[], comment:'', unit:prices[0]});
   saveCart(c);
-  if (navigator.vibrate) navigator.vibrate(10);
+  buzz(10);
 }
 
 // === PAYMENT METHOD (checkout) ===
@@ -1310,7 +1433,7 @@ function coSelPay(id){
   }
   coPay = id;
   renderPayOptions();
-  if (navigator.vibrate) navigator.vibrate(10);
+  buzz(10);
 }
 
 // === SUBMIT ORDER ===
@@ -1372,7 +1495,8 @@ function submitOrder(){
       coPay = 'pickup';
       pointChosen = false; // следующий заказ снова начнётся с выбора точки
       go('orderok');
-      if (navigator.vibrate) navigator.vibrate([30,60,30]);
+      confettiBurst();
+      buzz([30,60,30]);
     })
     .catch(() => {
       alert('Не получилось отправить заказ 😔 Проверь интернет и попробуй ещё раз.');
@@ -1441,7 +1565,7 @@ function cancelOrder(id){
         renderMyOrders();
         if (res.refunded) refreshWallet();
         alert(res.refunded ? 'Заказ отменён ✓\nДеньги вернулись на кошелёк.' : 'Заказ отменён ✓');
-        if (navigator.vibrate) navigator.vibrate(30);
+        buzz(30);
       } else if (res.reason === 'too_late'){
         alert('Уже не отменить — бариста взял заказ в работу ☕\nЕсли всё же нужно — обратись к администратору кофейни.');
         pollOrders();
@@ -1532,7 +1656,7 @@ function repeatLast(){
   const last = orders[orders.length - 1];
   saveCart(last.items.map(i => ({n:i.n, ic:(Object.values(MENU).flat().find(m=>m.n===i.n)||{}).ic||'☕', size:i.size, qty:i.qty, addons:i.addons||[], comment:i.comment||'', unit:i.unit})));
   go('cart');
-  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+  buzz([15,30,15]);
 }
 
 function pollOrders(){
@@ -1559,11 +1683,11 @@ function pollOrders(){
         if (becameReady){
           // Двойной приятный сигнал + вибрация: заказ готов к получению
           beep(880); setTimeout(()=>beep(1200),200);
-          if (navigator.vibrate) navigator.vibrate([100,80,100,80,200]);
+          buzz([100,80,100,80,200]);
           toast('☕ Заказ готов — забери у бариста', 5000);
         } else if (becameMaking){
           beep(660);
-          if (navigator.vibrate) navigator.vibrate([50,50,50]);
+          buzz([50,50,50]);
           toast('👨‍🍳 Бариста готовит твой заказ', 3500);
         }
       }
@@ -1743,7 +1867,7 @@ function refreshWallet(){
       if (card) card.style.display = 'none';
       const hint = document.getElementById('w-topup-hint');
       if (hint) hint.textContent = '✅ Пополнение зачислено — баланс обновлён.';
-      if (navigator.vibrate) navigator.vibrate([20,40,20]);
+      buzz([20,40,20]);
     }
   }).catch(() => { renderWalletUI(); });
 }
@@ -1813,7 +1937,7 @@ function walletTopup(){
       (wMethod === 'cash'
         ? 'Назови баристе код и оплати на кассе — деньги сразу упадут на кошелёк.'
         : 'После оплаты бариста подтвердит зачисление по коду.');
-    if (navigator.vibrate) navigator.vibrate([20,40,20]);
+    buzz([20,40,20]);
   }).catch(() => { btn.disabled = false; btn.textContent = 'Пополнить кошелёк'; alert('Нет связи — попробуй ещё раз'); });
 }
 
@@ -1875,7 +1999,7 @@ function checkOferta(){
 function acceptOferta(){
   localStorage.setItem('bounty_oferta', JSON.stringify({v: OFERTA_VERSION, ts: new Date().toISOString()}));
   document.getElementById('oferta-overlay').classList.remove('show');
-  if (navigator.vibrate) navigator.vibrate(20);
+  buzz(20);
   syncClient(true);
 }
 
@@ -2037,7 +2161,7 @@ function logoutAccount(){
   renderUsual();
   renderCartBar();
   renderLoyalty(); // клиента нет — покажет экран входа
-  if (navigator.vibrate) navigator.vibrate(20);
+  buzz(20);
 }
 
 // === LOYALTY: баллы + кэшбек на кошелёк (начисляются автоматически при заказе) ===
@@ -2060,7 +2184,7 @@ function registerLocal(name, phone){
   const id = 'BNT-' + phone.slice(-7) + '-' + Math.random().toString(36).slice(2,5).toUpperCase();
   saveClient({name, phone, id, stamps:0, total:0, free:0, reg: new Date().toISOString().slice(0,10)});
   document.getElementById('reg-overlay').classList.remove('show');
-  if (navigator.vibrate) navigator.vibrate([20,40,20]);
+  buzz([20,40,20]);
   syncClient(true);
 }
 function registerClient(){
@@ -2134,7 +2258,7 @@ function verifyCode(){
         document.getElementById('reg-overlay').classList.remove('show');
         document.getElementById('reg-step2').style.display = 'none';
         document.getElementById('reg-step1').style.display = 'block';
-        if (navigator.vibrate) navigator.vibrate([20,40,20]);
+        buzz([20,40,20]);
         syncClient(true);
       } else if (j.reason === 'wrong_code'){
         alert('Неверный код, попробуй ещё раз');
@@ -2156,7 +2280,7 @@ function creditStamp(num){
   saveClient(c);
   syncClient(true);
   accountPull();
-  if (navigator.vibrate) navigator.vibrate(30);
+  buzz(30);
 }
 
 let qrObj = null;
@@ -2321,7 +2445,7 @@ function renderLoyalty(){
   document.getElementById('home-greet-text').textContent = tier.id === 'diamond' ? 'Твой персональный бариста уже ждёт' :
     nextTier ? ('До уровня «' + nextTier.name + '» осталось ' + (nextTier.min - pts) + ' баллов') : '';
   document.getElementById('loy-status-title').textContent = tier.icon + ' ' + tier.name;
-  document.getElementById('loy-points').textContent = pts;
+  animNum(document.getElementById('loy-points'), pts);
   document.getElementById('loy-bar').style.width = progressPct + '%';
   document.getElementById('loy-progress-text').textContent = nextTier
     ? 'Ещё ' + (nextTier.min - pts) + ' баллов до уровня «' + nextTier.icon + ' ' + nextTier.name + '»'
@@ -2329,7 +2453,7 @@ function renderLoyalty(){
   document.getElementById('loy-perks-current').textContent = tier.perks.slice(0,2).join(' · ');
   // card screen — большая версия
   document.getElementById('card-status-title').textContent = tier.icon + ' ' + tier.name;
-  document.getElementById('card-points').textContent = pts;
+  animNum(document.getElementById('card-points'), pts);
   document.getElementById('card-bar').style.width = progressPct + '%';
   document.getElementById('card-progress-text').innerHTML = nextTier
     ? 'До ' + nextTier.icon + ' ' + nextTier.name + ': осталось ' + (nextTier.min - pts) + ' баллов'
@@ -2432,7 +2556,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadController) { hadController = true; return; }
     const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 14px);background:var(--gold);color:var(--navy);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:400;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+    t.style.cssText = 'position:fixed;left:14px;right:14px;top:calc(var(--safe-top) + 14px);background:var(--gold);color:var(--navy);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:400;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)';
     t.textContent = '✨ Приложение обновлено до свежей версии';
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 4000);
