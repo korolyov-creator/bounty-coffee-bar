@@ -596,5 +596,23 @@ function start(){
 }
 if (KEY){ document.getElementById('login').style.display = 'none'; start(); }
 </script>
+<script>
+// возврат в мобильное приложение (панель открыта внутри WebView с ?app=1)
+(function(){
+  try{
+    if (new URLSearchParams(location.search).get('app') === '1') sessionStorage.setItem('bounty_from_app','1');
+    if (sessionStorage.getItem('bounty_from_app') !== '1') return;
+    var b = document.createElement('button');
+    b.textContent = '‹ Приложение';
+    b.style.cssText = 'position:fixed;left:10px;bottom:42px;z-index:220;background:rgba(15,31,58,.92);color:#f5c542;border:1px solid #f5c542;border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.4)';
+    b.onclick = function(){
+      sessionStorage.removeItem('bounty_from_app');
+      if (history.length > 1) history.back();
+      else location.href = 'capacitor://localhost/index.html';
+    };
+    document.body.appendChild(b);
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
