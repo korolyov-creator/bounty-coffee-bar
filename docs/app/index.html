@@ -2833,6 +2833,17 @@ function loyRenderLevelsList(currentTierId, points){
   }).join('');
 }
 
+let _greetHour = -1;
+function updateGreeting(){
+  const c = getClient(); if (!c) return;
+  const hour = new Date().getHours();
+  _greetHour = hour;
+  const salut = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 17 ? 'Добрый день' : 'Добрый вечер';
+  document.getElementById('home-greeting').innerHTML = salut + '<span class="script" id="home-name">' + escHTML(c.name) + '</span>';
+}
+// приложение живёт в фоне часами — приветствие обновляем при возврате и на смене часа
+setInterval(() => { if (_greetHour !== -1 && new Date().getHours() !== _greetHour) updateGreeting(); }, 60000);
+
 function renderLoyalty(){
   const c = getClient();
   const reg = document.getElementById('reg-overlay');
@@ -2850,10 +2861,7 @@ function renderLoyalty(){
   const nextTier = LOY_TIERS[nextIdx] || null;
   const progressPct = nextTier ? Math.min(100, ((pts - tier.min) / (nextTier.min - tier.min)) * 100) : 100;
   // home
-  document.getElementById('home-name').textContent = c.name;
-  const hour = new Date().getHours();
-  const salut = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 17 ? 'Добрый день' : 'Добрый вечер';
-  document.getElementById('home-greeting').innerHTML = salut + '<span class="script" id="home-name">' + escHTML(c.name) + '</span>';
+  updateGreeting();
   const badge = document.getElementById('home-status-badge');
   badge.innerHTML = tier.icon + ' ' + tier.name;
   badge.style.background = tier.bg; badge.style.color = tier.color;
@@ -2940,7 +2948,7 @@ function renderHistory(c){
 window.addEventListener('load', () => { startEntry(); renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); subHomeRefresh(); chatPoll(false); });
 // Мультиустройство: регулярно подтягиваем аккаунт с сервера (карта/баллы/заказы одинаковы на всех телефонах)
 setInterval(accountPull, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden){ accountPull(); pollOrders(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden){ updateGreeting(); accountPull(); pollOrders(); } });
 // Экранная клавиатура сжимает вьюпорт — нижняя панель «всплывала» посреди экрана; прячем её
 if (window.visualViewport){
   visualViewport.addEventListener('resize', () => {
