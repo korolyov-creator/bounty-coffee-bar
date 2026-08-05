@@ -443,3 +443,23 @@ function sms_send($phone, $text) {
   }
   return false;
 }
+
+// Резервная доставка кода входа в Telegram, пока Eskiz в тест-режиме (до договора).
+// sms_config.json: {"tg_token":"...", "tg_otp":{"998XXXXXXXXX": chat_id}}
+function tg_otp_send($phone, $code) {
+  $c = store_read('sms_config.json');
+  $token = isset($c['tg_token']) ? (string)$c['tg_token'] : '';
+  $chat = isset($c['tg_otp'][$phone]) ? (int)$c['tg_otp'][$phone] : 0;
+  if ($token === '' || !$chat) { return false; }
+  $ch = curl_init('https://api.telegram.org/bot' . $token . '/sendMessage');
+  curl_setopt_array($ch, array(
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => http_build_query(array(
+      'chat_id' => $chat,
+      'text' => "☕ Bounty Coffee Bar: код для входа {$code}. Никому не сообщай.")),
+    CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15,
+  ));
+  $r = json_decode(curl_exec($ch), true);
+  curl_close($ch);
+  return !empty($r['ok']);
+}

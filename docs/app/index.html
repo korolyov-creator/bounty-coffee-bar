@@ -27,6 +27,9 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45;overscroll-behavior:none}
+/* 100dvh: высота следует за реальным вьюпортом (скрывающаяся адресная строка Safari/Chrome) —
+   иначе нижняя панель «всплывает» над низом экрана или уходит под браузерный тулбар */
+@supports (height:100dvh){html,body{height:100dvh}}
 .app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;position:relative}
 
 /* SCREENS */
@@ -89,7 +92,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
 /* LOCATIONS */
 .loc-card{background:rgba(242,234,215,.05);border-radius:14px;overflow:hidden;border:1px solid rgba(201,161,74,.15);margin-bottom:14px}
-.loc-card .img{height:140px;background-size:cover;background-position:center;background-color:var(--navy-light);position:relative}
+.loc-card .img{height:auto;aspect-ratio:16/9;min-height:140px;background-size:cover;background-position:center;background-color:var(--navy-light);position:relative}
 .loc-card .badge{position:absolute;top:10px;left:10px;background:var(--gold);color:var(--navy);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
 .loc-card .info{padding:16px}
 .loc-card .name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:4px}
@@ -117,7 +120,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .menu-list-rows .row .r{color:rgba(242,234,215,.4);font-size:18px}
 
 /* TAB BAR */
-.tabbar{position:absolute;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--safe-bot));background:rgba(9,21,41,.55);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-top:1px solid rgba(201,161,74,.22);display:flex;justify-content:space-around;align-items:flex-start;padding-top:6px;padding-bottom:calc(var(--safe-bot) - 4px);z-index:50}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--safe-bot));background:rgba(9,21,41,.55);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-top:1px solid rgba(201,161,74,.22);display:flex;justify-content:space-around;align-items:flex-start;padding-top:6px;padding-bottom:max(0px, calc(var(--safe-bot) - 4px));z-index:50;transition:transform .15s}
+.tabbar.kb-hidden{transform:translateY(110%)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.tabbar{background:rgba(9,21,41,.92)}}
 .tab{flex:1;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:rgba(242,234,215,.5);font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:color .15s;-webkit-tap-highlight-color:transparent}
 .tab .ico{font-size:22px;line-height:1}
@@ -511,7 +515,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.11.1 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.16 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
   </main>
 
   <!-- ============ HISTORY ============ -->
@@ -2048,6 +2052,7 @@ function accountPull(){
         stamps:a.stamps||0, total:a.total||0, free:a.free||0, reg:a.reg, hist:a.hist||[]});
       mergeServerOrders(j.orders);
       refreshWallet();
+      avatarSyncFrom(a);
     })
     .catch(()=>{});
 }
@@ -2126,6 +2131,44 @@ function beep(freq){
   }catch(e){}
 }
 
+// === AVATAR SYNC: фото профиля хранится на сервере — одинаковое на всех устройствах номера ===
+function avatarPush(dataUrl){
+  const token = localStorage.getItem('bounty_token');
+  if (!token) return;
+  const c = JSON.parse(localStorage.getItem('bounty_client') || '{}');
+  const key = c.id || c.phone || 'guest';
+  fetch('../api/avatar.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({token, action:'set', data:dataUrl})})
+    .then(r => r.json())
+    .then(j => { if (j.ok && j.ts) localStorage.setItem('bounty_avatar_ts_' + key, String(j.ts)); })
+    .catch(()=>{});
+}
+function avatarSyncFrom(a){
+  const token = localStorage.getItem('bounty_token');
+  if (!token) return;
+  const key = a.id || a.phone || 'guest';
+  const srvTs = +(a.ava || 0);
+  const locTs = +(localStorage.getItem('bounty_avatar_ts_' + key) || 0);
+  const local = localStorage.getItem('bounty_avatar_' + key);
+  if (srvTs > locTs){
+    fetch('../api/avatar.php', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token, action:'get'})})
+      .then(r => r.json())
+      .then(j => {
+        if (!j.ok) return;
+        if (j.data){
+          try { localStorage.setItem('bounty_avatar_' + key, j.data); } catch(err){ return; }
+        } else {
+          localStorage.removeItem('bounty_avatar_' + key);
+        }
+        localStorage.setItem('bounty_avatar_ts_' + key, String(srvTs));
+        renderLoyalty();
+      }).catch(()=>{});
+  } else if (!srvTs && local){
+    avatarPush(local); // фото было загружено до появления серверного хранения — поднимаем на сервер
+  }
+}
+
 // === AVATAR UPLOAD ===
 function avatarUpload(e){
   const file = e.target.files && e.target.files[0];
@@ -2155,6 +2198,7 @@ function avatarUpload(e){
         ava.style.backgroundImage = 'url(' + dataUrl + ')';
         ava.classList.add('has-photo');
         ava.firstChild.nodeValue = '';
+        avatarPush(dataUrl);
       } catch (err){
         alert('Не получилось сохранить фото — попробуй фото поменьше.');
       }
@@ -2167,7 +2211,16 @@ function avatarUpload(e){
 }
 function avatarRemove(){
   const c = JSON.parse(localStorage.getItem('bounty_client') || '{}');
-  localStorage.removeItem('bounty_avatar_' + (c.id || c.phone || 'guest'));
+  const key = c.id || c.phone || 'guest';
+  localStorage.removeItem('bounty_avatar_' + key);
+  const token = localStorage.getItem('bounty_token');
+  if (token){
+    fetch('../api/avatar.php', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token, action:'del'})})
+      .then(r => r.json())
+      .then(j => { if (j.ok && j.ts) localStorage.setItem('bounty_avatar_ts_' + key, String(j.ts)); })
+      .catch(()=>{});
+  }
   renderCard(c);
 }
 
@@ -2230,7 +2283,9 @@ function registerClient(){
       if (j.ok){
         document.getElementById('reg-step1').style.display = 'none';
         document.getElementById('reg-step2').style.display = 'block';
-        document.getElementById('reg-code-hint').textContent = 'Отправили код на +' + phone;
+        document.getElementById('reg-code-hint').textContent = (j.via === 'tg')
+          ? 'Код отправлен тебе в Telegram (SMS временно недоступны)'
+          : 'Отправили код на +' + phone;
         document.getElementById('reg-code').value = '';
         document.getElementById('reg-code').focus();
         startResendTimer();
@@ -2547,6 +2602,13 @@ window.addEventListener('load', () => { startEntry(); renderLoyalty(); checkOfer
 // Мультиустройство: регулярно подтягиваем аккаунт с сервера (карта/баллы/заказы одинаковы на всех телефонах)
 setInterval(accountPull, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden){ accountPull(); pollOrders(); } });
+// Экранная клавиатура сжимает вьюпорт — нижняя панель «всплывала» посреди экрана; прячем её
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', () => {
+    const kb = (window.innerHeight - visualViewport.height) > 140;
+    document.querySelector('.tabbar').classList.toggle('kb-hidden', kb);
+  });
+}
 
 // === PWA Install ===
 // В нативной обёртке (Capacitor) и в уже установленной PWA баннер не нужен

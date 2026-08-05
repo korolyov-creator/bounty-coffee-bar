@@ -12,7 +12,9 @@ client_guard($phone);
 // Демо-аккаунт для App Review: фиксированный код, SMS не шлём
 if ($phone === '998900000000') { respond(['ok' => true]); }
 
-if (!sms_config()) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
+$smsc = store_read('sms_config.json');
+$has_tg = !empty($smsc['tg_token']) && !empty($smsc['tg_otp'][$phone]);
+if (!sms_config() && !$has_tg) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
 
 $ip = client_ip();
 $now = time();
@@ -46,7 +48,8 @@ $res = store_update('otp.json', function ($data) use ($phone, $now, $code) {
 if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 429); }
 
 $sent = sms_send($phone, "Bounty Coffee Bar: kod dlya vhoda $code. Nikomu ne soobshchayte.");
-// Провайдер настроен, но отправка не прошла (тест-режим Eskiz до договора, сбой шлюза):
-// отвечаем sms_unavailable, чтобы клиент ушёл в локальную регистрацию, а не в тупиковый alert
-if (!$sent) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
-respond(['ok' => true]);
+if ($sent) { respond(['ok' => true]); }
+// SMS не прошла (тест-режим Eskiz до договора, сбой шлюза) — пробуем доставить код в Telegram
+if ($has_tg && tg_otp_send($phone, $code)) { respond(['ok' => true, 'via' => 'tg']); }
+// иначе клиент уходит в локальную регистрацию, а не в тупиковый alert
+respond(['ok' => false, 'reason' => 'sms_unavailable']);
