@@ -444,13 +444,30 @@ function sms_send($phone, $text) {
   return false;
 }
 
-// Резервная доставка кода входа в Telegram, пока Eskiz в тест-режиме (до договора).
-// sms_config.json: {"tg_token":"...", "tg_otp":{"998XXXXXXXXX": chat_id}}
-function tg_otp_send($phone, $code) {
+// === ДОСТАВКА КОДОВ ВХОДА ЧЕРЕЗ TELEGRAM (@bountycoffeebar_bot) ===
+// Самообслуживание: клиент жмёт «Поделиться номером» в боте → api/tg_webhook.php пишет
+// привязку в tg_link_map.json {"998XXXXXXXXX": chat_id}. Legacy-пары (RED-бот) — в sms_config tg_otp.
+function tg_link_chat($phone) {
   $c = store_read('sms_config.json');
+  $map = store_read('tg_link_map.json');
+  $bot_token = isset($c['tg_bot_token']) ? (string)$c['tg_bot_token'] : '';
+  if ($bot_token !== '' && !empty($map[$phone])) { return array($bot_token, (int)$map[$phone]); }
   $token = isset($c['tg_token']) ? (string)$c['tg_token'] : '';
   $chat = isset($c['tg_otp'][$phone]) ? (int)$c['tg_otp'][$phone] : 0;
-  if ($token === '' || !$chat) { return false; }
+  if ($token !== '' && $chat) { return array($token, $chat); }
+  return null;
+}
+
+// Ссылка на бота для привязки (показывается клиенту, когда SMS недоступна и номер не привязан)
+function tg_bot_link() {
+  $c = store_read('sms_config.json');
+  return !empty($c['tg_bot']) ? 'https://t.me/' . $c['tg_bot'] : '';
+}
+
+function tg_otp_send($phone, $code) {
+  $lc = tg_link_chat($phone);
+  if (!$lc) { return false; }
+  list($token, $chat) = $lc;
   $ch = curl_init('https://api.telegram.org/bot' . $token . '/sendMessage');
   curl_setopt_array($ch, array(
     CURLOPT_POST => true,

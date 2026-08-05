@@ -2290,7 +2290,11 @@ function registerClient(){
         document.getElementById('reg-code').focus();
         startResendTimer();
       } else if (j.reason === 'sms_unavailable'){
-        registerLocal(name, phone);
+        if (j.tg && confirm('SMS временно недоступны.\n\nПолучить код входа через Telegram?\n\nОткроется наш бот: нажми «Старт», поделись номером и вернись сюда — затем запроси код ещё раз.')){
+          window.open(j.tg, '_blank');
+        } else {
+          registerLocal(name, phone);
+        }
       } else if (j.reason === 'rate_limit' || j.reason === 'too_soon'){
         alert('Слишком много запросов кода. Подожди немного и попробуй снова.');
       } else {

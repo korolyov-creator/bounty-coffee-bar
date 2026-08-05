@@ -12,9 +12,8 @@ client_guard($phone);
 // Демо-аккаунт для App Review: фиксированный код, SMS не шлём
 if ($phone === '998900000000') { respond(['ok' => true]); }
 
-$smsc = store_read('sms_config.json');
-$has_tg = !empty($smsc['tg_token']) && !empty($smsc['tg_otp'][$phone]);
-if (!sms_config() && !$has_tg) { respond(['ok' => false, 'reason' => 'sms_unavailable']); }
+$has_tg = tg_link_chat($phone) !== null;
+if (!sms_config() && !$has_tg) { respond(['ok' => false, 'reason' => 'sms_unavailable', 'tg' => tg_bot_link()]); }
 
 $ip = client_ip();
 $now = time();
@@ -51,5 +50,5 @@ $sent = sms_send($phone, "Bounty Coffee Bar: kod dlya vhoda $code. Nikomu ne soo
 if ($sent) { respond(['ok' => true]); }
 // SMS не прошла (тест-режим Eskiz до договора, сбой шлюза) — пробуем доставить код в Telegram
 if ($has_tg && tg_otp_send($phone, $code)) { respond(['ok' => true, 'via' => 'tg']); }
-// иначе клиент уходит в локальную регистрацию, а не в тупиковый alert
-respond(['ok' => false, 'reason' => 'sms_unavailable']);
+// иначе клиент уходит в локальную регистрацию; tg — ссылка на бота для самопривязки номера
+respond(['ok' => false, 'reason' => 'sms_unavailable', 'tg' => tg_bot_link()]);
