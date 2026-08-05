@@ -11,6 +11,53 @@ $points = array('hadra' => 'Хадра · Ц-14', 'sayram' => 'Сайрам 25/1
 $point = (string)($d['point'] ?? '');
 if (!isset($points[$point])) { http_response_code(422); echo '{"ok":false,"error":"bad point"}'; exit; }
 
+// Доверенный клиент: токен входа (otp_verify) совпадает с номером в заказе.
+// Только доверенным начисляются баллы/кэшбек — чужой номер без токена накрутить нельзя.
+$phoneN = norm_phone($d['phone'] ?? '');
+$trusted = false;
+$tok = (string)($d['token'] ?? '');
+if (preg_match('/^[a-f0-9]{48}$/', $tok)) {
+  $tokens = store_read('tokens.json');
+  if (isset($tokens[$tok]) && $phoneN && $tokens[$tok]['phone'] === $phoneN) { $trusted = true; }
+}
+
+// Идемпотентность: повторный POST того же заказа (даблтап, ретрай сети) возвращает прежний ответ.
+// Новые клиенты шлют idem (случайный id на состав корзины); для старых — хэш содержимого с окном 120с.
+$idem = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['idem'] ?? '')), 0, 32);
+$idemKey = $idem !== ''
+  ? 'i:' . $idem
+  : 'h:' . hash('sha256', $phoneN . '|' . (string)($d['client_id'] ?? '') . '|' . (string)($d['pay'] ?? '') . '|' . json_encode($d['items']));
+$prev = store_update('order_idem.json', function ($data) use ($idemKey, $idem) {
+  $now = time();
+  foreach ($data as $k => $v) { if ($now - ($v['ts'] ?? 0) > 86400) { unset($data[$k]); } }
+  $e = $data[$idemKey] ?? null;
+  if ($e && isset($e['resp']) && ($idem !== '' || $now - $e['ts'] <= 120)) { return [$data, $e['resp']]; }
+  $data[$idemKey] = array('ts' => $now);
+  return [$data, null];
+});
+if ($prev) {
+  audit('order_idem_hit', array('key' => $idemKey));
+  echo json_encode($prev, JSON_UNESCAPED_UNICODE); exit;
+}
+
+// Рейт-лимит: не больше 6 заказов в час на номер (или IP, если номера нет)
+$rateKey = $phoneN ?: ('ip:' . client_ip());
+$rateOk = store_update('order_rate.json', function ($data) use ($rateKey) {
+  $now = time();
+  foreach ($data as $k => $ts) {
+    $data[$k] = array_values(array_filter((array)$ts, function ($t) use ($now) { return $now - $t < 3600; }));
+    if (!$data[$k]) { unset($data[$k]); }
+  }
+  if (count($data[$rateKey] ?? array()) >= 6) { return [$data, false]; }
+  $data[$rateKey][] = $now;
+  return [$data, true];
+});
+if (!$rateOk) {
+  audit('order_rate_limit', array('key' => $rateKey));
+  http_response_code(429); echo '{"ok":false,"error":"rate"}'; exit;
+}
+
+
 $items = array();
 $total = 0;
 foreach (array_slice($d['items'], 0, 20) as $i) {
@@ -30,8 +77,10 @@ foreach (array_slice($d['items'], 0, 20) as $i) {
     http_response_code(422); echo '{"ok":false,"error":"price"}'; exit;
   }
   if ($pc === null) {
-    // позиции нет в серверном прайсе (рассинхрон меню) — пропускаем, но сигналим
-    audit('price_unknown', array('n' => $name, 'unit' => $unit));
+    // позиции нет в серверном прайсе — с ценой клиента не верим, заказ отклоняем (меню и прайс деплоятся вместе)
+    audit('price_unknown_reject', array('n' => $name, 'unit' => $unit));
+    tg_alert("⚠️ Заказ с позицией вне серверного прайса (рассинхрон меню?)\n$name за " . number_format($unit, 0, '', ' ') . " сум\nЗаказ отклонён — проверь api/prices.php.");
+    http_response_code(422); echo '{"ok":false,"error":"price"}'; exit;
   }
   $items[] = array(
     'n'       => $name,
@@ -70,6 +119,9 @@ $id = bin2hex(random_bytes(8));
 $pk = (string)random_int(1000, 9999); // код выдачи: клиент показывает QR/цифры, бариста подтверждает
 
 if ($pay === 'wallet') {
+  // токен прислан, но чужой/не совпал с номером — списание запрещаем сразу
+  if ($tok !== '' && !$trusted) { http_response_code(401); echo '{"ok":false,"error":"bad_token"}'; exit; }
+  if (!$trusted) { audit('wallet_pay_no_token', array('phone' => $phoneN)); }
   list($wphone, $wid) = wallet_auth($d);
   $res = store_update('wallets.json', function ($data) use ($wphone, $wid, $total, $id, $num, $d) {
     $w = wallet_entry($data, $wphone, $wid, mb_substr(trim((string)($d['name'] ?? '')), 0, 50));
@@ -110,6 +162,11 @@ if ($ok === false) {
 // +10 баллов покупка, +5 за заказ через приложение. Кэшбек по уровню: 3/5/10/15/20%.
 $cashback = 0;
 $lphone = norm_phone($rec['phone']);
+if ($lphone && !$trusted) {
+  // без валидного токена баллы/кэшбек не начисляем: иначе накрутка на свой или чужой номер простым curl
+  audit('loyalty_skip_untrusted', array('phone' => $lphone));
+  $lphone = null;
+}
 if ($lphone) {
   $pts = store_update('accounts.json', function ($data) use ($lphone) {
     if (!isset($data[$lphone])) { return [$data, null]; }
@@ -135,4 +192,9 @@ if ($lphone) {
     }
   }
 }
-echo json_encode(array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => $cashback));
+$resp = array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => $cashback);
+store_update('order_idem.json', function ($data) use ($idemKey, $resp) {
+  $data[$idemKey] = array('ts' => time(), 'resp' => $resp);
+  return [$data, true];
+});
+echo json_encode($resp, JSON_UNESCAPED_UNICODE);

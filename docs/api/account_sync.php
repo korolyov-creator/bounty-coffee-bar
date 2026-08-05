@@ -48,16 +48,25 @@ if ($action === 'sync') {
   $account = store_update('accounts.json', function ($data) use ($phone, $d) {
     if (!isset($data[$phone])) { return [$data, null]; }
     $a = $data[$phone];
-    // счётчики: сервер главнее — клиент может только догонять, не занижать
-    foreach (array('stamps', 'total', 'free') as $k) {
-      if (isset($d[$k])) {
-        $v = max(0, min(100000, (int)$d[$k]));
-        if ($v > (int)($a[$k] ?? 0)) { $a[$k] = $v; }
+    // Счётчики от клиента принимаются ОДИН раз — миграция локальной карты при первом входе.
+    // Дальше баллы начисляет только сервер (order.php): накрутка повторным sync закрыта.
+    $sentCounters = isset($d['stamps']) || isset($d['total']) || isset($d['free']) || isset($d['points']);
+    if (empty($a['mig'])) {
+      $caps = array('stamps' => 100, 'total' => 500, 'free' => 50);
+      foreach ($caps as $k => $cap) {
+        if (isset($d[$k])) {
+          $v = max(0, min($cap, (int)$d[$k]));
+          if ($v > (int)($a[$k] ?? 0)) { $a[$k] = $v; }
+        }
       }
-    }
-    if (isset($d['points'])) {
-      $p = max(0, min(1000000, (int)$d['points']));
-      if (!isset($a['points']) || $p > (int)$a['points']) { $a['points'] = $p; }
+      if (isset($d['points'])) {
+        $p = max(0, min(5000, (int)$d['points']));
+        if (!isset($a['points']) || $p > (int)$a['points']) { $a['points'] = $p; }
+      }
+      if ($sentCounters) { $a['mig'] = time(); }
+    } elseif ($sentCounters) {
+      $delta = max(0, (int)($d['points'] ?? 0) - (int)($a['points'] ?? 0));
+      if ($delta > 0) { audit('sync_counters_ignored', array('phone' => $phone, 'points_delta' => $delta)); }
     }
     $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
     if ($name !== '') { $a['name'] = $name; }

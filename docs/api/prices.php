@@ -1,8 +1,8 @@
 <?php
 // Серверный прайс-лист — единственный источник правды по ценам.
-// Держать в синхроне с MENU в app/index.html (деплоить вместе!).
+// Держать в синхроне с MENU/ADDON_SETS/COMBO_* в app/index.html (деплоить вместе!).
 // PRICES: имя позиции => допустимые базовые цены (по размерам).
-// ADDONS: имя добавки => цена.
+// ADDONS: имя добавки => цена. Вкус в скобках («Сироп (Карамель)») отбрасывается при проверке.
 
 $BOUNTY_PRICES = array(
   '«Студент»' => array(30000),
@@ -22,6 +22,13 @@ $BOUNTY_PRICES = array(
   'Банановый кофе' => array(40000),
   'Какао американский' => array(45000),
   'Горячий шоколад' => array(32000),
+  'ПП-сэндвич с курицей' => array(42000),
+  'ПП-сэндвич с тунцом' => array(45000),
+  'Овсянка с ягодами' => array(32000),
+  'Гранола-боул' => array(38000),
+  'Кето-маффин' => array(28000),
+  'Печенье овсяное' => array(18000),
+  'Круассан миндальный БГ' => array(32000),
   'Айс-капучино' => array(36000),
   'Айс-американо' => array(32000),
   'Айс-латте' => array(32000),
@@ -60,16 +67,71 @@ $BOUNTY_ADDONS = array(
   'Взбитые сливки' => 6000,
   'Молоко доп.' => 10000,
   'Имбирь' => 6000,
+  'Топпинг' => 5000,
+  'Лёд extra' => 0,
+  'Без льда' => 0,
+  'Авокадо' => 8000,
+  'Доп. тунец / курица' => 10000,
+  'Сыр (моцарелла/фета)' => 6000,
+  'Овощи extra' => 3000,
+  'Оливки' => 4000,
+  'Соус без сахара' => 2000,
 );
 
+// Кастомизация напитка в комбо (COMBO_MILK / COMBO_SYRUPS / COMBO_SHOT_P в index.html)
+$BOUNTY_COMBO_MILK = array('обычное' => 0, 'без лактозы' => 0, 'кокосовое' => 5000, 'овсяное' => 5000, 'миндальное' => 5000);
+define('BOUNTY_COMBO_SYRUP_P', 3000);
+define('BOUNTY_COMBO_SHOT_P', 7000);
+
+function addon_price($a) {
+  global $BOUNTY_ADDONS;
+  $a = trim((string)$a);
+  if (isset($BOUNTY_ADDONS[$a])) { return $BOUNTY_ADDONS[$a]; }
+  // «Сироп (Карамель)» → «Сироп»: вкус в скобках цену не меняет
+  $base = preg_replace('/\s*\([^()]*\)\s*$/u', '', $a);
+  if ($base !== $a && isset($BOUNTY_ADDONS[$base])) { return $BOUNTY_ADDONS[$base]; }
+  return null;
+}
+
+// Конструктор комбо: n = «Комбо · Напиток + Еда», unit = round((напиток+кастом+еда)*0.85/500)*500.
+// Кастом приходит строками в addons: «молоко: овсяное», «сироп: карамель + ваниль», «+ эспрессо шот».
+function combo_price_check($name, $addons, $unit) {
+  global $BOUNTY_PRICES, $BOUNTY_COMBO_MILK;
+  if (!preg_match('/^Комбо · (.+?) \+ (.+)$/u', $name, $m)) { return null; }
+  $drink = trim($m[1]); $food = trim($m[2]);
+  if (!isset($BOUNTY_PRICES[$drink]) || !isset($BOUNTY_PRICES[$food])) { return false; }
+  $extra = 0;
+  foreach ((array)$addons as $a) {
+    $a = mb_strtolower(trim((string)$a));
+    if (strpos($a, 'молоко:') === 0) {
+      $milk = trim(mb_substr($a, mb_strlen('молоко:')));
+      $extra += $BOUNTY_COMBO_MILK[$milk] ?? 0;
+    } elseif (strpos($a, 'сироп:') === 0) {
+      $extra += BOUNTY_COMBO_SYRUP_P * (substr_count($a, ' + ') + 1);
+    } elseif (strpos($a, 'эспрессо шот') !== false) {
+      $extra += BOUNTY_COMBO_SHOT_P;
+    }
+    // размер, «без сахара», «без кофеина», «айс» — бесплатны
+  }
+  $fp = $BOUNTY_PRICES[$food][0];
+  foreach ($BOUNTY_PRICES[$drink] as $base) {
+    if ((int)round(($base + $extra + $fp) * 0.85 / 500) * 500 === (int)$unit) { return true; }
+  }
+  return false;
+}
+
 // Проверка: unit позиции = базовая цена (один из размеров) + сумма добавок.
-// Возвращает true если цена честная; неизвестные позиции пропускает (false = подмена).
+// true — цена честная; false — подмена; null — позиции нет в прайсе (заказ отклонить, меню рассинхронено).
 function price_check($name, $addons, $unit) {
-  global $BOUNTY_PRICES, $BOUNTY_ADDONS;
-  if (!isset($BOUNTY_PRICES[$name])) { return null; } // позиция не в прайсе — решает вызывающий
+  global $BOUNTY_PRICES;
+  $combo = combo_price_check($name, $addons, $unit);
+  if ($combo !== null) { return $combo; }
+  if (!isset($BOUNTY_PRICES[$name])) { return null; }
   $addSum = 0;
   foreach ((array)$addons as $a) {
-    $addSum += $BOUNTY_ADDONS[$a] ?? 0;
+    $p = addon_price($a);
+    if ($p === null) { return false; } // неизвестная добавка = подмена
+    $addSum += $p;
   }
   foreach ($BOUNTY_PRICES[$name] as $base) {
     if ($base + $addSum === (int)$unit) { return true; }

@@ -44,7 +44,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .scr-head h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1.05;letter-spacing:-.01em}
 .scr-head h1 .script{font-family:'Cookie',cursive;color:var(--gold);font-size:.7em;font-weight:400;display:block;margin-top:2px;line-height:1}
 .scr-head .greet{color:rgba(242,234,215,.7);font-size:14px;margin-top:6px}
-.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--gold);font-size:14px;font-weight:700;padding:0;margin-bottom:10px;cursor:pointer;font-family:inherit;letter-spacing:.02em}
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--gold);font-size:14px;font-weight:700;padding:13px 16px 13px 2px;margin:-13px 0 -3px -2px;cursor:pointer;font-family:inherit;letter-spacing:.02em}
 
 /* CARDS */
 .card{background:rgba(242,234,215,.06);border:1px solid rgba(201,161,74,.15);border-radius:14px;padding:18px;margin-bottom:14px;transition:transform .15s}
@@ -186,7 +186,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .btn-ghost{background:transparent;color:var(--gold);border:1px solid rgba(201,161,74,.4)}
 .tip{font-size:12px;color:rgba(242,234,215,.55);font-style:italic;text-align:center;margin-top:10px}
 .divider{height:1px;background:rgba(201,161,74,.15);margin:18px 0}
-.lang-chip{background:rgba(242,234,215,.08);border:1px solid rgba(212,175,55,.3);border-radius:10px;color:var(--paper);font-size:11px;font-weight:700;padding:5px 9px;cursor:pointer;letter-spacing:.03em}
+.lang-chip{background:rgba(242,234,215,.08);border:1px solid rgba(212,175,55,.3);border-radius:10px;color:var(--paper);font-size:12px;font-weight:700;padding:8px 12px;min-height:34px;cursor:pointer;letter-spacing:.03em}
 .lang-chip.sel{background:var(--gold);color:var(--navy);border-color:var(--gold)}
 .chip.sel{background:var(--gold);color:var(--navy);border-color:var(--gold)}
 .pr-flav{display:flex}
@@ -529,7 +529,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
       </div>
     </div>
 
-    <div class="tip" style="margin-top:18px">Bounty App · v1.24 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
+    <div class="tip" style="margin-top:18px">Bounty App · v1.25 · 2026<br>Предзаказ · кошелёк · оплата при получении или с кошелька</div>
     <div style="text-align:center;margin-top:14px;padding-bottom:6px"><span onclick="staffEntryShow()" style="font-size:11px;opacity:.45;text-decoration:underline;cursor:pointer">Вход для персонала</span></div>
   </main>
 
@@ -1157,9 +1157,9 @@ function renderMenu(cat){
                 ? `<div style="color:var(--gold);font-weight:700;font-size:14px;margin-top:5px">${fmtSum(pr.total)}</div>`
                 : `<div style="color:#e88;font-size:12px;margin-top:5px">⚠ Позиция временно недоступна</div>`}
             </div>
-            <button class="chip" style="color:#e88;padding:6px 10px" onclick="myComboDel(${mc.id})">✕</button>
+            <button class="chip" style="color:#e88;padding:10px 14px" onclick="myComboDel(${mc.id})">✕</button>
           </div>
-          ${pr.ok ? `<button class="chip" style="width:100%;margin-top:8px;background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:700" onclick="myComboOrder(${mc.id})">В корзину →</button>` : ''}
+          ${pr.ok ? `<button class="chip" style="width:100%;margin-top:8px;padding:13px 14px;font-size:14px;background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:700" onclick="myComboOrder(${mc.id})">В корзину →</button>` : ''}
         </div>`; }).join('')}
       </div>` : '';
     // аккордеон кастомизации напитка
@@ -1343,7 +1343,7 @@ function openProd(cat, idx){
     aw.style.display = 'block';
     document.getElementById('pr-addons').innerHTML = prState.addonSet.map((a,k) => {
       const priceTxt = a.p > 0 ? ' · +' + fmtSum(a.p) : ' · бесплатно';
-      const flavRow = a.fl ? `<div class="pr-flav" id="pr-flav-${k}" style="display:none;gap:6px;flex-wrap:wrap;margin:6px 0 2px;padding-left:4px">${a.fl.map((f,fi)=>`<button class="chip${fi===0?' sel':''}" data-fi="${fi}" style="padding:5px 10px;font-size:12px" onclick="prFlavor(${k},${fi})">${f}</button>`).join('')}</div>` : '';
+      const flavRow = a.fl ? `<div class="pr-flav" id="pr-flav-${k}" style="display:none;gap:6px;flex-wrap:wrap;margin:6px 0 2px;padding-left:4px">${a.fl.map((f,fi)=>`<button class="chip${fi===0?' sel':''}" data-fi="${fi}" style="padding:9px 13px;font-size:13px" onclick="prFlavor(${k},${fi})">${f}</button>`).join('')}</div>` : '';
       return `<label class="p-add"><span>${a.ic} ${a.n}${priceTxt}</span><input type="checkbox" data-k="${k}" onchange="prAddon(${k},this.checked)" style="width:18px;height:18px;accent-color:var(--gold)"></label>${flavRow}`;
     }).join('');
   }
@@ -1690,11 +1690,21 @@ function submitOrder(){
   if (coPay === 'wallet' && !client){ alert('Для оплаты с кошелька нужен аккаунт'); orderSending = false; btn.textContent = 'Оформить заказ ✓'; btn.disabled = false; return; }
   const payload = {
     client_id: client ? client.id : '', name: client ? client.name : '', phone: client ? client.phone : '',
+    token: localStorage.getItem('bounty_token') || '',
     point: coPoint, point_name: point.name, pickup: PICKUP_TIMES[coTime],
     items: c.map(i=>({n:i.n, size:i.size, qty:i.qty, addons:i.addons, comment:i.comment, unit:i.unit})),
     total: cartTotal(c),
     pay: coPay
   };
+  // идемпотентность: один ключ на состав корзины — ретрай/даблтап не создаст второй заказ
+  const cartSig = JSON.stringify(payload.items) + '|' + payload.total + '|' + payload.pay;
+  let idemRec = null;
+  try { idemRec = JSON.parse(localStorage.getItem('bounty_idem')); } catch(e){}
+  if (!idemRec || idemRec.sig !== cartSig){
+    idemRec = {sig: cartSig, id: Array.from(crypto.getRandomValues(new Uint8Array(12))).map(b=>b.toString(16).padStart(2,'0')).join('')};
+    localStorage.setItem('bounty_idem', JSON.stringify(idemRec));
+  }
+  payload.idem = idemRec.id;
   fetch('../api/order.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
     .then(r => r.json())
     .then(res => {
@@ -1706,6 +1716,10 @@ function submitOrder(){
         if (res && res.error === 'price'){
           alert('Цены в меню обновились 🙏\nЗакрой и открой приложение, затем собери заказ заново.');
           localStorage.removeItem('bounty_cart'); renderCartBar(); renderCart();
+          return;
+        }
+        if (res && res.error === 'rate'){
+          alert('Слишком много заказов за последний час 🙏 Попробуй чуть позже.');
           return;
         }
         if (res && res.error === 'insufficient'){
@@ -1720,6 +1734,7 @@ function submitOrder(){
       orders.push({id:res.id, num:res.num, pk:res.pk||'', ts:new Date().toISOString(), point:point.name, pickup:PICKUP_TIMES[coTime], total:payload.total, items:payload.items, status:'new', pay:coPay, paid:!!res.paid});
       localStorage.setItem('bounty_orders', JSON.stringify(orders.slice(-20)));
       localStorage.removeItem('bounty_cart');
+      localStorage.removeItem('bounty_idem');
       renderCartBar();
       renderUsual();
       if (res.paid) refreshWallet();
