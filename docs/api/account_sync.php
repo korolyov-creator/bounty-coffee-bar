@@ -61,6 +61,15 @@ if ($action === 'sync') {
     }
     $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
     if ($name !== '') { $a['name'] = $name; }
+    if (isset($d['dob']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$d['dob'])) {
+      $ts = strtotime((string)$d['dob']);
+      $age = $ts !== false ? (time() - $ts) / 31557600 : -1;
+      // менять дату рождения можно не чаще раза в год (защита от абуза ДР-бонуса)
+      if ($age >= 14 && $age <= 100 && (empty($a['dob']) || time() - (int)($a['dob_ts'] ?? 0) > 365 * 86400)) {
+        $a['dob'] = (string)$d['dob'];
+        $a['dob_ts'] = time();
+      }
+    }
     if (isset($d['hist']) && is_array($d['hist'])) {
       // объединение истории: серверные записи + новые с устройства, без дублей
       $merged = array();

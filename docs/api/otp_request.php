@@ -46,9 +46,9 @@ $res = store_update('otp.json', function ($data) use ($phone, $now, $code) {
 });
 if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 429); }
 
+// Приоритет — Telegram: мгновенно и бесплатно; SMS — фолбэк (Eskiz в тест-режиме до договора)
+if ($has_tg && tg_otp_send($phone, $code)) { respond(['ok' => true, 'via' => 'tg']); }
 $sent = sms_send($phone, "Bounty Coffee Bar: kod dlya vhoda $code. Nikomu ne soobshchayte.");
 if ($sent) { respond(['ok' => true]); }
-// SMS не прошла (тест-режим Eskiz до договора, сбой шлюза) — пробуем доставить код в Telegram
-if ($has_tg && tg_otp_send($phone, $code)) { respond(['ok' => true, 'via' => 'tg']); }
 // иначе клиент уходит в локальную регистрацию; tg — ссылка на бота для самопривязки номера
 respond(['ok' => false, 'reason' => 'sms_unavailable', 'tg' => tg_bot_link()]);

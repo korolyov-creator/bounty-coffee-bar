@@ -88,6 +88,29 @@ foreach ($subs as $phone => $s) {
   }
 }
 
+// ДР-бонус: накануне дня рождения (по Ташкенту) начисляем +50 баллов и поздравляем в Telegram —
+// подарок приходит вечером, клиент идёт за напитком в свой день
+$bdayLines = array();
+$tmr = new DateTime('tomorrow', new DateTimeZone('Asia/Tashkent'));
+$tmrMD = $tmr->format('m-d');
+$tmrY = (int)$tmr->format('Y');
+store_update('accounts.json', function ($data) use ($tmrMD, $tmrY, &$bdayLines) {
+  foreach ($data as $phone => $a) {
+    if (empty($a['dob']) || substr($a['dob'], 5) !== $tmrMD) { continue; }
+    if ((int)($a['bday_y'] ?? 0) >= $tmrY) { continue; }
+    $data[$phone]['points'] = (int)($a['points'] ?? 0) + 50;
+    $data[$phone]['bday_y'] = $tmrY;
+    $hist = (array)($a['hist'] ?? array());
+    $hist[] = array('t' => 'bday', 'd' => date('c'));
+    $data[$phone]['hist'] = array_slice($hist, -200);
+    $bdayLines[] = array('phone' => $phone, 'name' => (string)($a['name'] ?? ''));
+  }
+  return array($data, true);
+});
+foreach ($bdayLines as $bl) {
+  tg_text_send($bl['phone'], "🎂 " . ($bl['name'] !== '' ? $bl['name'] . ', ' : '') . "завтра твой день!\n\nBounty Coffee Bar дарит +50 баллов — они уже на карте. Загляни к нам, отметим ☕");
+}
+
 $f = function ($n) { return number_format($n, 0, '', ' '); };
 $msg = "📊 Bounty · сводка за " . date('d.m.Y', $fromTs) . "\n\n";
 $msg .= "☕ Выдано заказов: $doneN (отменено: $cancelN)\n";
@@ -119,6 +142,10 @@ if ($directs) { $msg .= "\n⚠️ ПРЯМЫЕ зачисления (без ко
 if ($adjusts) { $msg .= "\n✏️ Корректировки:\n· " . implode("\n· ", $adjusts) . "\n"; }
 if ($refunds > 0) { $msg .= "\n↩️ Возвраты на кошельки: " . $f($refunds) . " сум\n"; }
 $msg .= "\n👛 Остаток на всех кошельках: " . $f($walletTotal) . " сум (обязательства)";
+if ($bdayLines) {
+  $msg .= "\n\n🎂 ДР завтра (+50 баллов начислено):";
+  foreach ($bdayLines as $bl) { $msg .= "\n· " . ($bl['name'] !== '' ? $bl['name'] : '?') . " +" . $bl['phone']; }
+}
 
 tg_alert($msg);
 audit('daily_report', array('day' => $day));
