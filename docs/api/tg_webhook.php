@@ -27,6 +27,7 @@ function tgw_main_kb() {
   return array(
     'keyboard' => array(
       array(array('text' => '📱 Приложение'), array('text' => '🎁 Бонусы')),
+      array(array('text' => '🍏 Установка iPhone'), array('text' => '🤖 Установка Android')),
       array(array('text' => '📍 Адреса'), array('text' => '📰 Канал')),
       array(array('text' => '🔑 Код входа'), array('text' => '💬 Помощь')),
     ),
@@ -88,6 +89,7 @@ if ($cmd === '/start') {
     "☕ Привет! Это официальный бот кофейни Bounty Coffee Bar — «остров посреди города», Ташкент, 24/7.\n\n" .
     "Что я умею:\n" .
     "📱 Приложение — заказ, предзаказ и бонусы\n" .
+    "🍏🤖 Установка — поставить приложение на iPhone или Android\n" .
     "🎁 Бонусы — баллы за заказы и кэшбек до 20% на кошелёк\n" .
     "📍 Адреса — наши точки на карте города\n" .
     "🔑 Код входа — коды для входа в приложение прямо сюда, без SMS\n\n" .
@@ -100,11 +102,36 @@ if ($cmd === '/start') {
     "• карта лояльности: баллы, уровни и кэшбек на кошелёк\n" .
     "• кошелёк и история заказов\n" .
     "• чат с бариста\n\n" .
-    "Android / любой телефон: откройте ссылку и «Добавить на главный экран».\n" .
-    "iPhone: приложение в TestFlight.",
+    "Как установить на телефон — выберите в меню ниже:\n" .
+    "🍏 Установка iPhone · 🤖 Установка Android",
     array('inline_keyboard' => array(
       array(array('text' => '🌐 Открыть приложение', 'url' => $APP_URL)),
       array(array('text' => '🍏 iPhone — TestFlight', 'url' => $IOS_URL)),
+    )));
+} elseif ($cmd === '/iphone' || $text === '🍏 Установка iPhone') {
+  tgw_send($token, $chat_id,
+    "🍏 Установка на iPhone — два способа:\n\n" .
+    "1️⃣ TestFlight — полное приложение:\n" .
+    "• установите бесплатный TestFlight (кнопка ниже откроет его автоматически)\n" .
+    "• нажмите «Принять» и «Установить» — Bounty появится на экране\n\n" .
+    "2️⃣ Без App Store — прямо из Safari:\n" .
+    "• откройте bountycoffeebar.uz/app/ в Safari (кнопка ниже)\n" .
+    "• нажмите «Поделиться» (квадрат со стрелкой) → «На экран “Домой”»\n" .
+    "• иконка Bounty появится как обычное приложение\n\n" .
+    "⏳ Версия для App Store уже на проверке Apple — как только выйдет, анонсируем в @bountycoffeebar_uz.",
+    array('inline_keyboard' => array(
+      array(array('text' => '🛫 Установить через TestFlight', 'url' => $IOS_URL)),
+      array(array('text' => '🌐 Открыть в Safari', 'url' => $APP_URL)),
+    )));
+} elseif ($cmd === '/android' || $text === '🤖 Установка Android') {
+  tgw_send($token, $chat_id,
+    "🤖 Установка на Android:\n\n" .
+    "• откройте bountycoffeebar.uz/app/ в Chrome (кнопка ниже)\n" .
+    "• нажмите «Установить приложение» (или меню ⋮ → «Добавить на главный экран»)\n" .
+    "• иконка Bounty появится как обычное приложение\n\n" .
+    "⏳ Версия для Google Play готовится — анонсируем в @bountycoffeebar_uz.",
+    array('inline_keyboard' => array(
+      array(array('text' => '🌐 Открыть в Chrome', 'url' => $APP_URL)),
     )));
 } elseif ($cmd === '/bonus' || $text === '🎁 Бонусы') {
   tgw_send($token, $chat_id,
@@ -152,6 +179,8 @@ if ($cmd === '/start') {
   tgw_send($token, $chat_id,
     "💬 Команды бота:\n\n" .
     "/app — открыть приложение (заказ и бонусы)\n" .
+    "/iphone — установить на iPhone (TestFlight или Safari)\n" .
+    "/android — установить на Android\n" .
     "/bonus — бонусы: баллы, уровни и кэшбек\n" .
     "/locations — адреса точек\n" .
     "/link — получать коды входа сюда\n" .
