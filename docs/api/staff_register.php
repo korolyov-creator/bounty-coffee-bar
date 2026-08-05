@@ -15,8 +15,35 @@ $phone = norm_phone($d['phone'] ?? '');
 // проверка: есть ли для номера код от администратора (шаг 1 мастера)
 if (!empty($d['check'])) {
   if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
+  $has_invite = false;
   $inv = store_read('staff_invites.json');
-  respond(['ok' => true, 'invite' => isset($inv[$phone]) && ($inv[$phone]['exp'] ?? 0) >= time()]);
+  if (isset($inv[$phone]) && ($inv[$phone]['exp'] ?? 0) >= time()) { $has_invite = true; }
+  $tg_linked = tg_link_chat($phone) !== null;
+
+  // «Получить код в Telegram»: перегенерируем код инвайта и шлём в привязанный чат
+  if (!empty($d['send_tg'])) {
+    if (!$has_invite) { respond(['ok' => false, 'reason' => 'no_invite'], 404); }
+    if (!$tg_linked) { respond(['ok' => false, 'reason' => 'tg_not_linked', 'tg' => tg_bot_link()], 409); }
+    $code = (string)random_int(100000, 999999);
+    $res = store_update('staff_invites.json', function ($data) use ($phone, $code) {
+      $e = $data[$phone] ?? null;
+      if (!$e || time() > ($e['exp'] ?? 0)) { return [$data, 'no_invite']; }
+      if (time() - ($e['ts'] ?? 0) < 60) { return [$data, 'too_soon']; }
+      $e['h'] = hash('sha256', $phone . ':' . $code);
+      $e['tries'] = 0;
+      $e['ts'] = time();
+      $data[$phone] = $e;
+      return [$data, 'ok'];
+    });
+    if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 429); }
+    if (!tg_text_send($phone, "☕ Bounty Coffee Bar: код регистрации бариста {$code}. Действует 24 часа. Никому не сообщай.")) {
+      respond(['ok' => false, 'reason' => 'tg_send_failed', 'tg' => tg_bot_link()], 502);
+    }
+    audit('staff_invite_tg', array('phone' => $phone));
+    respond(['ok' => true, 'invite' => true, 'sent' => 'tg']);
+  }
+
+  respond(['ok' => true, 'invite' => $has_invite, 'tg_linked' => $tg_linked, 'tg' => tg_bot_link()]);
 }
 
 $code = preg_replace('/\D/', '', (string)($d['code'] ?? ''));

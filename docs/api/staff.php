@@ -540,8 +540,11 @@ if ($action === 'staff_invite') {
   });
   audit('staff_invite', array('phone' => $phone, 'name' => $name));
   $sent = sms_send($phone, "Bounty Coffee Bar: kod registratsii barista $code. Deystvuet 24 chasa.");
-  // если SMS-провайдер не настроен — код показываем админу, он передаёт бариста лично
-  respond(['ok' => true, 'sms_sent' => $sent, 'code' => $sent ? null : $code]);
+  $via = $sent ? 'sms' : '';
+  // SMS не прошла (тест-режим Eskiz) — шлём код в привязанный Telegram бариста
+  if (!$sent && tg_text_send($phone, "☕ Bounty Coffee Bar: код регистрации бариста {$code}. Действует 24 часа.\nРегистрация: https://bountycoffeebar.uz/barista.html")) { $via = 'tg'; }
+  // ни SMS, ни TG — код показываем админу, он передаёт бариста лично
+  respond(['ok' => true, 'sms_sent' => $sent, 'via' => $via, 'code' => $via ? null : $code, 'tg' => tg_bot_link()]);
 }
 
 if ($action === 'staff_invite_cancel') {

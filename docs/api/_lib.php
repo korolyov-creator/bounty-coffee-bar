@@ -464,19 +464,24 @@ function tg_bot_link() {
   return !empty($c['tg_bot']) ? 'https://t.me/' . $c['tg_bot'] : '';
 }
 
-function tg_otp_send($phone, $code) {
+// Произвольный текст в привязанный Telegram-чат номера (коды входа, инвайты персонала)
+function tg_text_send($phone, $text) {
   $lc = tg_link_chat($phone);
   if (!$lc) { return false; }
   list($token, $chat) = $lc;
   $ch = curl_init('https://api.telegram.org/bot' . $token . '/sendMessage');
   curl_setopt_array($ch, array(
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => http_build_query(array(
-      'chat_id' => $chat,
-      'text' => "☕ Bounty Coffee Bar: код для входа {$code}. Никому не сообщай.")),
+    CURLOPT_POSTFIELDS => http_build_query(array('chat_id' => $chat, 'text' => $text)),
     CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15,
+    // с хостинга первый коннект к api.telegram.org занимал секунды (IPv6/DNS) — пиним IPv4
+    CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
   ));
   $r = json_decode(curl_exec($ch), true);
   curl_close($ch);
   return !empty($r['ok']);
+}
+
+function tg_otp_send($phone, $code) {
+  return tg_text_send($phone, "☕ Bounty Coffee Bar: код для входа {$code}. Никому не сообщай.");
 }

@@ -467,9 +467,11 @@ function staffInvite(){
     if (!j.ok){ alert('Не получилось (' + (j.reason||'') + ')'); return; }
     const r = document.getElementById('inv-result');
     r.style.display = 'block';
-    r.innerHTML = j.sms_sent
+    r.innerHTML = j.via === 'sms' || j.sms_sent
       ? '✅ Код отправлен по SMS на +' + esc(phone)
-      : '📱 SMS не подключено — передай бариста код лично:<div style="font-size:30px;font-weight:800;color:var(--gold);text-align:center;letter-spacing:.2em;margin-top:6px">' + esc(j.code) + '</div><div class="sub" style="text-align:center">Действует 24 часа · регистрация на bountycoffeebar.uz/barista.html</div>';
+      : j.via === 'tg'
+      ? '✅ Код отправлен бариста в Telegram (бот @bountycoffeebar_bot, номер +' + esc(phone) + ')'
+      : '📱 SMS и Telegram недоступны — передай бариста код лично:<div style="font-size:30px;font-weight:800;color:var(--gold);text-align:center;letter-spacing:.2em;margin-top:6px">' + esc(j.code) + '</div><div class="sub" style="text-align:center">Действует 24 часа · регистрация на bountycoffeebar.uz/barista.html</div><div class="sub" style="margin-top:6px">Либо пусть бариста привяжет номер в боте @bountycoffeebar_bot («🔑 Код входа») и нажмёт «Получить код в Telegram» на шаге 1 регистрации.</div>';
     document.getElementById('inv-phone').value = ''; document.getElementById('inv-name').value = '';
     loadStaff();
   }).catch(()=>alert('Нет связи'));

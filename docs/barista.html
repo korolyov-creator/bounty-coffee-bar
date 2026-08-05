@@ -83,6 +83,8 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
       <input type="tel" id="reg-phone" placeholder="Телефон 9XXXXXXXX" style="letter-spacing:normal;font-size:16px;margin-bottom:10px">
       <div id="reg-code-wrap" style="display:none">
         <input type="tel" id="reg-code" placeholder="Код от администратора (6 цифр)">
+        <button class="chip" id="reg-tg-btn" onclick="regCodeTg()" style="margin-top:8px;width:100%">📨 Получить код в Telegram</button>
+        <div class="sub" id="reg-tg-hint" style="display:none;font-size:13px;margin-top:8px"></div>
       </div>
       <button class="gold" onclick="regNext(2)" style="margin-top:10px">Дальше →</button>
     </div>
@@ -294,7 +296,9 @@ function regNext(n){
           const wrap = document.getElementById('reg-code-wrap');
           if (j.invite){
             wrap.style.display = 'block';
-            document.getElementById('reg-s1-hint').textContent = 'Для твоего номера есть код от администратора — введи его';
+            document.getElementById('reg-s1-hint').textContent = 'Для твоего номера есть код от администратора — введи его или получи в Telegram';
+            const h = document.getElementById('reg-tg-hint');
+            h.style.display = 'none'; h.innerHTML = '';
           } else {
             wrap.style.display = 'none';
             document.getElementById('reg-code').value = '';
@@ -327,6 +331,31 @@ function regNext(n){
       (noCode ? '<br><span style="color:var(--muted);font-size:13px">Код администратора не нужен — после регистрации владелец подтвердит приём на работу</span>' : '');
   }
   regShow(n);
+}
+// «Получить код в Telegram»: сервер перегенерирует код инвайта и шлёт в привязанный чат бота
+function regCodeTg(){
+  const phone = document.getElementById('reg-phone').value.replace(/\D/g,'');
+  const btn = document.getElementById('reg-tg-btn');
+  const h = document.getElementById('reg-tg-hint');
+  btn.disabled = true;
+  fetch('api/staff_register.php', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({check:1, send_tg:1, phone})})
+    .then(r=>r.json()).then(j => {
+      btn.disabled = false;
+      h.style.display = 'block';
+      if (j.ok && j.sent === 'tg'){
+        h.innerHTML = '✅ Код отправлен в Telegram — проверь чат с ботом @bountycoffeebar_bot и введи код выше';
+      } else if (j.reason === 'tg_not_linked'){
+        h.innerHTML = 'Сначала привяжи свой номер: открой бота <a href="' + (j.tg || 'https://t.me/bountycoffeebar_bot') +
+          '" target="_blank" style="color:var(--gold)">@bountycoffeebar_bot</a>, нажми «🔑 Код входа» и поделись номером. Потом вернись сюда и нажми кнопку ещё раз.';
+      } else if (j.reason === 'too_soon'){
+        h.textContent = 'Код уже отправлялся — проверь Telegram. Повторить можно через минуту.';
+      } else if (j.reason === 'no_invite'){
+        h.textContent = 'Приглашение не найдено или истекло — попроси администратора создать новое.';
+      } else {
+        h.textContent = 'Не получилось отправить код — попробуй позже или возьми код у администратора.';
+      }
+    }).catch(()=>{ btn.disabled = false; regErr('Нет связи'); });
 }
 function doRegister(){
   const phone = document.getElementById('reg-phone').value.trim();
@@ -539,7 +568,6 @@ function pkScan(){
     document.getElementById('pk-scan-btn').textContent = '⏹ Остановить камеру';
     const v = document.getElementById('pk-video');
     const cv = document.getElementById('pk-canvas'), cx = cv.getContext('2d');
-    const v = document.getElementById('pk-video');
     pkTimer = setInterval(() => {
       if (!v.videoWidth) return;
       cv.width = v.videoWidth; cv.height = v.videoHeight;

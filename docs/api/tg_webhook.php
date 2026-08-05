@@ -12,14 +12,15 @@ $token = isset($c['tg_bot_token']) ? (string)$c['tg_bot_token'] : '';
 if ($token === '') { echo 'ok'; exit; }
 
 function tgw_send($token, $chat_id, $text, $markup = null) {
-  $p = array('chat_id' => $chat_id, 'text' => $text, 'disable_web_page_preview' => 'true');
-  if ($markup !== null) { $p['reply_markup'] = json_encode($markup, JSON_UNESCAPED_UNICODE); }
-  $ch = curl_init('https://api.telegram.org/bot' . $token . '/sendMessage');
-  curl_setopt_array($ch, array(
-    CURLOPT_POST => true, CURLOPT_POSTFIELDS => http_build_query($p),
-    CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10,
-  ));
-  curl_exec($ch); curl_close($ch);
+  // Ответ методом в теле HTTP-ответа вебхука: мгновенно для клиента и без
+  // исходящего запроса к api.telegram.org (с хостинга он занимает секунды,
+  // а его таймауты копили очередь ретраев у Telegram).
+  $p = array('method' => 'sendMessage', 'chat_id' => $chat_id, 'text' => $text,
+    'disable_web_page_preview' => true);
+  if ($markup !== null) { $p['reply_markup'] = $markup; }
+  header('Content-Type: application/json');
+  echo json_encode($p, JSON_UNESCAPED_UNICODE);
+  exit;
 }
 
 function tgw_main_kb() {
