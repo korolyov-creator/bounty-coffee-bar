@@ -483,5 +483,5 @@ function tg_text_send($phone, $text) {
 }
 
 function tg_otp_send($phone, $code) {
-  return tg_text_send($phone, "☕ Bounty Coffee Bar: код для входа {$code}. Никому не сообщай.");
+  return tg_text_send($phone, "☕ Bounty Coffee Bar: код для входа {$code}.\n\nВернись в приложение и введи его на экране «Код из SMS». Никому не сообщай код.");
 }

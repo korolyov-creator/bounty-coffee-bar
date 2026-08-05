@@ -30,12 +30,13 @@ if (!$ok_ip) { respond(['ok' => false, 'reason' => 'rate_limit'], 429); }
 
 $code = (string)random_int(10000, 99999);
 
-// Лимит по номеру: 3 SMS в час, повтор не чаще раза в 60 сек
-$res = store_update('otp.json', function ($data) use ($phone, $now, $code) {
+// Лимит по номеру: 3 SMS в час (Telegram бесплатен — 10 в час), повтор не чаще раза в 60 сек
+$per_hour = $has_tg ? 10 : 3;
+$res = store_update('otp.json', function ($data) use ($phone, $now, $code, $per_hour) {
   foreach ($data as $k => $v) { if ($now > ($v['exp'] ?? 0) + 3600) unset($data[$k]); }
   $e = $data[$phone] ?? array('sent' => []);
   $e['sent'] = array_values(array_filter(isset($e['sent']) ? $e['sent'] : [], function ($t) use ($now) { return $now - $t < 3600; }));
-  if (count($e['sent']) >= 3) { return [$data, 'rate_limit']; }
+  if (count($e['sent']) >= $per_hour) { return [$data, 'rate_limit']; }
   if ($e['sent'] && $now - end($e['sent']) < 60) { return [$data, 'too_soon']; }
   $e['sent'][] = $now;
   $e['h'] = hash('sha256', $phone . ':' . $code);

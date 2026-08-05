@@ -499,11 +499,11 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <div class="l"><span>📸</span><span>Instagram @bountycoffeebar.tashkent</span></div>
         <div class="r">›</div>
       </div>
-      <div class="row" onclick="window.open('https://t.me/bountycoffeebar','_blank')">
+      <div class="row" onclick="window.open('https://t.me/bountycoffeebar_uz','_blank')">
         <div class="l"><span>✈️</span><span>Telegram канал</span></div>
         <div class="r">›</div>
       </div>
-      <div class="row" onclick="window.open('https://t.me/bountycoffeebar','_blank')">
+      <div class="row" onclick="window.open('https://t.me/bountycoffeebar_bot','_blank')">
         <div class="l"><span>❓</span><span>Помощь — напиши нам</span></div>
         <div class="r">›</div>
       </div>
@@ -2317,7 +2317,7 @@ function mergeServerOrders(srv){
   }
 }
 function forceLogout(msg){
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg'].forEach(k => localStorage.removeItem(k));
   if (msg) alert(msg);
   entryDone = true;
   go('home');
@@ -2538,7 +2538,7 @@ function logoutAccount(){
     ? 'Выйти из аккаунта?\n\nКарта и бонусы сохранятся на сервере — войдёшь снова по номеру телефона и коду из SMS.'
     : 'Выйти из аккаунта?\n\nВнимание: карта пока хранится только на этом устройстве. После выхода отметки обнулятся, вход — по номеру телефона.';
   if (!confirm(msg)) return;
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg'].forEach(k => localStorage.removeItem(k));
   document.getElementById('reg-step2').style.display = 'none';
   document.getElementById('reg-step1').style.display = 'block';
   document.getElementById('reg-name').value = '';
@@ -2614,6 +2614,8 @@ function registerClient(){
     .then(j => {
       btn.disabled = false; btn.textContent = 'Получить карту ☕';
       if (j.ok){
+        // переживаем перезапуск приложения (уход в Telegram за кодом убивает PWA)
+        localStorage.setItem('bounty_reg', JSON.stringify({phone, name, ts: Date.now(), step: 2}));
         document.getElementById('reg-step1').style.display = 'none';
         document.getElementById('reg-step2').style.display = 'block';
         document.getElementById('reg-code-hint').textContent = (j.via === 'tg')
@@ -2625,6 +2627,7 @@ function registerClient(){
       } else if (j.reason === 'sms_unavailable'){
         if (j.tg && confirm('SMS временно недоступны.\n\nПолучить код входа через Telegram?\n\nОткроется наш бот: нажми «Старт» и поделись номером — когда вернёшься сюда, код запросится сам.')){
           tgLinkPending = true;
+          localStorage.setItem('bounty_reg', JSON.stringify({phone, name, ts: Date.now(), step: 1, tg: 1}));
           btn.textContent = 'Я привязал Telegram → Получить код';
           window.open(j.tg, '_blank');
         } else {
@@ -2674,6 +2677,7 @@ function verifyCode(){
     .then(j => {
       btn.disabled = false; btn.textContent = 'Войти ☕';
       if (j.ok && j.account){
+        localStorage.removeItem('bounty_reg');
         localStorage.setItem('bounty_token', j.token);
         const a = j.account;
         saveClient({name: a.name, phone: a.phone, id: a.id, dob: a.dob, points:(typeof a.points === 'number' ? a.points : undefined), stamps: a.stamps||0, total: a.total||0, free: a.free||0, reg: a.reg, hist: a.hist||[]});
@@ -2697,6 +2701,8 @@ function verifyCode(){
 // Сервер начисляет то же самое сам — тут дублируем для мгновенного отображения, затем accountPull подтянет точное значение.
 function creditStamp(num){
   const c = getClient(); if (!c) return;
+  // серверный аккаунт: баллы уже начислил сервер — локальный «+15» задваивал бы их через accountPush
+  if (localStorage.getItem('bounty_token')){ accountPull(); buzz(30); return; }
   c.total = (c.total || 0) + 1;
   c.points = loyPointsOf(c) + 15;
   (c.hist = c.hist || []).push({t:'buy', d:new Date().toISOString(), o:num});
@@ -2757,6 +2763,23 @@ function enterAsClient(){
     document.getElementById('reg-hello').textContent = 'Привет, ' + last + '!';
     document.getElementById('reg-hello-sub').textContent = 'войди по номеру, чтобы вернуть карту';
   }
+  // восстановление незавершённого входа: PWA перезапустилась, пока клиент ходил за кодом в Telegram/SMS
+  try {
+    const rs = JSON.parse(localStorage.getItem('bounty_reg') || 'null');
+    if (rs && rs.phone && Date.now() - rs.ts < 10 * 60 * 1000){
+      regPhone = rs.phone;
+      document.getElementById('reg-name').value = rs.name || '';
+      document.getElementById('reg-phone').value = '+' + rs.phone;
+      if (rs.step === 2){
+        document.getElementById('reg-step1').style.display = 'none';
+        document.getElementById('reg-step2').style.display = 'block';
+        document.getElementById('reg-code-hint').textContent = 'Введи код из Telegram или SMS. Не пришёл — запроси новый ниже.';
+        document.getElementById('reg-code').focus();
+      } else if (rs.tg){
+        setTimeout(registerClient, 700);
+      }
+    } else if (rs){ localStorage.removeItem('bounty_reg'); }
+  } catch(e){}
 }
 // совместимость со старыми ссылками/тестами
 function roleChoose(role){
