@@ -1635,7 +1635,7 @@ function renderPayOptions(){
   const el = document.getElementById('co-pays');
   if (!el || !document.getElementById('scr-cart').classList.contains('active')) return;
   const total = cartTotal();
-  if (coPay === 'wallet' && wallet.balance < total) coPay = 'pickup';
+  // выбор клиента НЕ сбрасываем молча: если на кошельке не хватает — честно скажем в подсказке и при оформлении
   const m = wallet.methods || {};
   const opts = [
     {id:'pickup', label:'💵 При получении', ok:true},
@@ -1647,7 +1647,10 @@ function renderPayOptions(){
   el.innerHTML = opts.map(o =>
     `<button class="p-opt${coPay===o.id?' sel':''}${o.ok?'':' dim'}" onclick="coSelPay('${o.id}')">${o.label}</button>`).join('');
   document.getElementById('co-pay-hint').textContent =
-    coPay === 'wallet' ? 'Спишем ' + fmtSum(total) + ' с кошелька при оформлении. Отменишь до начала приготовления — деньги вернутся.'
+    coPay === 'wallet'
+      ? (wallet.balance >= total
+        ? 'Спишем ' + fmtSum(total) + ' с кошелька при оформлении. Отменишь до начала приготовления — деньги вернутся.'
+        : '⚠️ На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(total) + '. Пополни кошелёк или выбери другой способ.')
     : 'Наличными или картой на кассе при получении. Онлайн-оплата — через кошелёк.';
 }
 function coSelPay(id){
@@ -1680,6 +1683,11 @@ function submitOrder(){
   orderSending = true; btn.textContent = 'Отправляем…'; btn.disabled = true;
   const point = POINTS.find(p=>p.id===coPoint);
   if (coPay === 'wallet' && !client){ alert('Для оплаты с кошелька нужен аккаунт'); orderSending = false; btn.textContent = 'Оформить заказ ✓'; btn.disabled = false; return; }
+  if (coPay === 'wallet' && wallet.balance < cartTotal(c)){
+    orderSending = false; btn.textContent = 'Оформить заказ ✓'; btn.disabled = false;
+    if (confirm('На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(cartTotal(c)) + '.\n\nПополнить кошелёк?')) go('wallet');
+    return;
+  }
   const payload = {
     client_id: client ? client.id : '', name: client ? client.name : '', phone: client ? client.phone : '',
     token: localStorage.getItem('bounty_token') || '',
@@ -2700,8 +2708,17 @@ function registerClient(){
             registerLocal(name, phone);
           }
         }
-      } else if (j.reason === 'rate_limit' || j.reason === 'too_soon'){
-        alert('Слишком много запросов кода. Подожди немного и попробуй снова.');
+      } else if (j.reason === 'too_soon'){
+        // код уже отправлен меньше минуты назад и ещё действует — сразу к вводу, а не в тупик
+        localStorage.setItem('bounty_reg', JSON.stringify({phone, name, ts: Date.now(), step: 2}));
+        document.getElementById('reg-step1').style.display = 'none';
+        document.getElementById('reg-step2').style.display = 'block';
+        document.getElementById('reg-code-hint').textContent = 'Код уже отправлен — проверь Telegram или SMS. Новый можно запросить через минуту.';
+        document.getElementById('reg-code').value = '';
+        document.getElementById('reg-code').focus();
+        startResendTimer();
+      } else if (j.reason === 'rate_limit'){
+        alert('Превышен лимит кодов на этот час 🙏 Подожди немного и попробуй снова.');
       } else {
         alert('Не получилось отправить SMS. Проверь номер и попробуй ещё раз.');
       }

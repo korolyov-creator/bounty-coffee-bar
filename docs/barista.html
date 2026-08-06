@@ -642,7 +642,11 @@ function pkScan(){
     btn.textContent = '📷 Сканировать QR';
     const name = (err && err.name) || '';
     if (name === 'NotAllowedError' || name === 'PermissionDeniedError'){
-      alert('Разрешение на камеру отклонено.\nОткрой Настройки → Bounty Coffee Bar → Камера → Вкл.\nПока — введи 4-значный код клиента вручную.');
+      const inApp = /[?&]app=1/.test(location.search);
+      alert('Разрешение на камеру отклонено.\n' + (inApp
+        ? 'Включи его: Настройки iPhone → Bounty Coffee Bar → Камера → Вкл, затем вернись сюда.'
+        : 'Включи его: в Safari нажми «аА» (или «…») в адресной строке → Настройки сайта → Камера → Разрешить. Либо Настройки → Safari → Камера.')
+        + '\nПока — введи 4-значный код клиента вручную.');
     } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError'){
       alert('Камера не найдена на устройстве.\nВведи 4-значный код клиента вручную.');
     } else if (name === 'NotReadableError'){

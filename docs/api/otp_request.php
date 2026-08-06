@@ -51,5 +51,16 @@ if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 429); }
 if ($has_tg && tg_otp_send($phone, $code)) { respond(['ok' => true, 'via' => 'tg']); }
 $sent = sms_send($phone, "Bounty Coffee Bar: kod dlya vhoda $code. Nikomu ne soobshchayte.");
 if ($sent) { respond(['ok' => true]); }
-// иначе клиент уходит в локальную регистрацию; tg — ссылка на бота для самопривязки номера
+// Код НЕ ушёл (SMS-провайдер отказал, TG не привязан) — возвращаем списанную попытку,
+// иначе клиент, вернувшись после привязки Telegram, бьётся о 60-сек кулдаун («слишком много запросов»).
+store_update('otp.json', function ($data) use ($phone, $now) {
+  if (isset($data[$phone]['sent'])) {
+    $data[$phone]['sent'] = array_values(array_filter($data[$phone]['sent'], function ($t) use ($now) { return $t !== $now; }));
+    unset($data[$phone]['h'], $data[$phone]['exp']);
+    if (!$data[$phone]['sent']) { unset($data[$phone]); }
+  }
+  return [$data, true];
+});
+audit('otp_send_fail', array('phone' => $phone));
+// клиент уходит в локальную регистрацию; tg — ссылка на бота для самопривязки номера
 respond(['ok' => false, 'reason' => 'sms_unavailable', 'tg' => tg_bot_link()]);
