@@ -143,6 +143,12 @@ button.gold{background:var(--gold);color:var(--navy);border:none;border-radius:1
   </div>
 </div>
 
+<div class="card" id="pos-credit-card">
+  <h2 style="margin-top:0">⭐ Баллы за покупку на кассе</h2>
+  <div class="sub" style="margin:0 0 8px">Клиент платит на кассе → отсканируй QR его карты (экран «Карта» в приложении) и введи сумму чека — баллы и кэшбек начислятся сами</div>
+  <button class="gold" style="width:100%" onclick="posOpen()">➕ Начислить баллы</button>
+</div>
+
 <div class="card" id="topups-card" style="display:none">
   <h2 style="margin-top:0">👛 Пополнение кошельков <span class="badge" id="topups-n"></span></h2>
   <div id="topups"></div>
@@ -531,6 +537,35 @@ function pkClose(){
   pkStopCam();
   pkId = null;
 }
+function posOpen(){
+  pkMode = 'pos';
+  pkId = null;
+  document.getElementById('pk-title').textContent = '⭐ Покупка на кассе — баллы';
+  document.getElementById('pk-hint').innerHTML = 'Отсканируй QR карты клиента (экран «Карта» в приложении)<br>или введи его номер телефона';
+  const inp = document.getElementById('pk-input');
+  inp.value = ''; inp.maxLength = 12; inp.placeholder = '998XXXXXXXXX';
+  document.getElementById('pk-force-btn').style.display = 'none';
+  document.getElementById('pk-ov').style.display = 'flex';
+}
+function posDo(phone){
+  if (phone.length < 9){ alert('Введи полный номер телефона клиента'); return; }
+  const raw = prompt('Сумма чека, сум (например 32000):');
+  if (raw === null) return;
+  const amount = parseInt(String(raw).replace(/\D/g,''), 10) || 0;
+  if (amount < 1000){ alert('Сумма слишком маленькая — введи сумму чека в сумах'); return; }
+  if (!confirm('Начислить баллы за покупку на ' + fmt(amount) + ' сум\nклиенту +' + phone + '?')) return;
+  staffReq('pos_credit', {phone, amount}).then(j => {
+    if (j.ok){
+      beep(1200); pkClose();
+      alert('⭐ Начислено: +' + j.points_added + ' балл(ов)\n🎁 Кэшбек на кошелёк: ' + fmt(j.cashback) + ' сум (' + j.pct + '%)\nВсего баллов у клиента: ' + j.points);
+    } else {
+      const msg = {no_account:'У клиента нет аккаунта в приложении.\nПредложи установить: bountycoffeebar.uz/app и войти по номеру телефона — тогда баллы будут копиться.',
+        duplicate:'Эта покупка уже начислена только что (защита от даблтапа).',
+        bad_input:'Проверь номер и сумму.'}[j.reason] || ('Не получилось (' + (j.reason||'') + ')');
+      alert(msg);
+    }
+  }).catch(()=>alert('Нет связи'));
+}
 function pkStopCam(){
   if (pkTimer){ clearInterval(pkTimer); pkTimer = null; }
   if (pkStream){ pkStream.getTracks().forEach(t=>t.stop()); pkStream = null; }
@@ -589,6 +624,14 @@ function pkScan(){
         pkStopCam();
         document.getElementById('pk-input').value = q.data.split('|')[1] || '';
         pkSubmit();
+      } else if (pkMode === 'pos' && q.data.indexOf('BNT-') === 0 && q.data.indexOf('|') > 0){
+        // QR карты клиента: "BNT-XXXXXXX-ABC|998XXXXXXXXX"
+        pkStopCam();
+        document.getElementById('pk-input').value = (q.data.split('|')[1] || '').replace(/\D/g,'');
+        pkSubmit();
+      } else if (pkMode === 'pos' && (q.data.indexOf('BNT|') === 0 || q.data.indexOf('BNTSUB|') === 0)){
+        pkStopCam();
+        alert('Это QR ' + (q.data.indexOf('BNTSUB|') === 0 ? 'абонемента' : 'заказа') + ', а не карты.\nПопроси клиента открыть экран «Карта» в приложении.');
       } else if (pkMode === 'sub' && q.data.indexOf('BNT|') === 0){
         pkStopCam();
         alert('Это QR заказа, а не абонемента.\nДля выдачи заказа нажми «Выдан клиенту» на самом заказе.');
@@ -611,6 +654,7 @@ function pkScan(){
 }
 function pkSubmit(){
   const code = document.getElementById('pk-input').value.replace(/\D/g,'');
+  if (pkMode === 'pos'){ posDo(code); return; }
   if (pkMode === 'sub'){ subRedeemDo(code); return; }
   if (code.length !== 4){ alert('Введи 4 цифры кода клиента'); return; }
   const o = orders.find(x=>x.id===pkId) || {};

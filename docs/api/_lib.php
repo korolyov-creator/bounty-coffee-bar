@@ -177,6 +177,17 @@ function client_guard($phone, $id = '') {
   if (is_blocked($phone, $id)) { respond(['ok' => false, 'reason' => 'blocked', 'error' => 'blocked'], 403); }
 }
 
+// === LOYALTY ===
+// Баллы пропорциональны чеку: 1 балл за каждые полные 5 000 сум, минимум 1 за покупку.
+function loy_points_for($amount) {
+  return max(1, (int)floor((int)$amount / 5000));
+}
+// Кэшбек по уровню: Бронза 3 / Серебро(150) 5 / Золото(500) 10 / Платина(1500) 15 / Бриллиант(3500) 20.
+// Пороги синхронизированы с LOY_TIERS в app/index.html — менять только вместе.
+function loy_cashback_pct($pts) {
+  return $pts >= 3500 ? 20 : ($pts >= 1500 ? 15 : ($pts >= 500 ? 10 : ($pts >= 150 ? 5 : 3)));
+}
+
 // === WALLET ===
 // wallets.json: { "998XXXXXXXXX": {id, name, balance, tx:[{t,a,ts,m,o,oid,by}]} }
 function wallet_entry(&$data, $phone, $id = '', $name = '') {

@@ -7,6 +7,7 @@
 // далее все запросы с {token}:
 //  'topups' | 'topup_confirm' {tid} | 'topup_cancel' {tid} | 'topup_direct' {phone, amount}
 //  'chat_threads' | 'chat_get' {phone} | 'chat_send' {phone, text}
+//  'pos_credit' {phone, amount} — баллы+кэшбек за покупку на кассе (QR карты клиента)
 //  админ: 'overview' | 'adjust' {phone, amount, note}
 //  админ: 'staff_list' | 'staff_invite' {phone, name?} | 'staff_invite_cancel' {phone}
 //  админ: 'staff_block'/'staff_unblock' {login} | 'staff_reset' {login} | 'legacy_toggle' {on}
@@ -247,6 +248,47 @@ if ($action === 'sub_redeem') {
   }
   audit('sub_redeem', array('phone' => $phone, 'by' => $who));
   respond(['ok' => true, 'sub' => sub_public($res)]);
+}
+
+// Покупка на кассе: бариста сканирует QR карты клиента (или вводит номер) + сумму чека →
+// баллы (loy_points_for) и кэшбек по уровню, как при заказе через приложение.
+if ($action === 'pos_credit') {
+  $phone = norm_phone($d['phone'] ?? '');
+  $amount = (int)($d['amount'] ?? 0);
+  if (!$phone || $amount < 1000 || $amount > 5000000) { respond(['ok' => false, 'reason' => 'bad_input'], 422); }
+  // дедуп: тот же клиент + та же сумма в течение 90 секунд = даблтап бариста
+  $dup = store_update('pos_dedup.json', function ($data) use ($phone, $amount) {
+    $now = time();
+    foreach ($data as $k => $ts) { if ($now - $ts > 300) { unset($data[$k]); } }
+    $key = $phone . '|' . $amount;
+    if (isset($data[$key]) && $now - $data[$key] <= 90) { return [$data, true]; }
+    $data[$key] = $now;
+    return [$data, false];
+  });
+  if ($dup) { respond(['ok' => false, 'reason' => 'duplicate']); }
+  $earn = loy_points_for($amount);
+  $pts = store_update('accounts.json', function ($data) use ($phone, $earn) {
+    if (!isset($data[$phone])) { return [$data, null]; }
+    $a = $data[$phone];
+    $a['total'] = (int)($a['total'] ?? 0) + 1;
+    $a['points'] = (int)($a['points'] ?? 0) + $earn;
+    $data[$phone] = $a;
+    return [$data, (int)$a['points']];
+  });
+  if ($pts === null) { respond(['ok' => false, 'reason' => 'no_account']); }
+  $pct = loy_cashback_pct($pts);
+  $cashback = (int)floor($amount * $pct / 100);
+  if ($cashback > 0) {
+    store_update('wallets.json', function ($data) use ($phone, $cashback, $who) {
+      $w = wallet_entry($data, $phone);
+      $w['balance'] = (int)$w['balance'] + $cashback;
+      wallet_push_tx($w, array('t' => 'cashback', 'a' => $cashback, 'ts' => date('c'), 'by' => $who, 'm' => 'касса'));
+      $data[$phone] = $w;
+      return [$data, true];
+    });
+  }
+  audit('pos_credit', array('phone' => $phone, 'amount' => $amount, 'points' => $earn, 'cashback' => $cashback, 'by' => $who));
+  respond(['ok' => true, 'points_added' => $earn, 'points' => $pts, 'cashback' => $cashback, 'pct' => $pct]);
 }
 
 if ($role !== 'admin' && $role !== 'owner') { respond(['ok' => false, 'reason' => 'admin_only'], 403); }

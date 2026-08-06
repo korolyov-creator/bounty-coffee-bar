@@ -159,8 +159,9 @@ if ($ok === false) {
 }
 
 // Лояльность (замена панч-карты): баллы + кэшбек на кошелёк, всё серверно и автоматически.
-// +10 баллов покупка, +5 за заказ через приложение. Кэшбек по уровню: 3/5/10/15/20%.
+// Баллы от суммы чека: loy_points_for() (1 балл / 5000 сум). Кэшбек по уровню: loy_cashback_pct().
 $cashback = 0;
+$earned = 0;
 $lphone = norm_phone($rec['phone']);
 if ($lphone && !$trusted) {
   // без валидного токена баллы/кэшбек не начисляем: иначе накрутка на свой или чужой номер простым curl
@@ -168,18 +169,20 @@ if ($lphone && !$trusted) {
   $lphone = null;
 }
 if ($lphone) {
-  $pts = store_update('accounts.json', function ($data) use ($lphone) {
+  $earn = loy_points_for($total);
+  $pts = store_update('accounts.json', function ($data) use ($lphone, $earn) {
     if (!isset($data[$lphone])) { return [$data, null]; }
     $a = $data[$lphone];
     $a['total'] = (int)($a['total'] ?? 0) + 1;
     $base = isset($a['points']) ? (int)$a['points']
       : ((int)($a['total'] ?? 0) - 1) * 10 + ((int)($a['free'] ?? 0)) * 50; // миграция со штампов
-    $a['points'] = $base + 15;
+    $a['points'] = $base + $earn;
     $data[$lphone] = $a;
     return [$data, (int)$a['points']];
   });
   if ($pts !== null) {
-    $pct = $pts >= 2000 ? 20 : ($pts >= 800 ? 15 : ($pts >= 300 ? 10 : ($pts >= 100 ? 5 : 3)));
+    $earned = $earn;
+    $pct = loy_cashback_pct($pts);
     $cashback = (int)floor($total * $pct / 100);
     if ($cashback > 0) {
       store_update('wallets.json', function ($data) use ($lphone, $rec, $cashback, $id, $num) {
@@ -192,7 +195,7 @@ if ($lphone) {
     }
   }
 }
-$resp = array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => $cashback);
+$resp = array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => $cashback, 'points_added' => $earned);
 store_update('order_idem.json', function ($data) use ($idemKey, $resp) {
   $data[$idemKey] = array('ts' => time(), 'resp' => $resp);
   return [$data, true];

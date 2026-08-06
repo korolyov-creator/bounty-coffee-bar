@@ -60,7 +60,8 @@ if ($action === 'sync') {
         }
       }
       if (isset($d['points'])) {
-        $p = max(0, min(5000, (int)$d['points']));
+        // cap 500: с формулой «1 балл/5000 сум» локальная карта физически не могла накопить больше
+        $p = max(0, min(500, (int)$d['points']));
         if (!isset($a['points']) || $p > (int)$a['points']) { $a['points'] = $p; }
       }
       if ($sentCounters) { $a['mig'] = time(); }
