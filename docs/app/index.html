@@ -1630,7 +1630,7 @@ function addUpsell(cat, idx){
 }
 
 // === PAYMENT METHOD (checkout) ===
-let coPay = 'pickup';
+let coPay = 'pickup', coPayChosen = false;
 function renderPayOptions(){
   const el = document.getElementById('co-pays');
   if (!el || !document.getElementById('scr-cart').classList.contains('active')) return;
@@ -1667,6 +1667,7 @@ function coSelPay(id){
     return;
   }
   coPay = id;
+  coPayChosen = true;
   renderPayOptions();
   buzz(10);
 }
@@ -1687,6 +1688,13 @@ function submitOrder(){
     orderSending = false; btn.textContent = 'Оформить заказ ✓'; btn.disabled = false;
     if (confirm('На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(cartTotal(c)) + '.\n\nПополнить кошелёк?')) go('wallet');
     return;
+  }
+  // клиент не выбирал способ оплаты явно, а на кошельке хватает — предложим списать оттуда
+  if (coPay === 'pickup' && !coPayChosen && client && wallet.balance >= cartTotal(c)){
+    coPayChosen = true;
+    if (confirm('На кошельке ' + fmtSum(wallet.balance) + '.\n\nОплатить заказ (' + fmtSum(cartTotal(c)) + ') с кошелька?')){
+      coPay = 'wallet'; renderPayOptions();
+    }
   }
   const payload = {
     client_id: client ? client.id : '', name: client ? client.name : '', phone: client ? client.phone : '',
@@ -1750,6 +1758,7 @@ function submitOrder(){
         (res.pk ? '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.15)">Код выдачи — покажи бариста:<br><div id="okqr" style="display:inline-block;border-radius:10px;background:#fff;padding:8px;margin:8px 0 4px"></div><br><strong style="font-size:26px;letter-spacing:6px;color:var(--gold)">' + res.pk + '</strong></div>' : '');
       if (res.pk) drawPickupQr('okqr', res.id, res.pk);
       coPay = 'pickup';
+      coPayChosen = false;
       pointChosen = false; // следующий заказ снова начнётся с выбора точки
       go('orderok');
       confettiBurst();
@@ -2105,6 +2114,9 @@ function subHomeRefresh(){
 
 // === WALLET (кошелёк) ===
 let wallet = {balance:0, tx:[], methods:{}};
+// холодный старт: берём последний известный баланс из localStorage,
+// иначе панель оплаты в корзине рисуется с нулём до ответа API
+try { const wc = JSON.parse(localStorage.getItem('bounty_wallet')); if (wc && typeof wc.balance === 'number'){ wallet.balance = wc.balance; wallet.methods = wc.methods || {}; } } catch(e){}
 let wAmount = 50000, wMethod = 'cash', wPending = null;
 const W_AMOUNTS = [30000, 50000, 100000, 200000];
 function clientReq(url, extra){
@@ -2117,7 +2129,9 @@ function refreshWallet(){
   clientReq('../api/wallet.php', {action:'get'}).then(j => {
     if (!j.ok) return;
     wallet.balance = j.balance; wallet.tx = j.tx || []; wallet.methods = j.methods || {};
+    try { localStorage.setItem('bounty_wallet', JSON.stringify({balance: wallet.balance, methods: wallet.methods})); } catch(e){}
     renderWalletUI();
+    renderPayOptions();
     if (wPending && wallet.tx.some(t => t.t === 'topup' && new Date(t.ts).getTime() >= wPending.ts - 90000)){
       wPending = null;
       const card = document.getElementById('w-pending-card');
@@ -2126,7 +2140,7 @@ function refreshWallet(){
       if (hint) hint.textContent = '✅ Пополнение зачислено — баланс обновлён.';
       buzz([20,40,20]);
     }
-  }).catch(() => { renderWalletUI(); });
+  }).catch(() => { renderWalletUI(); renderPayOptions(); });
 }
 function renderWalletUI(){
   const f = fmtSum(wallet.balance);
