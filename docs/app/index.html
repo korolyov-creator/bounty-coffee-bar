@@ -2116,7 +2116,13 @@ function subHomeRefresh(){
 let wallet = {balance:0, tx:[], methods:{}};
 // холодный старт: берём последний известный баланс из localStorage,
 // иначе панель оплаты в корзине рисуется с нулём до ответа API
-try { const wc = JSON.parse(localStorage.getItem('bounty_wallet')); if (wc && typeof wc.balance === 'number'){ wallet.balance = wc.balance; wallet.methods = wc.methods || {}; } } catch(e){}
+try {
+  const wc = JSON.parse(localStorage.getItem('bounty_wallet'));
+  const cc = JSON.parse(localStorage.getItem('bounty_client') || '{}');
+  if (wc && Number.isFinite(wc.balance) && wc.balance >= 0 && wc.cid && wc.cid === cc.id){
+    wallet.balance = wc.balance; wallet.methods = wc.methods || {};
+  } else { localStorage.removeItem('bounty_wallet'); }
+} catch(e){}
 let wAmount = 50000, wMethod = 'cash', wPending = null;
 const W_AMOUNTS = [30000, 50000, 100000, 200000];
 function clientReq(url, extra){
@@ -2129,7 +2135,7 @@ function refreshWallet(){
   clientReq('../api/wallet.php', {action:'get'}).then(j => {
     if (!j.ok) return;
     wallet.balance = j.balance; wallet.tx = j.tx || []; wallet.methods = j.methods || {};
-    try { localStorage.setItem('bounty_wallet', JSON.stringify({balance: wallet.balance, methods: wallet.methods})); } catch(e){}
+    try { const cc = getClient(); if (cc) localStorage.setItem('bounty_wallet', JSON.stringify({cid: cc.id, balance: wallet.balance, methods: wallet.methods})); } catch(e){}
     renderWalletUI();
     renderPayOptions();
     if (wPending && wallet.tx.some(t => t.t === 'topup' && new Date(t.ts).getTime() >= wPending.ts - 90000)){
@@ -2350,7 +2356,7 @@ function mergeServerOrders(srv){
   }
 }
 function forceLogout(msg){
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg','bounty_wallet'].forEach(k => localStorage.removeItem(k));
   if (msg) alert(msg);
   entryDone = true;
   go('home');
@@ -2600,7 +2606,7 @@ function logoutAccount(){
     ? 'Выйти из аккаунта?\n\nКарта и бонусы сохранятся на сервере — войдёшь снова по номеру телефона и коду из SMS.'
     : 'Выйти из аккаунта?\n\nВнимание: карта пока хранится только на этом устройстве. После выхода отметки обнулятся, вход — по номеру телефона.';
   if (!confirm(msg)) return;
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg','bounty_wallet'].forEach(k => localStorage.removeItem(k));
   document.getElementById('reg-step2').style.display = 'none';
   document.getElementById('reg-step1').style.display = 'block';
   document.getElementById('reg-name').value = '';
@@ -2625,7 +2631,7 @@ async function deleteAccount(){
       if (!j.ok && r.status !== 401 && r.status !== 404) { alert('Не получилось удалить аккаунт — попробуй ещё раз или напиши нам: korolyov@epcwood.uz'); return; }
     } catch(e) { alert('Нет связи с сервером — проверь интернет и попробуй ещё раз.'); return; }
   }
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg','bounty_mycombos','bounty_idem','bounty_usual'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg','bounty_mycombos','bounty_idem','bounty_usual','bounty_wallet'].forEach(k => localStorage.removeItem(k));
   alert('Аккаунт удалён. Спасибо, что был с нами ☕');
   location.reload();
 }
