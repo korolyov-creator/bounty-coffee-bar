@@ -918,10 +918,14 @@ function go(scr, opts){
   opts = opts || {};
   const cur = document.querySelector('.screen.active');
   const curId = cur && cur.id ? cur.id.replace('scr-','') : null;
-  if (!opts.silent && curId && curId !== scr){ NAV_STACK.push(curId); if (NAV_STACK.length > 20) NAV_STACK.shift(); }
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('scr-'+scr);
   if (!target){ console.warn('no screen', scr); return; }
+  if (!opts.silent && curId && curId !== scr){
+    NAV_STACK.push(curId);
+    if (NAV_STACK.length > 20) NAV_STACK.shift();
+    history.pushState({ screen: scr }, '', location.href);
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   target.classList.add('active');
   const tab = TAB_MAP[scr] || scr;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.scr===tab));
