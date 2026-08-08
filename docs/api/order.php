@@ -28,6 +28,33 @@ $idem = substr(preg_replace('/[^a-f0-9]/', '', (string)($d['idem'] ?? '')), 0, 3
 $idemKey = $idem !== ''
   ? 'i:' . $idem
   : 'h:' . hash('sha256', $phoneN . '|' . (string)($d['client_id'] ?? '') . '|' . (string)($d['pay'] ?? '') . '|' . json_encode($d['items']));
+
+// Атомарный O_EXCL файловый лок: защита от race-condition при параллельных дублях (сеть + даблтап).
+// Имя lock-файла — sha256(idemKey), чтобы избежать спецсимволов в пути файловой системы.
+// Выполняется ДО store_update, чтобы предотвратить двойное списание при одновременных запросах.
+$idemLockSafe = hash('sha256', (string)$idemKey);
+$idemLockDir  = dirname(__DIR__, 2) . '/bounty_data/order_idem';
+$idemLockPath = $idemLockDir . '/' . $idemLockSafe . '.lock';
+if (!is_dir($idemLockDir)) { @mkdir($idemLockDir, 0700, true); }
+$idemLockHandle = @fopen($idemLockPath, 'x'); // O_EXCL: только один поток создаёт файл
+if ($idemLockHandle === false) {
+  // Лок занят — проверяем возраст файла
+  clearstatcache(true, $idemLockPath);
+  $lockAge = time() - (int)@filemtime($idemLockPath);
+  if ($lockAge <= 10) {
+    // Свежий лок (≤10 сек): параллельный дубль активен — вернуть 409
+    http_response_code(409); echo '{"ok":false,"error":"duplicate"}'; exit;
+  }
+  // Stale-лок (>10 сек): предыдущий запрос упал не почистив себя — удаляем и продолжаем
+  @unlink($idemLockPath);
+  $idemLockHandle = @fopen($idemLockPath, 'x');
+}
+if ($idemLockHandle) {
+  fwrite($idemLockHandle, (string)getmypid());
+  fclose($idemLockHandle);
+  register_shutdown_function(static function () use ($idemLockPath): void { @unlink($idemLockPath); });
+}
+
 $prev = store_update('order_idem.json', function ($data) use ($idemKey, $idem) {
   $now = time();
   foreach ($data as $k => $v) { if ($now - ($v['ts'] ?? 0) > 86400) { unset($data[$k]); } }
@@ -136,22 +163,38 @@ if ($pay === 'wallet') {
   $paid = true;
 }
 
+// Рассчитываем ожидаемые баллы лояльности для хранения в заказе.
+// ВАЖНО: фактическое начисление баллов и кэшбека происходит ТОЛЬКО при выдаче заказа
+// через endpoint api/order_mark_done.php (бариста нажимает «Выдать»).
+// Это предотвращает начисление за заказы, которые были отменены или не получены.
+$ptsPending = 0;
+$lphone = norm_phone($d['phone'] ?? '');
+if ($lphone && $trusted) {
+  $ptsPending = loy_points_for($total);
+} elseif ($lphone) {
+  // без валидного токена даже pending не ставим: иначе накрутка через curl
+  audit('loyalty_skip_untrusted', array('phone' => $lphone));
+}
+
 $rec = array(
-  'id'         => $id,
-  'num'        => $num,
-  'ts'         => date('c'),
-  'point'      => $point,
-  'point_name' => $points[$point],
-  'pickup'     => mb_substr(trim((string)($d['pickup'] ?? '')), 0, 30),
-  'client_id'  => substr(preg_replace('/[^A-Za-z0-9\-]/', '', (string)($d['client_id'] ?? '')), 0, 32),
-  'name'       => mb_substr(trim((string)($d['name'] ?? '')), 0, 50),
-  'phone'      => preg_replace('/[^\d+]/', '', (string)($d['phone'] ?? '')),
-  'items'      => $items,
-  'total'      => $total,
-  'pay'        => $pay,
-  'paid'       => $paid,
-  'pk'         => $pk,
-  'ip'         => $_SERVER['REMOTE_ADDR'] ?? ''
+  'id'          => $id,
+  'num'         => $num,
+  'ts'          => date('c'),
+  'point'       => $point,
+  'point_name'  => $points[$point],
+  'pickup'      => mb_substr(trim((string)($d['pickup'] ?? '')), 0, 30),
+  'client_id'   => substr(preg_replace('/[^A-Za-z0-9\-]/', '', (string)($d['client_id'] ?? '')), 0, 32),
+  'name'        => mb_substr(trim((string)($d['name'] ?? '')), 0, 50),
+  'phone'       => preg_replace('/[^\d+]/', '', (string)($d['phone'] ?? '')),
+  'items'       => $items,
+  'total'       => $total,
+  'pay'         => $pay,
+  'paid'        => $paid,
+  'pk'          => $pk,
+  'ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
+  'status'      => 'pending',
+  'pts_pending' => $ptsPending,
+  'pts_done'    => false,
 );
 $ok = file_put_contents($dir . '/orders.jsonl', json_encode($rec, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
 if ($ok === false) {
@@ -159,56 +202,10 @@ if ($ok === false) {
   http_response_code(500); echo '{"ok":false,"error":"store"}'; exit;
 }
 
-// Лояльность (замена панч-карты): баллы + кэшбек на кошелёк, всё серверно и автоматически.
-// Баллы от суммы чека: loy_points_for() (1 балл / 5000 сум). Кэшбек по уровню: loy_cashback_pct().
-$cashback = 0;
-$earned = 0;
-$lphone = norm_phone($rec['phone']);
-if ($lphone && !$trusted) {
-  // без валидного токена баллы/кэшбек не начисляем: иначе накрутка на свой или чужой номер простым curl
-  audit('loyalty_skip_untrusted', array('phone' => $lphone));
-  $lphone = null;
-}
-if ($lphone) {
-  $earn = loy_points_for($total);
-  $pts = store_update('accounts.json', function ($data) use ($lphone, $earn, $num, $rec) {
-    if (!isset($data[$lphone])) { return [$data, null]; }
-    $a = $data[$lphone];
-    $a['total'] = (int)($a['total'] ?? 0) + 1;
-    $base = isset($a['points']) ? (int)$a['points']
-      : ((int)($a['total'] ?? 0) - 1) * 10 + ((int)($a['free'] ?? 0)) * 50; // миграция со штампов
-    $a['points'] = $base + $earn;
-    // Автоматически добавляем запись в hist при подтверждённом заказе (для server-account пользователей,
-    // у которых creditStamp вызывает accountPull вместо локального hist.push).
-    $hist_entry = array('t' => 'buy', 'd' => $rec['ts'], 'o' => $num, 'amt' => $rec['total'], 'pts' => $earn, 'point' => $rec['point_name']);
-    $hist = (array)($a['hist'] ?? array());
-    $hkey = 'buy|' . $rec['ts'] . '|' . $num;
-    $hkeys = array();
-    foreach ($hist as $h) { $hkeys[] = (string)($h['t'] ?? '') . '|' . (string)($h['d'] ?? '') . '|' . (string)($h['o'] ?? ''); }
-    if (!in_array($hkey, $hkeys, true)) {
-      $hist[] = $hist_entry;
-      usort($hist, function ($x, $y) { return strcmp((string)($x['d'] ?? ''), (string)($y['d'] ?? '')); });
-      $a['hist'] = array_slice($hist, -200);
-    }
-    $data[$lphone] = $a;
-    return [$data, (int)$a['points']];
-  });
-  if ($pts !== null) {
-    $earned = $earn;
-    $pct = loy_cashback_pct($pts);
-    $cashback = (int)floor($total * $pct / 100);
-    if ($cashback > 0) {
-      store_update('wallets.json', function ($data) use ($lphone, $rec, $cashback, $id, $num) {
-        $w = wallet_entry($data, $lphone, $rec['client_id'], $rec['name']);
-        $w['balance'] = (int)$w['balance'] + $cashback;
-        wallet_push_tx($w, array('t' => 'cashback', 'a' => $cashback, 'ts' => date('c'), 'o' => $num, 'oid' => $id));
-        $data[$lphone] = $w;
-        return [$data, true];
-      });
-    }
-  }
-}
-$resp = array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => $cashback, 'points_added' => $earned);
+// Баллы и кэшбек НЕ начисляем здесь — только при выдаче (order_mark_done.php).
+// Клиент получит cashback:0 и points_added:0 при оформлении — реальные значения придут
+// через accountPull после изменения статуса баристой.
+$resp = array('ok' => true, 'id' => $id, 'num' => $num, 'paid' => $paid, 'pk' => $pk, 'cashback' => 0, 'points_added' => 0);
 store_update('order_idem.json', function ($data) use ($idemKey, $resp) {
   $data[$idemKey] = array('ts' => time(), 'resp' => $resp);
   return [$data, true];
