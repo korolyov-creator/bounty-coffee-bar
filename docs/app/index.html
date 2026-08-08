@@ -219,6 +219,34 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 .test-banner .tb-text{flex:1;font-size:13px;color:#DDC472;font-weight:600;line-height:1.4}
 .test-banner .tb-close{background:none;border:none;color:rgba(221,196,114,.55);font-size:20px;line-height:1;padding:0 0 0 6px;cursor:pointer;flex-shrink:0;font-family:inherit}
 .test-banner .tb-close:active{color:#DDC472}
+
+/* MENU TILES 2×2 (v58) */
+.menu-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.menu-tile{min-height:154px;padding:20px 12px;border:1px solid #DDC472;border-radius:16px;background:#00465F;color:var(--paper);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;box-shadow:inset 0 0 0 1px rgba(221,196,114,.16)}
+.menu-tile:active{transform:scale(.98)}
+.menu-tile .mt-icon{font-size:48px;line-height:1}
+.menu-tile .mt-label{font-size:18px;font-weight:700;color:#DDC472}
+.menu-breadcrumb{display:none;align-items:center;gap:10px;margin:0 0 14px;font-size:14px;color:rgba(242,234,215,.65)}
+.menu-breadcrumb.show{display:flex}
+.menu-breadcrumb button{border:0;background:transparent;color:#DDC472;font:inherit;font-weight:700;padding:0;cursor:pointer}
+.menu-breadcrumb .bc-current{color:var(--paper);font-weight:600}
+
+/* ONBOARDING (v58) */
+.onboarding-overlay{position:fixed;inset:0;z-index:350;display:none;flex-direction:column;justify-content:space-between;padding:48px 24px 32px;background:#00465F;color:#fff;font-family:Inter,Arial,sans-serif}
+.onboarding-overlay.show{display:flex;animation:fade .3s ease}
+.ob-slides{flex:1;display:flex;align-items:center;overflow:hidden}
+.ob-slide{display:none;width:100%;text-align:center}
+.ob-slide.active{display:block;animation:fade .25s ease}
+.ob-icon{font-size:72px;margin-bottom:24px;display:block}
+.ob-slide h2{margin:0 0 14px;font:700 30px/1.15 "Playfair Display",serif;color:#DDC472}
+.ob-slide p{margin:0 auto;max-width:310px;font-size:16px;line-height:1.6;color:rgba(255,255,255,.88)}
+.ob-bottom{text-align:center}
+.ob-dots{display:flex;justify-content:center;gap:8px;margin-bottom:28px}
+.ob-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35);transition:all .25s}
+.ob-dots i.active{width:24px;border-radius:8px;background:#DDC472}
+.ob-actions{display:flex;gap:12px}
+.ob-btn{flex:1;border:0;border-radius:14px;padding:15px;background:#DDC472;color:#00465F;font:700 15px Inter,Arial,sans-serif;cursor:pointer}
+.ob-skip{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}
 </style>
 </head>
 <body>
@@ -354,6 +382,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 
     <div class="point-chip" id="order-point-chip" onclick="openPointPicker()"></div>
 
+    <div class="menu-breadcrumb" id="menu-breadcrumb"></div>
     <div class="cats" id="cats"></div>
 
     <div class="menu-list" id="menu-list"></div>
@@ -812,6 +841,34 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     <button class="btn-big" id="oferta-btn" disabled onclick="acceptOferta()">Принимаю условия</button>
   </div>
 
+  <!-- ONBOARDING OVERLAY (v58: первый запуск) -->
+  <div id="onboarding-overlay" class="onboarding-overlay">
+    <div class="ob-slides">
+      <section class="ob-slide active">
+        <span class="ob-icon">📱</span>
+        <h2>Заказ в 2 тапа</h2>
+        <p>Выбери кофе → в корзину → готово. Без очередей.</p>
+      </section>
+      <section class="ob-slide">
+        <span class="ob-icon">🌟</span>
+        <h2>Кэшбек с каждого заказа</h2>
+        <p>Баллы копятся автоматически. Трать на кофе.</p>
+      </section>
+      <section class="ob-slide">
+        <span class="ob-icon">🎫</span>
+        <h2>Твоя QR-карта = лояльность</h2>
+        <p>Покажи бариста QR — баллы идут в копилку.</p>
+      </section>
+    </div>
+    <div class="ob-bottom">
+      <div class="ob-dots"><i class="active"></i><i></i><i></i></div>
+      <div class="ob-actions">
+        <button class="ob-btn ob-skip" id="ob-skip-btn" onclick="obSkip()">Пропустить</button>
+        <button class="ob-btn" id="ob-next" onclick="obNext()">Далее</button>
+      </div>
+    </div>
+  </div>
+
   <!-- WELCOME SPLASH: приветствие + автопроверка обновления (каждый запуск) -->
   <div class="reg-overlay" id="welcome-splash" style="display:flex;z-index:320;justify-content:center">
     <div style="text-align:center">
@@ -1144,6 +1201,70 @@ function comboAddToCart(){
   toast('🍱 Комбо в корзине! Скидка 15%', 3000);
   buzz([15,30,15]);
   go('cart');
+}
+
+
+// === MENU TILES 2×2 (v58) ===
+const MENU_TILES = [
+  {icon:'☕', label:'Кофе', cats:['Кофе','С молоком','Холодные']},
+  {icon:'🥤', label:'Напитки', cats:['Напитки']},
+  {icon:'🍽', label:'Еда', cats:['ПП · без сахара','Выпечка']},
+  {icon:'🎁', label:'Комбо', cats:['Комбо']},
+];
+let menuState = 'tiles';
+let activeMenuTile = null;
+
+function renderMenuTiles(){
+  menuState = 'tiles';
+  activeMenuTile = null;
+  const cats = document.getElementById('cats');
+  const list = document.getElementById('menu-list');
+  const breadcrumb = document.getElementById('menu-breadcrumb');
+  breadcrumb.classList.remove('show');
+  breadcrumb.innerHTML = '';
+  cats.style.display = 'none';
+  cats.innerHTML = '';
+  list.innerHTML = '<div class="menu-tiles">' +
+    MENU_TILES.map((tile, idx) =>
+      '<button class="menu-tile" onclick="menuTileClick(' + idx + ')">' +
+      '<span class="mt-icon">' + tile.icon + '</span>' +
+      '<span class="mt-label">' + tile.label + '</span>' +
+      '</button>'
+    ).join('') + '</div>';
+}
+
+function menuTileClick(tileIdx){
+  const tile = MENU_TILES[tileIdx];
+  if (!tile) return;
+  menuState = 'category';
+  activeMenuTile = tileIdx;
+  const cats = document.getElementById('cats');
+  const breadcrumb = document.getElementById('menu-breadcrumb');
+  breadcrumb.classList.add('show');
+  breadcrumb.innerHTML =
+    '<button onclick="menuTileBack()">← Назад</button>' +
+    '<span>Меню /</span>' +
+    '<span class="bc-current">' + tile.icon + ' ' + tile.label + '</span>';
+  if (tile.cats.length > 1){
+    cats.style.display = 'flex';
+    cats.innerHTML = tile.cats.map((cat, i) =>
+      '<button class="' + (i===0?'active':'') + '" onclick="menuSubcatClick(' + "'" + cat.replace(/'/g,"\'") + "'" + ',this)">' + cat + '</button>'
+    ).join('');
+  } else {
+    cats.style.display = 'none';
+    cats.innerHTML = '';
+  }
+  renderMenu(tile.cats[0]);
+}
+
+function menuSubcatClick(cat, btn){
+  document.querySelectorAll('#cats button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMenu(cat);
+}
+
+function menuTileBack(){
+  renderMenuTiles();
 }
 
 // === Render menu ===
@@ -1968,21 +2089,9 @@ function pollOrders(){
     }).catch(()=>{});
 }
 setInterval(pollOrders, 25000);
-// Init categories («Добавки» — не отдельный товар, доступны в карточках напитков)
+// Init menu: v58 — сначала плитки 2×2, категории появляются после тапа
 (function(){
-  const c = document.getElementById('cats');
-  Object.keys(MENU).filter(k => k !== 'Добавки').forEach((k,i)=>{
-    const b = document.createElement('button');
-    b.textContent = k;
-    if (i===0) b.classList.add('active');
-    b.onclick = () => {
-      document.querySelectorAll('.cats button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      renderMenu(k);
-    };
-    c.appendChild(b);
-  });
-  renderMenu(Object.keys(MENU)[0]);
+  renderMenuTiles();
 })();
 
 // === SUB (абонемент) ===
@@ -2641,8 +2750,8 @@ async function deleteAccount(){
 
 // === LOYALTY: баллы + кэшбек на кошелёк (начисляются автоматически при заказе) ===
 function cashbackPctFor(pts){
-  // пороги = LOY_TIERS и loy_cashback_pct() на сервере — менять только вместе
-  return pts >= 3500 ? 20 : pts >= 1500 ? 15 : pts >= 500 ? 10 : pts >= 150 ? 5 : 3;
+  // v58: 3 уровня — Бронза 2%, Серебро 4%, Золото 6%; backward compat: >= 1500 → 6%
+  return pts >= 500 ? 6 : pts >= 150 ? 4 : 2;
 }
 // Баллы пропорциональны чеку: 1 балл за каждые полные 5 000 сум, минимум 1 (= loy_points_for на сервере)
 function loyPointsForAmount(amount){
@@ -2838,6 +2947,37 @@ function creditStamp(num, total, point){
 let qrObj = null;
 function escHTML(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+
+// === ONBOARDING (v58) — показывается один раз при первом запуске ===
+let _obIdx = 0, _obTouchX = 0;
+function showOnboarding(){
+  if (localStorage.getItem('bounty_onboarding_done')) return false;
+  _obIdx = 0;
+  _obRender();
+  document.getElementById('onboarding-overlay').classList.add('show');
+  const ov = document.getElementById('onboarding-overlay');
+  ov.addEventListener('touchstart', e => { _obTouchX = e.changedTouches[0].clientX; }, {passive:true});
+  ov.addEventListener('touchend', e => {
+    const d = e.changedTouches[0].clientX - _obTouchX;
+    if (d < -45) obNext();
+    else if (d > 45 && _obIdx > 0){ _obIdx--; _obRender(); }
+  }, {passive:true});
+  return true;
+}
+function _obRender(){
+  document.querySelectorAll('.ob-slide').forEach((s,i) => s.classList.toggle('active', i === _obIdx));
+  document.querySelectorAll('.ob-dots i').forEach((d,i) => d.classList.toggle('active', i === _obIdx));
+  document.getElementById('ob-next').textContent = _obIdx === 2 ? 'Начать' : 'Далее';
+  document.getElementById('ob-skip-btn').style.visibility = _obIdx === 2 ? 'hidden' : '';
+}
+function obNext(){ if (_obIdx === 2){ obFinish(); return; } _obIdx++; _obRender(); }
+function obSkip(){ obFinish(); }
+function obFinish(){
+  localStorage.setItem('bounty_onboarding_done', '1');
+  document.getElementById('onboarding-overlay').classList.remove('show');
+  enterAsClient();
+}
+
 // === ВХОД ПРИ КАЖДОМ ОТКРЫТИИ: splash (приветствие + автообновление) → выбор роли ===
 let entryDone = false;
 function startEntry(){
@@ -2879,6 +3019,8 @@ function enterAsClient(){
     renderLoyalty();
     return;
   }
+  // v58: онбординг — только для новых пользователей (один раз)
+  if (showOnboarding()) return;
   document.getElementById('reg-overlay').classList.add('show');
   // приветствие если уже был вход
   const last = localStorage.getItem('bounty_last_name') || '';
@@ -2935,22 +3077,22 @@ function openStaffPanel(){
 }
 
 // === СИСТЕМА СТАТУСОВ ===
+// v58: 3 уровня (Платина/Бриллиант убраны); backward compat: points>=1500 → «Золото Premium»
 const LOY_TIERS = [
-  {id:'bronze',   name:'Бронза',    icon:'🥉', color:'#c68f5a', bg:'#4b3018', min:0,   next:150,
-   perks:['3% кэшбек на кошелёк с каждого заказа','Уведомления об акциях','Персональные предложения по дню рождения']},
-  {id:'silver',   name:'Серебро',   icon:'🥈', color:'#c7ced9', bg:'#2b2f3a', min:150, next:500,
-   perks:['5% кэшбек на кошелёк с каждой покупки','Ранний доступ к сезонным напиткам','Бесплатный сироп на выбор']},
-  {id:'gold',     name:'Золото',    icon:'🥇', color:'#f5c542', bg:'#4a3808', min:500, next:1500,
-   perks:['10% кэшбек на кошелёк','Приоритет в очереди (метка Gold)','Апгрейд размера бесплатно 1×/день','−15% на всю ПП-выпечку']},
-  {id:'platinum', name:'Платина',   icon:'💎', color:'#7dd3fc', bg:'#0d2f43', min:1500, next:3500,
-   perks:['15% кэшбек на кошелёк','Приоритет в очереди + именной стакан в подарок на любимой точке','Двойные баллы по вторникам','1 сюрприз-напиток от бариста в месяц','Приглашения на закрытые дегустации']},
-  {id:'diamond',  name:'Бриллиант', icon:'💠', color:'#e879f9', bg:'#3b0f4a', min:3500, next:null,
-   perks:['20% кэшбек на кошелёк','Бесплатный кофе каждую пятницу утром','Пожизненная скидка 20% на ПП/выпечку','Именная зона в Катта Дархон (фото и подпись)','Персональный бариста-консультант','Приглашение на открытие каждой новой точки Bounty']},
+  {id:'bronze', name:'Бронза', icon:'🥉', color:'#c68f5a', bg:'#4b3018', min:0, next:150,
+   perks:['2% кэшбек на кошелёк с каждого заказа','Уведомления об акциях','Персональные предложения по дню рождения']},
+  {id:'silver', name:'Серебро', icon:'🥈', color:'#c7ced9', bg:'#2b2f3a', min:150, next:500,
+   perks:['4% кэшбек на кошелёк с каждой покупки','Ранний доступ к сезонным напиткам','Бесплатный сироп на выбор']},
+  {id:'gold', name:'Золото', icon:'🥇', color:'#f5c542', bg:'#4a3808', min:500, next:null,
+   perks:['6% кэшбек на кошелёк','Приоритет в очереди (метка Gold)','Апгрейд размера бесплатно 1×/день','−15% на всю ПП-выпечку']},
 ];
 function loyTierFor(points){
-  let t = LOY_TIERS[0];
-  for (const x of LOY_TIERS) if (points >= x.min) t = x;
-  return t;
+  // backward compat: старые клиенты с >= 1500 баллов не понижаются — показываем «Золото Premium»
+  if (points >= 1500){
+    return {id:'gold', name:'Золото Premium', icon:'🌟', color:'#f5c542', bg:'#4a3808', min:500, next:null,
+      perks:['6% кэшбек на кошелёк','Приоритет в очереди (метка Gold)','Апгрейд размера бесплатно 1×/день','−15% на всю ПП-выпечку','★ Постоянный гость Bounty']};
+  }
+  return points >= 500 ? LOY_TIERS[2] : points >= 150 ? LOY_TIERS[1] : LOY_TIERS[0];
 }
 function loyPointsOf(c){
   // если сервер уже даёт очки — используем; иначе оцениваем по total
