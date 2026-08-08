@@ -12,6 +12,8 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    # CSP (F-04 fix: защита от XSS-усиления)
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.gstatic.com; font-src 'self' fonts.gstatic.com data:; img-src 'self' data: blob: https://bountycoffeebar.uz; connect-src 'self' https://bountycoffeebar.uz https://api.telegram.org; frame-ancestors 'none';"
 </IfModule>
 
 # PHP: скрыть ошибки от пользователя, писать в лог

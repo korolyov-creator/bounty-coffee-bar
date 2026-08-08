@@ -754,7 +754,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
   <div class="prod-overlay" id="prod-overlay" onclick="if(event.target===this)closeProd()">
     <div class="prod-sheet">
       <div style="font-size:34px" id="pr-ic">☕</div>
-      <img id="pr-photo" alt="" style="display:none;width:100%;max-height:220px;object-fit:cover;border-radius:14px;margin:6px 0 4px">
+      <img id="pr-photo" alt="" loading="lazy" style="display:none;width:100%;max-height:220px;object-fit:cover;border-radius:14px;margin:6px 0 4px">
 
       <h2 id="pr-name"></h2>
       <div class="sub" id="pr-desc"></div>
@@ -844,7 +844,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
     </div>
     <div id="reg-step2" style="display:none">
       <label>Код из SMS</label>
-      <input type="tel" id="reg-code" placeholder="•••••" autocomplete="one-time-code" inputmode="numeric" maxlength="5" style="text-align:center;letter-spacing:.5em;font-size:24px">
+      <input type="tel" id="reg-code" placeholder="•••••" autocomplete="one-time-code" inputmode="numeric" maxlength="5" oninput="if(this.value.replace(/\D/g,'').length===5)verifyCode()" style="text-align:center;letter-spacing:.5em;font-size:24px">
       <div style="margin-top:26px">
         <button class="btn-big" id="reg-verify-btn" onclick="verifyCode()">Войти ☕</button>
       </div>
@@ -2777,7 +2777,14 @@ function verifyCode(){
         syncClient(true);
         if (!a.dob) setTimeout(dobShow, 800); // подарок на ДР — мягкий запрос после входа
       } else if (j.reason === 'wrong_code'){
-        alert('Неверный код, попробуй ещё раз');
+        const left = typeof j.attempts_left === 'number' ? ` (ещё ${j.attempts_left} попыт${j.attempts_left===1?'ка':j.attempts_left<5?'ки':'ок'})` : '';
+        alert('Неверный код, попробуй ещё раз' + left);
+        document.getElementById('reg-code').value = '';
+        document.getElementById('reg-code').focus();
+      } else if (j.reason === 'too_many_attempts'){
+        const retryMin = j.retry_after ? Math.ceil(j.retry_after / 60) : 15;
+        alert(`Слишком много неверных попыток. Попробуй снова через ${retryMin} мин.`);
+        regBack({preventDefault:()=>{}});
       } else {
         alert('Код устарел — запроси новый');
         regBack({preventDefault:()=>{}});
