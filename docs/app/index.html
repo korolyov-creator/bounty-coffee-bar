@@ -2609,7 +2609,7 @@ function logoutAccount(){
     ? 'Выйти из аккаунта?\n\nКарта и бонусы сохранятся на сервере — войдёшь снова по номеру телефона и коду из SMS.'
     : 'Выйти из аккаунта?\n\nВнимание: карта пока хранится только на этом устройстве. После выхода отметки обнулятся, вход — по номеру телефона.';
   if (!confirm(msg)) return;
-  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg','bounty_wallet'].forEach(k => localStorage.removeItem(k));
+  ['bounty_client','bounty_token','bounty_cart','bounty_orders','bounty_sync_day','bounty_chat_seen','bounty_reg','bounty_wallet','bounty_mycombos','bounty_idem','bounty_usual'].forEach(k => localStorage.removeItem(k));
   document.getElementById('reg-step2').style.display = 'none';
   document.getElementById('reg-step1').style.display = 'block';
   document.getElementById('reg-name').value = '';
