@@ -2764,6 +2764,21 @@ function saveClient(c){ localStorage.setItem('bounty_client', JSON.stringify(c))
 // Если SMS-провайдер ещё не настроен, сервер отвечает sms_unavailable — работаем по-старому (локальная карта).
 let regPhone = '';
 let tgLinkPending = false;
+// FIX 2026-08-08: восстанавливаем regPhone из localStorage при старте —
+// iOS WKWebView пересоздаёт JS-контекст при return из Telegram, теряя in-memory переменные.
+// bounty_reg сохраняется до успешного verify (10-минутное окно).
+function restorePendingRegistration(){
+  try {
+    const rs = JSON.parse(localStorage.getItem('bounty_reg') || 'null');
+    if (rs && rs.phone && Date.now() - rs.ts < 10 * 60 * 1000) {
+      regPhone = rs.phone;
+      return rs;
+    }
+    if (rs) localStorage.removeItem('bounty_reg');
+  } catch(e) {}
+  return null;
+}
+(function(){ restorePendingRegistration(); })();
 // вернулся из Telegram после привязки номера — сами запрашиваем код ещё раз
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && tgLinkPending){
@@ -2883,12 +2898,16 @@ function regBack(e){
   document.getElementById('reg-step1').style.display = 'block';
 }
 function verifyCode(){
+  // FIX 2026-08-08: восстанавливаем phone из localStorage на случай потери regPhone (return из TG на iOS)
+  const pending = restorePendingRegistration();
+  const phone = regPhone || (pending && pending.phone);
+  if (!phone){ alert('Сессия входа истекла — запроси код ещё раз'); regBack({preventDefault:()=>{}}); return; }
   const code = document.getElementById('reg-code').value.replace(/\D/g,'');
   if (code.length !== 5){ alert('Введи 5 цифр из SMS'); return; }
-  const name = document.getElementById('reg-name').value.trim();
+  const name = document.getElementById('reg-name').value.trim() || (pending && pending.name) || '';
   const btn = document.getElementById('reg-verify-btn');
   btn.disabled = true; btn.textContent = 'Проверяем…';
-  fetch('../api/otp_verify.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone: regPhone, code, name})})
+  fetch('../api/otp_verify.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone, code, name})})
     .then(r => r.json())
     .then(j => {
       btn.disabled = false; btn.textContent = 'Войти ☕';
@@ -2896,7 +2915,10 @@ function verifyCode(){
         localStorage.removeItem('bounty_reg');
         localStorage.setItem('bounty_token', j.token);
         const a = j.account;
-        saveClient({name: a.name, phone: a.phone, id: a.id, dob: a.dob, points:(typeof a.points === 'number' ? a.points : undefined), stamps: a.stamps||0, total: a.total||0, free: a.free||0, reg: a.reg, hist: a.hist||[]});
+        // FIX 2026-08-08: используем j.client_id (canonical server-side id) если сервер вернул его.
+        // Гарантирует что на любом устройстве после OTP в localStorage хранится один и тот же id.
+        const canonicalId = j.client_id || a.id;
+        saveClient({name: a.name, phone: a.phone, id: canonicalId, dob: a.dob, points:(typeof a.points === 'number' ? a.points : undefined), stamps: a.stamps||0, total: a.total||0, free: a.free||0, reg: a.reg, hist: a.hist||[]});
         document.getElementById('reg-overlay').classList.remove('show');
         document.getElementById('reg-step2').style.display = 'none';
         document.getElementById('reg-step1').style.display = 'block';

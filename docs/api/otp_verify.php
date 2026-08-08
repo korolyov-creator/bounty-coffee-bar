@@ -67,4 +67,6 @@ store_update('tokens.json', function ($data) use ($token, $phone) {
   return [$data, true];
 });
 
-respond(['ok' => true, 'token' => $token, 'account' => $account]);
+// FIX 2026-08-08: возвращаем canonical client_id (из accounts.json) чтобы клиент
+// на любом устройстве использовал один и тот же id при обращении к wallet.php
+respond(['ok' => true, 'token' => $token, 'client_id' => $account['id'], 'account' => $account]);

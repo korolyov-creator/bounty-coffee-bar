@@ -232,22 +232,25 @@ function wallet_refund_order($phone, $amount, $oid, $num, $by) {
 }
 
 // Клиентская авторизация кошелька: телефон + карта (client_id). Привязка при первом обращении.
+// FIX 2026-08-08: кошелёк привязан к номеру телефона (phone — единственный канонический ключ).
+// id_mismatch убран: клиент с iPhone имел другой client_id (локальный vs серверный),
+// что блокировало доступ к кошельку с балансом. Теперь — доверяем phone, id обновляем до canonical.
 function wallet_auth($d) {
   $phone = norm_phone($d['phone'] ?? '');
   $id = substr(preg_replace('/[^A-Za-z0-9\-]/', '', (string)($d['client_id'] ?? '')), 0, 32);
-  if (!$phone || $id === '') { respond(['ok' => false, 'reason' => 'bad_auth'], 401); }
-  $wallets = store_read('wallets.json');
-  if (isset($wallets[$phone]) && !empty($wallets[$phone]['id']) && $wallets[$phone]['id'] !== $id) {
-    // id мог смениться при перевходе (единая сессия) — сверяем с каноном accounts.json и перепривязываем
-    $accounts = store_read('accounts.json');
-    $canon = isset($accounts[$phone]['id']) ? $accounts[$phone]['id'] : '';
-    if ($canon !== '' && $canon === $id) {
-      store_update('wallets.json', function ($data) use ($phone, $id) {
-        if (isset($data[$phone])) { $data[$phone]['id'] = $id; }
+  if (!$phone) { respond(['ok' => false, 'reason' => 'bad_auth'], 401); }
+  // client_id опционален: кошелёк ищем по phone, id обновляем до canonical (accounts.json) при несовпадении
+  if ($id !== '') {
+    $wallets = store_read('wallets.json');
+    if (isset($wallets[$phone]) && !empty($wallets[$phone]['id']) && $wallets[$phone]['id'] !== $id) {
+      // Синхронизируем id в wallets до canonical из accounts (молча, без 403)
+      $accounts = store_read('accounts.json');
+      $canon = isset($accounts[$phone]['id']) ? $accounts[$phone]['id'] : '';
+      $effective_id = ($canon !== '') ? $canon : $id;
+      store_update('wallets.json', function ($data) use ($phone, $effective_id) {
+        if (isset($data[$phone])) { $data[$phone]['id'] = $effective_id; }
         return [$data, true];
       });
-    } else {
-      respond(['ok' => false, 'reason' => 'id_mismatch'], 403);
     }
   }
   return array($phone, $id);
