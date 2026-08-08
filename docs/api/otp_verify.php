@@ -11,7 +11,8 @@ if (!$phone || strlen($code) !== 5) { respond(['ok' => false, 'reason' => 'bad_i
 client_guard($phone);
 
 // Демо-аккаунт для App Review: фиксированный код 11111
-if ($phone === '998900000000') {
+// Активен только если существует флаг-файл bounty_data/demo_enabled (для прода удалить файл)
+if ($phone === '998900000000' && file_exists(dirname(__DIR__, 2) . '/bounty_data/demo_enabled')) {
   $res = ($code === '11111') ? 'ok' : 'wrong_code';
   if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 401); }
   goto demo_ok;

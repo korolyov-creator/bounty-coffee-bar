@@ -10,7 +10,8 @@ if (!$phone) { respond(['ok' => false, 'reason' => 'bad_phone'], 422); }
 client_guard($phone);
 
 // Демо-аккаунт для App Review: фиксированный код, SMS не шлём
-if ($phone === '998900000000') { respond(['ok' => true]); }
+// Активен только если существует флаг-файл bounty_data/demo_enabled (создать вручную для тестов, удалить для прода)
+if ($phone === '998900000000' && file_exists(dirname(__DIR__, 2) . '/bounty_data/demo_enabled')) { respond(['ok' => true]); }
 
 $has_tg = tg_link_chat($phone) !== null;
 if (!sms_config() && !$has_tg) { respond(['ok' => false, 'reason' => 'sms_unavailable', 'tg' => tg_bot_link()]); }
