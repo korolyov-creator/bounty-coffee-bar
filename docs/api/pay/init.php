@@ -6,15 +6,8 @@
 require_once __DIR__ . '/_pay_lib.php';
 header('Content-Type: application/json; charset=utf-8');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(['ok' => false], 405); }
-$d = json_body();
-if (!$d) { respond(['ok' => false], 400); }
-
-$order_id = (string)($d['order_id'] ?? '');
-$provider = (string)($d['provider'] ?? '');
-if (!$order_id || !in_array($provider, array('click', 'payme', 'uzum'), true)) {
-  respond(['ok' => false, 'reason' => 'bad_input'], 422);
-}
+// Онлайн-эквайринг отключён: только наличный расчёт у бариста.
+respond(['ok' => false, 'reason' => 'method_disabled'], 400);
 
 $cfg = pay_provider_config($provider);
 if (!$cfg) { respond(['ok' => false, 'reason' => 'provider_not_configured']); }

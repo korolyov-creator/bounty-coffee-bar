@@ -4,6 +4,14 @@
 // PRICES: имя позиции => допустимые базовые цены (по размерам).
 // ADDONS: имя добавки => цена. Вкус в скобках («Сироп (Карамель)») отбрасывается при проверке.
 
+// === HTTP-эндпойнт: если файл вызван напрямую — отдать JSON прайса ===
+// При include/require из другого скрипта — только константы/функции, без вывода.
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', '/home/socia361/bounty_data/php_errors.log');
+define('PRICES_PHP_INCLUDED', true);
+
 $BOUNTY_PRICES = array(
   '«Студент»' => array(30000),
   '«Бариста-завтрак»' => array(39000),
@@ -137,4 +145,28 @@ function price_check($name, $addons, $unit) {
     if ($base + $addSum === (int)$unit) { return true; }
   }
   return false;
+}
+
+// === JSON HTTP-ответ (только при прямом запросе, не при include) ===
+if (!defined('ORDER_PHP_INCLUDED')) {
+  header('Content-Type: application/json; charset=utf-8');
+  $prices_out = array();
+  foreach ($BOUNTY_PRICES as $name => $variants) {
+    $prices_out[] = array('n' => $name, 'p' => $variants);
+  }
+  $addons_out = array();
+  foreach ($BOUNTY_ADDONS as $name => $price) {
+    $addons_out[] = array('n' => $name, 'p' => $price);
+  }
+  echo json_encode(array(
+    'ok'     => true,
+    'prices' => $prices_out,
+    'addons' => $addons_out,
+    'combo'  => array(
+      'milk'    => $BOUNTY_COMBO_MILK,
+      'syrup_p' => BOUNTY_COMBO_SYRUP_P,
+      'shot_p'  => BOUNTY_COMBO_SHOT_P,
+    ),
+  ), JSON_UNESCAPED_UNICODE);
+  exit;
 }

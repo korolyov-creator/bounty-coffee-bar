@@ -559,7 +559,7 @@ function posDo(phone){
       beep(1200); pkClose();
       alert('⭐ Начислено: +' + j.points_added + ' балл(ов)\n🎁 Кэшбек на кошелёк: ' + fmt(j.cashback) + ' сум (' + j.pct + '%)\nВсего баллов у клиента: ' + j.points);
     } else {
-      const msg = {no_account:'У клиента нет аккаунта в приложении.\nПредложи установить: bountycoffeebar.uz/app и войти по номеру телефона — тогда баллы будут копиться.',
+      const msg = {no_account:'У клиента нет аккаунта в приложении.\niPhone: скачайте в App Store → apps.apple.com/uz/app/bounty-coffee-bar/id6796310216\nAndroid/браузер: bountycoffeebar.uz/app — войдите по номеру телефона. Баллы начнут копиться сразу.',
         duplicate:'Эта покупка уже начислена только что (защита от даблтапа).',
         bad_input:'Проверь номер и сумму.'}[j.reason] || ('Не получилось (' + (j.reason||'') + ')');
       alert(msg);

@@ -1636,13 +1636,10 @@ function renderPayOptions(){
   if (!el || !document.getElementById('scr-cart').classList.contains('active')) return;
   const total = cartTotal();
   // выбор клиента НЕ сбрасываем молча: если на кошельке не хватает — честно скажем в подсказке и при оформлении
-  const m = wallet.methods || {};
+  // Только наличный расчёт и кошелёк — онлайн-эквайринг не подключён
   const opts = [
-    {id:'pickup', label:'💵 При получении', ok:true},
-    {id:'wallet', label:'👛 Кошелёк · ' + fmtSum(wallet.balance), ok: wallet.balance >= total},
-    {id:'click',  label:'Click',  ok:!!m.click},
-    {id:'payme',  label:'Payme',  ok:!!m.payme},
-    {id:'uzum',   label:'Uzum',   ok:!!m.uzum}
+    {id:'pickup', label:'💵 Наличными', ok:true},
+    {id:'wallet', label:'👛 Кошелёк · ' + fmtSum(wallet.balance), ok: wallet.balance >= total}
   ];
   el.innerHTML = opts.map(o =>
     `<button class="p-opt${coPay===o.id?' sel':''}${o.ok?'':' dim'}" onclick="coSelPay('${o.id}')">${o.label}</button>`).join('');
@@ -1650,20 +1647,13 @@ function renderPayOptions(){
     coPay === 'wallet'
       ? (wallet.balance >= total
         ? 'Спишем ' + fmtSum(total) + ' с кошелька при оформлении. Отменишь до начала приготовления — деньги вернутся.'
-        : '⚠️ На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(total) + '. Пополни кошелёк или выбери другой способ.')
-    : 'Наличными или картой на кассе при получении. Онлайн-оплата — через кошелёк.';
+        : '⚠️ На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(total) + '. Пополни у бариста наличными.')
+    : 'Оплата наличными бариста при получении заказа.';
 }
 function coSelPay(id){
   const total = cartTotal();
   if (id === 'wallet' && wallet.balance < total){
-    if (confirm('На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(total) + '.\n\nПополнить кошелёк?')) go('wallet');
-    return;
-  }
-  if (id === 'click' || id === 'payme' || id === 'uzum'){
-    const nm = {click:'Click', payme:'Payme', uzum:'Uzum'}[id];
-    alert((wallet.methods||{})[id]
-      ? 'Оплата заказа через ' + nm + ' идёт через кошелёк:\n1) пополни кошелёк через ' + nm + '\n2) оплати заказ с кошелька'
-      : nm + ' подключается — совсем скоро.\nПока доступны: кошелёк и оплата при получении.');
+    if (confirm('На кошельке ' + fmtSum(wallet.balance) + ' — не хватает для оплаты ' + fmtSum(total) + '.\n\nПополнить кошелёк у бариста?')) go('wallet');
     return;
   }
   coPay = id;
@@ -1940,7 +1930,7 @@ function pollOrders(){
           if (newSt === 'ready' && o.status !== 'ready') becameReady = true;
           if (newSt === 'making' && o.status === 'new') becameMaking = true;
           o.status = newSt; changed = true;
-          if (o.status === 'done' && !o.credited){ o.credited = true; creditStamp(o.num, o.total); }
+          if (o.status === 'done' && !o.credited){ o.credited = true; creditStamp(o.num, o.total, o.point); }
         }
       });
       if (changed){
@@ -2155,19 +2145,14 @@ function renderWalletUI(){
   document.getElementById('w-balance').textContent = f;
   document.getElementById('w-amounts').innerHTML = W_AMOUNTS.map(a =>
     `<button class="p-opt${a===wAmount?' sel':''}" onclick="wSelAmount(${a})">${fmtSum(a)}</button>`).join('');
-  const m = wallet.methods || {};
-  const meth = [
-    {id:'cash',  label:'💵 На кассе', ok:true},
-    {id:'click', label:'Click', ok:!!m.click},
-    {id:'payme', label:'Payme', ok:!!m.payme},
-    {id:'uzum',  label:'Uzum',  ok:!!m.uzum}];
+  // Только наличный расчёт у бариста — онлайн-эквайринг не подключён
+  const meth = [{id:'cash', label:'💵 У бариста', ok:true}];
+  if (wMethod !== 'cash') wMethod = 'cash'; // сбросить, если был выбран online-метод
   document.getElementById('w-methods').innerHTML = meth.map(o =>
     `<button class="p-opt${wMethod===o.id?' sel':''}${o.ok?'':' dim'}" onclick="wSelMethod('${o.id}')">${o.label}</button>`).join('');
   document.getElementById('w-topup-hint').textContent = !getClient()
     ? 'Чтобы пополнить кошелёк, войди в аккаунт — вкладка «Профиль».'
-    : wMethod === 'cash'
-    ? 'Оплати на кассе наличными или картой — бариста зачислит по коду заявки.'
-    : 'Откроется страница оплаты, зачисление подтвердит бариста.';
+    : 'Покажи бариста код заявки и оплати наличными — деньги зачислятся сразу.';
   const TX = {topup:['💵','Пополнение'], pay:['☕','Оплата заказа'], refund:['↩️','Возврат за заказ'], adjust:['⚙️','Корректировка'], cashback:['🎁','Кэшбек за заказ']};
   document.getElementById('w-tx').innerHTML = wallet.tx.length ? wallet.tx.map(t => {
     const d = new Date(t.ts), i = TX[t.t] || ['•', t.t];
@@ -2803,13 +2788,22 @@ function verifyCode(){
 
 // Автоначисление баллов при выдаче предзаказа: 1 балл за каждые 5 000 сум чека.
 // Сервер начисляет то же самое сам — тут дублируем для мгновенного отображения, затем accountPull подтянет точное значение.
-function creditStamp(num, total){
+function creditStamp(num, total, point){
   const c = getClient(); if (!c) return;
-  // серверный аккаунт: баллы уже начислил сервер — локальное начисление задваивало бы их через accountPush
-  if (localStorage.getItem('bounty_token')){ accountPull(); buzz(30); return; }
+  if (localStorage.getItem('bounty_token')){
+    // Серверный аккаунт: баллы начислил сервер через order.php.
+    // Локально добавляем запись в hist сразу — иначе экран «История» покажет покупку только после
+    // следующего accountPull (до 60 с). accountPull перетрёт hist полностью актуальным с сервера.
+    const pts = loyPointsForAmount(total);
+    (c.hist = c.hist || []).push({t:'buy', d:new Date().toISOString(), o:num, amt:total, pts:pts, point:point||''});
+    saveClient(c);
+    accountPull();
+    buzz(30);
+    return;
+  }
   c.total = (c.total || 0) + 1;
   c.points = loyPointsOf(c) + loyPointsForAmount(total);
-  (c.hist = c.hist || []).push({t:'buy', d:new Date().toISOString(), o:num});
+  (c.hist = c.hist || []).push({t:'buy', d:new Date().toISOString(), o:num, amt:total, pts:loyPointsForAmount(total)});
   saveClient(c);
   syncClient(true);
   accountPull();
@@ -3069,7 +3063,7 @@ function renderHistory(c){
     const ds = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
     return h.t === 'free'
       ? '<div class="row"><div class="l"><span>🎁</span><span>Бесплатный кофе</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>'
-      : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + ' · отметка ' + (h.n || '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
+      : '<div class="row"><div class="l"><span>☕</span><span>' + (h.o ? 'Предзаказ №' + h.o : 'Покупка') + (h.amt ? ' · ' + fmtSum(h.amt) : (h.n ? ' · ' + h.n : '')) + (h.pts ? '<br><small style="color:var(--gold)">+' + h.pts + ' балл' + (h.pts===1?'':'ов') + '</small>' : '') + '</span></div><div class="r" style="font-size:12px">' + ds + '</div></div>';
   }).join('');
 }
 window.addEventListener('load', () => { startEntry(); renderLoyalty(); checkOferta(); syncClient(false); accountPull(); renderCartBar(); renderUsual(); renderHoro(); pollOrders(); refreshWallet(); subHomeRefresh(); chatPoll(false); });

@@ -1,4 +1,5 @@
 <?php
+define('ORDER_PHP_INCLUDED', true); // prevents prices.php from outputting HTTP response when included
 require __DIR__ . '/_lib.php';
 require __DIR__ . '/prices.php';
 header('Content-Type: application/json; charset=utf-8');
@@ -170,13 +171,25 @@ if ($lphone && !$trusted) {
 }
 if ($lphone) {
   $earn = loy_points_for($total);
-  $pts = store_update('accounts.json', function ($data) use ($lphone, $earn) {
+  $pts = store_update('accounts.json', function ($data) use ($lphone, $earn, $num, $rec) {
     if (!isset($data[$lphone])) { return [$data, null]; }
     $a = $data[$lphone];
     $a['total'] = (int)($a['total'] ?? 0) + 1;
     $base = isset($a['points']) ? (int)$a['points']
       : ((int)($a['total'] ?? 0) - 1) * 10 + ((int)($a['free'] ?? 0)) * 50; // миграция со штампов
     $a['points'] = $base + $earn;
+    // Автоматически добавляем запись в hist при подтверждённом заказе (для server-account пользователей,
+    // у которых creditStamp вызывает accountPull вместо локального hist.push).
+    $hist_entry = array('t' => 'buy', 'd' => $rec['ts'], 'o' => $num, 'amt' => $rec['total'], 'pts' => $earn, 'point' => $rec['point_name']);
+    $hist = (array)($a['hist'] ?? array());
+    $hkey = 'buy|' . $rec['ts'] . '|' . $num;
+    $hkeys = array();
+    foreach ($hist as $h) { $hkeys[] = (string)($h['t'] ?? '') . '|' . (string)($h['d'] ?? '') . '|' . (string)($h['o'] ?? ''); }
+    if (!in_array($hkey, $hkeys, true)) {
+      $hist[] = $hist_entry;
+      usort($hist, function ($x, $y) { return strcmp((string)($x['d'] ?? ''), (string)($y['d'] ?? '')); });
+      $a['hist'] = array_slice($hist, -200);
+    }
     $data[$lphone] = $a;
     return [$data, (int)$a['points']];
   });

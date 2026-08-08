@@ -21,12 +21,8 @@ if ($action === 'topup_request') {
   $amount = (int)($d['amount'] ?? 0);
   if ($amount < 10000 || $amount > 5000000) { respond(['ok' => false, 'reason' => 'bad_amount'], 422); }
   $method = (string)($d['method'] ?? 'cash');
-  if (!in_array($method, array('cash', 'click', 'payme', 'uzum'), true)) { respond(['ok' => false, 'reason' => 'bad_method'], 422); }
-
-  if ($method !== 'cash') {
-    $link = pay_link($method, $amount, $phone);
-    if (!$link) { respond(['ok' => false, 'reason' => 'method_unavailable']); }
-  }
+  // Только наличный расчёт: Click/Payme/Uzum не подключены, заблокированы на уровне API.
+  if ($method !== 'cash') { respond(['ok' => false, 'reason' => 'method_disabled'], 400); }
 
   $tid = bin2hex(random_bytes(6));
   $code = (string)random_int(1000, 9999);
