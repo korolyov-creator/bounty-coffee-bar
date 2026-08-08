@@ -212,6 +212,13 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
 /* pull-to-refresh индикатор */
 .ptr-hint{position:absolute;left:0;right:0;top:calc(var(--safe-top) + 4px);text-align:center;font-size:12px;color:var(--gold);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80}
 .ptr-hint.show{opacity:1}
+
+/* TEST MODE BANNER */
+.test-banner{display:flex;align-items:center;gap:10px;background:#00465F;border:1px solid #DDC472;border-radius:14px;padding:12px 14px;margin-bottom:16px;cursor:pointer;position:relative;animation:fade .3s ease}
+.test-banner .tb-icon{font-size:20px;flex-shrink:0}
+.test-banner .tb-text{flex:1;font-size:13px;color:#DDC472;font-weight:600;line-height:1.4}
+.test-banner .tb-close{background:none;border:none;color:rgba(221,196,114,.55);font-size:20px;line-height:1;padding:0 0 0 6px;cursor:pointer;flex-shrink:0;font-family:inherit}
+.test-banner .tb-close:active{color:#DDC472}
 </style>
 </head>
 <body>
@@ -232,6 +239,13 @@ html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);
         <span id="home-status-badge" class="loy-badge">🥉 Бронза</span>
         <span id="home-greet-text">Тихая пауза ждёт тебя — Ц-14 открыт 24/7</span>
       </div>
+    </div>
+
+    <!-- TEST MODE BANNER -->
+    <div class="test-banner" id="test-mode-banner" onclick="go('chat')" style="display:none">
+      <span class="tb-icon">🧪</span>
+      <span class="tb-text">Приложение в тестовом режиме. Помоги нам сделать его лучше — напиши в чат ниже, что понравилось или мешает.</span>
+      <button class="tb-close" onclick="event.stopPropagation();dismissTestBanner()" title="Закрыть">×</button>
     </div>
 
     <!-- Статус лояльности + прогресс -->
@@ -3215,6 +3229,46 @@ new MutationObserver(muts => {
   for (const m of muts) for (const nd of m.addedNodes) i18nApply(nd);
 }).observe(document.body, {childList: true, subtree: true});
 setLang(APP_LANG);
+
+// === TEST MODE BANNER ===
+(function(){
+  const BANNER_KEY = 'bounty_test_banner_dismissed';
+  const BANNER_TTL = 7 * 24 * 60 * 60 * 1000;
+  function showTestBanner(){
+    const dismissed = parseInt(localStorage.getItem(BANNER_KEY) || '0', 10);
+    if (dismissed && Date.now() - dismissed < BANNER_TTL) return;
+    const el = document.getElementById('test-mode-banner');
+    if (el) el.style.display = 'flex';
+  }
+  window.dismissTestBanner = function(){
+    localStorage.setItem(BANNER_KEY, String(Date.now()));
+    const el = document.getElementById('test-mode-banner');
+    if (el) el.style.display = 'none';
+  };
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', showTestBanner);
+  } else {
+    showTestBanner();
+  }
+})();
+
+// === CHAT WELCOME (первое открытие) ===
+(function(){
+  const CHAT_WELCOME_KEY = 'bounty_chat_welcome_shown';
+  const origRender = window.renderChat;
+  if (typeof origRender === 'function'){
+    window.renderChat = function(msgs, scrollBottom){
+      origRender.call(this, msgs, scrollBottom);
+      if (!msgs.length && !localStorage.getItem(CHAT_WELCOME_KEY)){
+        localStorage.setItem(CHAT_WELCOME_KEY, '1');
+        const el = document.getElementById('chat-list');
+        if (el && el.querySelector('.tip')){
+          el.innerHTML = '<div style="align-self:flex-start;max-width:88%;background:rgba(0,70,95,.65);border:1px solid rgba(221,196,114,.4);color:#DDC472;border-radius:14px 14px 14px 4px;padding:10px 14px;font-size:13px;line-height:1.5">☕ Привет! Мы в тестовом режиме — расскажи, что улучшить: баги, идеи, что бесит.</div>';
+        }
+      }
+    };
+  }
+})();
 
 </script>
 
