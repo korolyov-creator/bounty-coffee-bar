@@ -19,17 +19,24 @@ if ($phone === '998900000000' && file_exists(dirname(__DIR__, 2) . '/bounty_data
 }
 
 $now = time();
+// F-10 (2026-08-10): возвращаем attempts_left в ответе, чтобы UI показывал сколько попыток осталось.
 $res = store_update('otp.json', function ($data) use ($phone, $code, $now) {
   $e = isset($data[$phone]) ? $data[$phone] : null;
-  if (!$e || empty($e['h'])) { return [$data, 'no_code']; }
-  if ($now > $e['exp']) { unset($data[$phone]); return [$data, 'expired']; }
+  if (!$e || empty($e['h'])) { return [$data, ['no_code', null]]; }
+  if ($now > $e['exp']) { unset($data[$phone]); return [$data, ['expired', null]]; }
   $e['tries'] = (isset($e['tries']) ? $e['tries'] : 0) + 1;
-  if ($e['tries'] > 5) { unset($data[$phone]); return [$data, 'too_many_tries']; }
-  if (!hash_equals($e['h'], hash('sha256', $phone . ':' . $code))) { $data[$phone] = $e; return [$data, 'wrong_code']; }
+  if ($e['tries'] > 5) { unset($data[$phone]); return [$data, ['too_many_tries', 0]]; }
+  if (!hash_equals($e['h'], hash('sha256', $phone . ':' . $code))) { $data[$phone] = $e; return [$data, ['wrong_code', max(0, 5 - $e['tries'])]]; }
   unset($data[$phone]);
-  return [$data, 'ok'];
+  return [$data, ['ok', null]];
 });
-if ($res !== 'ok') { respond(['ok' => false, 'reason' => $res], 401); }
+$status = $res[0];
+$attempts_left = $res[1];
+if ($status !== 'ok') {
+  $resp = ['ok' => false, 'reason' => $status];
+  if ($attempts_left !== null) { $resp['attempts_left'] = $attempts_left; }
+  respond($resp, 401);
+}
 
 demo_ok:
 $name = mb_substr(trim((string)($d['name'] ?? '')), 0, 50);
