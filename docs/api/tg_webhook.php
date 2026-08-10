@@ -82,7 +82,7 @@ $cmd = mb_strtolower($text, 'UTF-8');
 if (strpos($cmd, '/') === 0) { $cmd = preg_replace('/@[a-z0-9_]+$/i', '', strtok($cmd, ' ')); }
 
 $APP_URL = 'https://bountycoffeebar.uz/app/';
-$IOS_URL = 'https://testflight.apple.com/join/3z2ayUCS';
+$IOS_URL = 'https://apps.apple.com/uz/app/bounty-coffee-bar/id6796310216';
 
 if ($cmd === '/start') {
   tgw_send($token, $chat_id,
@@ -106,21 +106,21 @@ if ($cmd === '/start') {
     "🍏 Установка iPhone · 🤖 Установка Android",
     array('inline_keyboard' => array(
       array(array('text' => '🌐 Открыть приложение', 'url' => $APP_URL)),
-      array(array('text' => '🍏 iPhone — TestFlight', 'url' => $IOS_URL)),
+      array(array('text' => '🍏 iPhone — App Store', 'url' => $IOS_URL)),
     )));
 } elseif ($cmd === '/iphone' || $text === '🍏 Установка iPhone') {
   tgw_send($token, $chat_id,
     "🍏 Установка на iPhone — два способа:\n\n" .
-    "1️⃣ TestFlight — полное приложение:\n" .
-    "• установите бесплатный TestFlight (кнопка ниже откроет его автоматически)\n" .
-    "• нажмите «Принять» и «Установить» — Bounty появится на экране\n\n" .
+    "1️⃣ App Store — рекомендуемый способ:\n" .
+    "• нажмите кнопку «Установить из App Store» ниже\n" .
+    "• App Store откроется на странице Bounty Coffee Bar — жмите «Загрузить»\n" .
+    "• приложение появится на экране «Домой»\n\n" .
     "2️⃣ Без App Store — прямо из Safari:\n" .
     "• откройте bountycoffeebar.uz/app/ в Safari (кнопка ниже)\n" .
     "• нажмите «Поделиться» (квадрат со стрелкой) → «На экран “Домой”»\n" .
-    "• иконка Bounty появится как обычное приложение\n\n" .
-    "⏳ Версия для App Store уже на проверке Apple — как только выйдет, анонсируем в @bountycoffeebar_uz.",
+    "• иконка Bounty появится как обычное приложение.",
     array('inline_keyboard' => array(
-      array(array('text' => '🛫 Установить через TestFlight', 'url' => $IOS_URL)),
+      array(array('text' => '🍏 Установить из App Store', 'url' => $IOS_URL)),
       array(array('text' => '🌐 Открыть в Safari', 'url' => $APP_URL)),
     )));
 } elseif ($cmd === '/android' || $text === '🤖 Установка Android') {
@@ -128,8 +128,8 @@ if ($cmd === '/start') {
     "🤖 Установка на Android:\n\n" .
     "• откройте bountycoffeebar.uz/app/ в Chrome (кнопка ниже)\n" .
     "• нажмите «Установить приложение» (или меню ⋮ → «Добавить на главный экран»)\n" .
-    "• иконка Bounty появится как обычное приложение\n\n" .
-    "⏳ Версия для Google Play готовится — анонсируем в @bountycoffeebar_uz.",
+    "• иконка Bounty появится как обычное приложение.\n\n" .
+    "☕ Все функции доступны сразу: заказ, бонусы, кошелёк, чат с бариста. Версию для Google Play анонсируем в @bountycoffeebar_uz.",
     array('inline_keyboard' => array(
       array(array('text' => '🌐 Открыть в Chrome', 'url' => $APP_URL)),
     )));
@@ -179,19 +179,50 @@ if ($cmd === '/start') {
   tgw_send($token, $chat_id,
     "💬 Команды бота:\n\n" .
     "/app — открыть приложение (заказ и бонусы)\n" .
-    "/iphone — установить на iPhone (TestFlight или Safari)\n" .
+    "/iphone — установить на iPhone (App Store или Safari)\n" .
     "/android — установить на Android\n" .
     "/bonus — бонусы: баллы, уровни и кэшбек\n" .
     "/locations — адреса точек\n" .
     "/link — получать коды входа сюда\n" .
     "/channel — канал с новостями\n\n" .
-    "Вопросы по заказу — чат с бариста в приложении " . $APP_URL . "\n" .
+    "Есть вопрос? Напишите его прямо сюда — мы ответим.\n" .
+    "Вопросы по заказу — быстрее через чат с бариста в приложении " . $APP_URL . "\n" .
     "Мы работаем 24/7 ☕",
     tgw_main_kb());
 } else {
-  tgw_send($token, $chat_id,
-    "Я вас не совсем понял 🙂 Выберите кнопку ниже или команду из меню.\n" .
-    "Вопросы по заказам — через чат в приложении " . $APP_URL,
-    tgw_main_kb());
+  // Незнакомое сообщение = клиент задаёт вопрос. Форвардим владельцу с rate-limit 60 сек.
+  // Ответ клиенту — подтверждение приёма, а не «я не понял».
+  if ($text !== '') {
+    $now_ts = time();
+    $forward = false;
+    store_update('support_ratelimit.json', function ($data) use ($chat_id, $now_ts, &$forward) {
+      foreach ($data as $k => $v) { if ($now_ts - (int)$v > 3600) unset($data[$k]); }
+      $last = isset($data[$chat_id]) ? (int)$data[$chat_id] : 0;
+      if ($now_ts - $last >= 60) {
+        $data[$chat_id] = $now_ts;
+        $forward = true;
+      }
+      return [$data, true];
+    });
+    if ($forward) {
+      $uname = isset($msg['from']['username']) ? '@' . $msg['from']['username'] : '';
+      $fname = isset($msg['from']['first_name']) ? $msg['from']['first_name'] : '';
+      $who = trim($fname . ' ' . $uname);
+      if ($who === '') { $who = 'id' . $from_id; }
+      $preview = mb_substr($text, 0, 1500);
+      tg_alert("💬 Bounty бот · сообщение клиента\n\nОт: {$who}\nchat_id: {$chat_id}\n\n{$preview}");
+      audit('tg_client_msg', array('chat' => $chat_id, 'from' => $who, 'len' => mb_strlen($text)));
+    }
+    tgw_send($token, $chat_id,
+      "✅ Ваше сообщение получено — мы ответим сюда как только освободимся.\n\n" .
+      "Быстрые действия — на кнопках ниже. " .
+      "Вопросы по конкретному заказу быстрее решаются через чат в приложении " . $APP_URL,
+      tgw_main_kb());
+  } else {
+    tgw_send($token, $chat_id,
+      "Выберите кнопку ниже 👇 или напишите вопрос текстом — мы ответим.\n" .
+      "Вопросы по заказам — через чат в приложении " . $APP_URL,
+      tgw_main_kb());
+  }
 }
 echo 'ok';
