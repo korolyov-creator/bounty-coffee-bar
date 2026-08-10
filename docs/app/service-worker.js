@@ -1,5 +1,5 @@
-// Bounty PWA · Service Worker v60
-const CACHE = 'bounty-app-v60';
+// Bounty PWA · Service Worker v61
+const CACHE = 'bounty-app-v61';
 const ASSETS = [
   './',
   './index.html',
@@ -42,6 +42,6 @@ self.addEventListener('fetch', e => {
       const copy = resp.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy));
       return resp;
-    })));
+    }).catch(() => caches.match(e.request).then(r2 => r2 || new Response('', {status: 504, statusText: 'offline'})))));
   }
 });

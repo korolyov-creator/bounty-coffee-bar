@@ -2750,8 +2750,9 @@ async function deleteAccount(){
 
 // === LOYALTY: баллы + кэшбек на кошелёк (начисляются автоматически при заказе) ===
 function cashbackPctFor(pts){
-  // v58: 3 уровня — Бронза 2%, Серебро 4%, Золото 6%; backward compat: >= 1500 → 6%
-  return pts >= 500 ? 6 : pts >= 150 ? 4 : 2;
+  // Синхронизировано с loy_cashback_pct() в docs/api/_lib.php — менять только вместе.
+  // 5 уровней: Бронза 2% / Серебро 4% / Золото 6% / Платина 8% / Бриллиант 10%.
+  return pts >= 3500 ? 10 : pts >= 1500 ? 8 : pts >= 500 ? 6 : pts >= 150 ? 4 : 2;
 }
 // Баллы пропорциональны чеку: 1 балл за каждые полные 5 000 сум, минимум 1 (= loy_points_for на сервере)
 function loyPointsForAmount(amount){
@@ -2931,8 +2932,8 @@ function verifyCode(){
         document.getElementById('reg-code').value = '';
         document.getElementById('reg-code').focus();
       } else if (j.reason === 'too_many_tries'){
-        const retryMin = j.retry_after ? Math.ceil(j.retry_after / 60) : 15;
-        alert(`Слишком много неверных попыток. Попробуй снова через ${retryMin} мин.`);
+        // Сервер (otp_verify.php) не возвращает retry_after — код удаляется, окно совпадает с TTL кода (15 мин).
+        alert('Слишком много неверных попыток. Попробуй снова через 15 мин.');
         regBack({preventDefault:()=>{}});
       } else {
         alert('Код устарел — запроси новый');
@@ -3099,22 +3100,26 @@ function openStaffPanel(){
 }
 
 // === СИСТЕМА СТАТУСОВ ===
-// v58: 3 уровня (Платина/Бриллиант убраны); backward compat: points>=1500 → «Золото Premium»
+// 5 уровней — Бронза/Серебро/Золото/Платина/Бриллиант.
+// Пороги и % синхронизированы с loy_cashback_pct() в docs/api/_lib.php — менять только вместе.
 const LOY_TIERS = [
   {id:'bronze', name:'Бронза', icon:'🥉', color:'#c68f5a', bg:'#4b3018', min:0, next:150,
    perks:['2% кэшбек на кошелёк с каждого заказа','Уведомления об акциях','Персональные предложения по дню рождения']},
   {id:'silver', name:'Серебро', icon:'🥈', color:'#c7ced9', bg:'#2b2f3a', min:150, next:500,
    perks:['4% кэшбек на кошелёк с каждой покупки','Ранний доступ к сезонным напиткам','Бесплатный сироп на выбор']},
-  {id:'gold', name:'Золото', icon:'🥇', color:'#f5c542', bg:'#4a3808', min:500, next:null,
+  {id:'gold', name:'Золото', icon:'🥇', color:'#f5c542', bg:'#4a3808', min:500, next:1500,
    perks:['6% кэшбек на кошелёк','Приоритет в очереди (метка Gold)','Апгрейд размера бесплатно 1×/день','−15% на всю ПП-выпечку']},
+  {id:'platinum', name:'Платина', icon:'💎', color:'#b7e4f7', bg:'#1e3040', min:1500, next:3500,
+   perks:['8% кэшбек на кошелёк','Персональные предложения по средам','Бесплатный второй сироп','Двойные баллы в день рождения']},
+  {id:'diamond', name:'Бриллиант', icon:'🌟', color:'#f8f4ff', bg:'#2a1e40', min:3500, next:null,
+   perks:['10% кэшбек на кошелёк','Твой персональный бариста','Секретные новинки первым','Персональный подарок раз в квартал']},
 ];
 function loyTierFor(points){
-  // backward compat: старые клиенты с >= 1500 баллов не понижаются — показываем «Золото Premium»
-  if (points >= 1500){
-    return {id:'gold', name:'Золото Premium', icon:'🌟', color:'#f5c542', bg:'#4a3808', min:500, next:null,
-      perks:['6% кэшбек на кошелёк','Приоритет в очереди (метка Gold)','Апгрейд размера бесплатно 1×/день','−15% на всю ПП-выпечку','★ Постоянный гость Bounty']};
-  }
-  return points >= 500 ? LOY_TIERS[2] : points >= 150 ? LOY_TIERS[1] : LOY_TIERS[0];
+  if (points >= 3500) return LOY_TIERS[4];
+  if (points >= 1500) return LOY_TIERS[3];
+  if (points >= 500)  return LOY_TIERS[2];
+  if (points >= 150)  return LOY_TIERS[1];
+  return LOY_TIERS[0];
 }
 function loyPointsOf(c){
   // если сервер уже даёт очки — используем; иначе оцениваем по total
