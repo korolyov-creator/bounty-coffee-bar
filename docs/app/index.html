@@ -2930,7 +2930,7 @@ function verifyCode(){
         alert('Неверный код, попробуй ещё раз' + left);
         document.getElementById('reg-code').value = '';
         document.getElementById('reg-code').focus();
-      } else if (j.reason === 'too_many_attempts'){
+      } else if (j.reason === 'too_many_tries'){
         const retryMin = j.retry_after ? Math.ceil(j.retry_after / 60) : 15;
         alert(`Слишком много неверных попыток. Попробуй снова через ${retryMin} мин.`);
         regBack({preventDefault:()=>{}});
