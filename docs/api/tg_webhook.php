@@ -129,7 +129,8 @@ if ($cmd === '/start') {
     "• откройте bountycoffeebar.uz/app/ в Chrome (кнопка ниже)\n" .
     "• нажмите «Установить приложение» (или меню ⋮ → «Добавить на главный экран»)\n" .
     "• иконка Bounty появится как обычное приложение.\n\n" .
-    "☕ Все функции доступны сразу: заказ, бонусы, кошелёк, чат с бариста. Версию для Google Play анонсируем в @bountycoffeebar_uz.",
+    "☕ Все функции доступны сразу: заказ, бонусы, кошелёк, чат с бариста. Версию для Google Play анонсируем в @bountycoffeebar_uz.\n\n" .
+    "💡 Хотите попасть в закрытую бету Google Play, когда билд будет готов? Пришлите ваш Gmail сюда — добавим в список (лимит 100).",
     array('inline_keyboard' => array(
       array(array('text' => '🌐 Открыть в Chrome', 'url' => $APP_URL)),
     )));
@@ -184,12 +185,96 @@ if ($cmd === '/start') {
     "/bonus — бонусы: баллы, уровни и кэшбек\n" .
     "/locations — адреса точек\n" .
     "/link — получать коды входа сюда\n" .
+    "/beta_status — статус в закрытой бете Android\n" .
     "/channel — канал с новостями\n\n" .
     "Есть вопрос? Напишите его прямо сюда — мы ответим.\n" .
     "Вопросы по заказу — быстрее через чат с бариста в приложении " . $APP_URL . "\n" .
     "Мы работаем 24/7 ☕",
     tgw_main_kb());
+} elseif ($cmd === '/beta_status') {
+  $list = store_read('beta_testers.json');
+  $found = null; $pos = 0; $size = is_array($list) ? count($list) : 0;
+  if (is_array($list)) {
+    $i = 0;
+    foreach ($list as $rec) {
+      $i++;
+      if (isset($rec['chat_id']) && (int)$rec['chat_id'] === $chat_id) { $found = $rec; $pos = $i; break; }
+    }
+  }
+  if ($found !== null) {
+    $email = isset($found['email']) ? $found['email'] : '';
+    tgw_send($token, $chat_id,
+      "✅ Вы в списке закрытой беты Google Play (позиция {$pos} из 100). Ссылка на установку придёт сюда, как только билд будет готов — ориентировочно осень 2026.\n\n" .
+      "Ваш Gmail: {$email}",
+      tgw_main_kb());
+  } else {
+    tgw_send($token, $chat_id,
+      "Вас в списке беты пока нет. Пришлите ваш Gmail сюда — добавим (лимит 100). Билд Android — ориентировочно осень 2026.",
+      tgw_main_kb());
+  }
 } else {
+  // Приоритет 1: пришёл Gmail-адрес — заявка на бету Google Play.
+  $gmail = null;
+  $has_other_email = false;
+  if ($text !== '' && preg_match('/([A-Za-z0-9._%+\-]+)@(gmail|googlemail)\.com/i', $text, $mg)) {
+    $gmail = strtolower($mg[1]) . '@' . strtolower($mg[2]) . '.com';
+  } elseif ($text !== '' && preg_match('/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/', $text)) {
+    $has_other_email = true;
+  }
+
+  if ($gmail !== null) {
+    $existing = null; $list_size = 0; $was_new = false; $list_full = false;
+    $uname = isset($msg['from']['username']) ? '@' . $msg['from']['username'] : '';
+    $fname = isset($msg['from']['first_name']) ? $msg['from']['first_name'] : '';
+    $who = trim($fname . ' ' . $uname); if ($who === '') { $who = 'id' . $from_id; }
+    $now_ts = time();
+    store_update('beta_testers.json', function ($data) use ($gmail, $chat_id, $who, $now_ts, &$existing, &$list_size, &$was_new, &$list_full) {
+      if (!is_array($data)) $data = array();
+      foreach ($data as $i => $rec) {
+        if (isset($rec['email']) && strcasecmp($rec['email'], $gmail) === 0) {
+          $existing = $rec;
+          $data[$i]['last_seen'] = $now_ts;
+          $list_size = count($data);
+          return array($data, true);
+        }
+      }
+      if (count($data) >= 100) { $list_size = count($data); $list_full = true; return array($data, false); }
+      $data[] = array('email' => $gmail, 'chat_id' => $chat_id, 'from' => $who, 'added_at' => $now_ts, 'last_seen' => $now_ts, 'sent_at' => null);
+      $was_new = true; $list_size = count($data);
+      return array($data, true);
+    });
+    if ($list_full && $existing === null) {
+      audit('beta_full', array('chat' => $chat_id, 'email' => $gmail));
+      tgw_send($token, $chat_id,
+        "🚫 Список закрытой беты Google Play уже заполнен (лимит 100). Как только откроем следующий пул — сообщим в @bountycoffeebar_uz.\n\n" .
+        "Пока Android можно ставить как PWA: bountycoffeebar.uz/app в Chrome → «Установить приложение».",
+        tgw_main_kb());
+    } elseif ($existing !== null) {
+      audit('beta_dup', array('chat' => $chat_id, 'email' => $gmail));
+      tgw_send($token, $chat_id,
+        "✅ Ваш Gmail {$gmail} уже в списке закрытой беты Google Play. Ссылка на установку придёт сюда, как только билд будет готов — ориентировочно осень 2026.",
+        tgw_main_kb());
+    } else {
+      tg_alert("💚 Bounty · новый бета-тестер Google Play\n\nEmail: {$gmail}\nОт: {$who}\nchat_id: {$chat_id}\nВ списке: {$list_size}/100");
+      audit('beta_new', array('chat' => $chat_id, 'email' => $gmail, 'size' => $list_size));
+      tgw_send($token, $chat_id,
+        "✅ Ваш Gmail {$gmail} добавлен в список закрытой беты Google Play (позиция {$list_size} из 100).\n\n" .
+        "Ссылка на установку придёт сюда, как только билд будет готов — ориентировочно осень 2026.\n\n" .
+        "🔒 Email хранится только для приглашения в Google Play и не передаётся третьим лицам.",
+        tgw_main_kb());
+    }
+    echo 'ok'; exit;
+  }
+
+  if ($has_other_email) {
+    audit('beta_wrong_domain', array('chat' => $chat_id));
+    tgw_send($token, $chat_id,
+      "Для закрытой беты Android нужен именно Gmail (Google-аккаунт). Другие почтовые сервисы Google Play не поддерживает.\n\n" .
+      "Если у вас есть Gmail — пришлите его сюда, добавим в список.",
+      tgw_main_kb());
+    echo 'ok'; exit;
+  }
+
   // Незнакомое сообщение = клиент задаёт вопрос. Форвардим владельцу с rate-limit 60 сек.
   // Ответ клиенту — подтверждение приёма, а не «я не понял».
   if ($text !== '') {
